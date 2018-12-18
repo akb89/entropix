@@ -37,7 +37,9 @@ def _compute_vocab(corpus, vocab_filepath):
 def _count(args):
     if not args.vocab:
         logger.info('No vocabulary file specified. Computing vocabulary with counts...')
-        vocab_filepath = '{}.vocab'.format(args.model)
+        corpus_name = os.path.basename(args.corpus)
+        vocab_filepath = os.path.join(args.outputdir,
+                                      '{}.vocab'.format(corpus_name))
         _compute_vocab(args.corpus, vocab_filepath)
 
 
@@ -48,11 +50,12 @@ def main():
     parser_count = subparsers.add_parser(
         'count', formatter_class=argparse.RawTextHelpFormatter,
         help='count co-occurences in input corpus')
-    parser_count.add_argument('--corpus',
+    parser_count.add_argument('--corpus', required=True,
                               help='an input corpus to compute counts from')
     parser_count.add_argument('--vocab',
                               help='corpus vocabulary with frequencies')
-    parser_count.add_arguments('--model', help='absolute path to output model')
+    parser_count.add_argument('--outputdir', required=True,
+                              help='absolute path to output directory')
     parser_count.set_defaults(func=_count)
     args = parser.parse_args()
     args.func(args)
