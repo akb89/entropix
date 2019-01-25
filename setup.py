@@ -31,7 +31,7 @@ setup(
             'entropix = entropix.main:main'
         ],
     },
-    install_requires=['PyYAML==3.13'],
+    install_requires=['PyYAML==3.13', 'tqdm==4.28.1'],
     classifiers=['Development Status :: 2 - Pre-Alpha',
                  'Environment :: Web Environment',
                  'Intended Audience :: Developers',
