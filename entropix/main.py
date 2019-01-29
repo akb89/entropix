@@ -64,7 +64,7 @@ def _compute(args):
     compute(counts)
 
 
-def count(output_dirpath, corpus_filepath):
+def count(output_dirpath, corpus_filepath, min_count=0):
     """Count words in a corpus."""
     if corpus_filepath.endswith('.txt'):
         output_filepath = os.path.join(
@@ -74,13 +74,17 @@ def count(output_dirpath, corpus_filepath):
         output_filepath = os.path.join(
             output_dirpath,
             '{}.counts'.format(os.path.basename(corpus_filepath)))
-    counts = defaultdict(int)
+    _counts = defaultdict(int)
     logger.info('Counting words in {}'.format(corpus_filepath))
     with open(corpus_filepath, 'r', encoding='utf-8') as input_stream:
         for line in input_stream:
             line = line.strip()
             for word in line.split():
-                counts[word] += 1
+                _counts[word] += 1
+    if min_count == 0:
+        counts = _counts
+    else:
+        counts = {word: count for word, count in _counts.items() if count >= min_count}
     logger.info('Saving counts to {}'.format(output_filepath))
     with open(output_filepath, 'w', encoding='utf-8') as output_stream:
         for word, wcount in sorted(counts.items(),
