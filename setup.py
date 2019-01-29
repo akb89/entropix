@@ -6,7 +6,7 @@ This file details modalities for packaging the matrixor application.
 
 from setuptools import setup
 
-with open('README.md', 'r') as fh:
+with open('README.md', 'r', encoding='utf-8') as fh:
     long_description = fh.read()
 
 setup(
@@ -31,7 +31,7 @@ setup(
             'entropix = entropix.main:main'
         ],
     },
-    install_requires=['PyYAML==3.13', 'tqdm==4.28.1'],
+    install_requires=['pyyaml>=4.2b1', 'tqdm==4.28.1'],
     classifiers=['Development Status :: 2 - Pre-Alpha',
                  'Environment :: Web Environment',
                  'Intended Audience :: Developers',
