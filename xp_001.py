@@ -10,11 +10,12 @@ import entropix.utils.files as futils
 
 def _process(counts_dirpath, wiki_filepath):
     counts = entropix.count(counts_dirpath, wiki_filepath)
-    return wiki_filepath, entropix.compute(counts)
+    corpus_size, vocab_size, entropy = entropix.compute(counts)
+    return wiki_filepath, corpus_size, vocab_size, entropy
 
 
 if __name__ == '__main__':
-    print('Running entropix XP001')
+    print('Running entropix XP#001')
 
     WIKI_DIRPATH = '/Users/akb/Github/entropix/data/wiki/'
     COUNTS_DIRPATH = '/Users/akb/Github/entropix/data/counts/'
@@ -37,17 +38,17 @@ if __name__ == '__main__':
             partial = {
                 'corpus_size': corpus_size,
                 'vocab_size': vocab_size,
-                'entropy': entropy
+                'entropy': round(entropy, 2)
             }
             results[os.path.basename(wikipath)] = partial
     print('Saving results to file {}'.format(RESULTS_FILEPATH))
     with open(RESULTS_FILEPATH, 'w', encoding='utf-8') as output_stream:
-        print('{:20}\t{:5}\t{:5}\t{:5}'
-              .format('Language', 'Corpus size', 'Vocab size', 'Entropy'),
+        print('{:20}\t{:>11}\t{:>10}\t{:>7}'
+              .format('Wiki', 'Corpus size', 'Vocab size', 'Entropy'),
               file=output_stream)
-        print('-*80', file=output_stream)
+        print('-'*63, file=output_stream)
         for key in sorted(results.keys()):
-            print('{:20}\t{:5}\t{:5}\t{:5}'
+            print('{:20}\t{:>11}\t{:>10}\t{:>7}'
                   .format(key, results[key]['corpus_size'],
                           results[key]['vocab_size'], results[key]['entropy']),
                   file=output_stream)
