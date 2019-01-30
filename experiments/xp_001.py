@@ -18,7 +18,7 @@ if __name__ == '__main__':
     print('Running entropix XP#001')
 
     WIKI_DIRPATH = '/home/kabbach/witokit/data/wiki/'
-    COUNTS_DIRPATH = '/home/kabbach/entropix/data/counts/xp001/'
+    COUNTS_DIRPATH = '/home/kabbach/witokit/data/counts/xp001/'
     RESULTS_FILEPATH = '/home/kabbach/entropix/xp001.results'
     NUM_THREADS = 51
 
