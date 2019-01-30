@@ -44,12 +44,12 @@ if __name__ == '__main__':
             results[os.path.basename(wikipath)] = partial
     print('Saving results to file {}'.format(RESULTS_FILEPATH))
     with open(RESULTS_FILEPATH, 'w', encoding='utf-8') as output_stream:
-        print('{:20}\t{:>11}\t{:>10}\t{:>7}'
+        print('{:30}\t{:>11}\t{:>10}\t{:>7}'
               .format('Wiki', 'Corpus size', 'Vocab size', 'Entropy'),
               file=output_stream)
         print('-'*63, file=output_stream)
         for key in sorted(results.keys()):
-            print('{:20}\t{:>11}\t{:>10}\t{:>7}'
+            print('{:30}\t{:>11}\t{:>10}\t{:>7}'
                   .format(key, results[key]['corpus_size'],
                           results[key]['vocab_size'], results[key]['entropy']),
                   file=output_stream)
