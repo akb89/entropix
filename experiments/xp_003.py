@@ -20,7 +20,7 @@ if __name__ == '__main__':
     WIKI_DIRPATH = '/home/kabbach/witokit/data/wiki/'
     COUNTS_DIRPATH = '/home/kabbach/witokit/data/counts/xp003/'
     RESULTS_FILEPATH = '/home/kabbach/entropix/xp003.results'
-    NUM_THREADS = 44
+    NUM_THREADS = 51
     MIN_COUNT = 50
 
     assert os.path.exists(WIKI_DIRPATH)

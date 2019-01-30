@@ -17,10 +17,10 @@ def _process(counts_dirpath, wiki_filepath):
 if __name__ == '__main__':
     print('Running entropix XP#001')
 
-    WIKI_DIRPATH = '/Users/akb/Github/entropix/data/wiki/'
-    COUNTS_DIRPATH = '/Users/akb/Github/entropix/data/counts/'
-    RESULTS_FILEPATH = '/Users/akb/Github/entropix/data/xp001.results'
-    NUM_THREADS = 2
+    WIKI_DIRPATH = '/home/kabbach/witokit/data/wiki/'
+    COUNTS_DIRPATH = '/home/kabbach/entropix/data/counts/wp001/'
+    RESULTS_FILEPATH = '/home/kabbach/entropix/xp001.results'
+    NUM_THREADS = 51
 
     assert os.path.exists(WIKI_DIRPATH)
     assert os.path.exists(COUNTS_DIRPATH)
