@@ -9,6 +9,9 @@ handlers:
     class: logging.StreamHandler
     formatter: simple
 loggers:
+  entropix.core:
+    level: INFO
+    handlers: [console]
   entropix.main:
     level: INFO
     handlers: [console]

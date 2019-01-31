@@ -23,15 +23,15 @@ setup(
     keywords=['entropy', 'distributional semantics'],
     platforms=['any'],
     packages=['entropix', 'entropix.logging', 'entropix.exceptions',
-              'entropix.utils'],
-    package_data={'matrixor': ['logging/*.yml']},
+              'entropix.utils', 'entropix.core'],
+    package_data={'entropix': ['logging/*.yml']},
     include_package_data=True,
     entry_points={
         'console_scripts': [
             'entropix = entropix.main:main'
         ],
     },
-    install_requires=['pyyaml>=4.2b1', 'tqdm==4.28.1'],
+    install_requires=['pyyaml>=4.2b1'],
     classifiers=['Development Status :: 2 - Pre-Alpha',
                  'Environment :: Web Environment',
                  'Intended Audience :: Developers',

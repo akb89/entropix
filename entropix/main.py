@@ -2,16 +2,15 @@
 
 This is the entry point of the application.
 """
-
 import os
 
 import argparse
 import logging
 import logging.config
 
-from collections import defaultdict
-
 import entropix.utils.config as cutils
+import entropix.core.count as count
+import entropix.core.compute as compute
 
 logging.config.dictConfig(
     cutils.load(
@@ -20,27 +19,28 @@ logging.config.dictConfig(
 logger = logging.getLogger(__name__)
 
 
-def _compute_vocab(corpus, vocab_filepath):
-    vocab = defaultdict(int)
-    with open(corpus, 'r') as corpus_stream:
-        for line in corpus_stream:
-            tokens = line.strip().split()
-            for token in tokens:
-                vocab[token] += 1
-    logger.info('Saving vocabulary to {}'.format(vocab_filepath))
-    with open(vocab_filepath, 'w') as vocab_stream:
-        for item in sorted(vocab.items(), key=lambda x: (x[1].count, x[0]),
-                           reverse=True):
-            print('{}\t{}'.format(item[0], item[1]), file=vocab_stream)
+def _compute(args):
+    logger.info('Computing entropy from file {}'.format(args.counts))
+    counts = {}
+    with open(args.counts, 'r', encoding='utf-8') as input_stream:
+        for line in input_stream:
+            line = line.strip()
+            word_count = line.split('\t')
+            counts[word_count[0]] = int(word_count[1])
+    compute.compute_entropy(counts)
 
 
 def _count(args):
-    if not args.vocab:
-        logger.info('No vocabulary file specified. Computing vocabulary with counts...')
-        corpus_name = os.path.basename(args.corpus)
-        vocab_filepath = os.path.join(args.outputdir,
-                                      '{}.vocab'.format(corpus_name))
-        _compute_vocab(args.corpus, vocab_filepath)
+    if not args.output:
+        output_dirpath = os.path.dirname(args.corpus)
+    else:
+        output_dirpath = args.output
+    if not os.path.exists(output_dirpath):
+        logger.info('Creating directory {}'.format(output_dirpath))
+        os.makedirs(output_dirpath)
+    else:
+        logger.info('Saving to directory {}'.format(output_dirpath))
+    count.count_words(output_dirpath, args.corpus)
 
 
 def main():
@@ -49,13 +49,19 @@ def main():
     subparsers = parser.add_subparsers()
     parser_count = subparsers.add_parser(
         'count', formatter_class=argparse.RawTextHelpFormatter,
-        help='count co-occurences in input corpus')
-    parser_count.add_argument('--corpus', required=True,
-                              help='an input corpus to compute counts from')
-    parser_count.add_argument('--vocab',
-                              help='corpus vocabulary with frequencies')
-    parser_count.add_argument('--outputdir', required=True,
-                              help='absolute path to output directory')
+        help='count words in input corpus')
+    parser_count.add_argument('-c', '--corpus', required=True,
+                              help='an input .txt corpus to compute counts on')
+    parser_count.add_argument('-o', '--output',
+                              help='absolute path to output directory. '
+                                   'If not set, will default to corpus dir')
     parser_count.set_defaults(func=_count)
+    parser_compute = subparsers.add_parser(
+        'compute', formatter_class=argparse.RawTextHelpFormatter,
+        help='compute entropy from input .counts file')
+    parser_compute.set_defaults(func=_compute)
+    parser_compute.add_argument('-c', '--counts', required=True,
+                                help='input .counts counts file to compute '
+                                     'entropy from')
     args = parser.parse_args()
     args.func(args)
