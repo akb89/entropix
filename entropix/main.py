@@ -19,6 +19,10 @@ logging.config.dictConfig(
 logger = logging.getLogger(__name__)
 
 
+def _evaluate(args):
+    logger.info('Evaluating model against MEN {}'.format(args.model))
+
+
 def _compute(args):
     logger.info('Computing entropy from file {}'.format(args.counts))
     counts = {}
@@ -63,5 +67,13 @@ def main():
     parser_compute.add_argument('-c', '--counts', required=True,
                                 help='input .counts counts file to compute '
                                      'entropy from')
+    parser_evaluate = subparsers.add_parser(
+        'evaluate', formatter_class=argparse.RawTextHelpFormatter,
+        help='evaluate a given distributional space against the MEN dataset')
+    parser_evaluate.set_defaults(fund=_evaluate)
+    parser_evaluate.add_argument('-m', '-model', required=True,
+                                 help='absolute path to .npy matrix '
+                                      'corresponding to the distributional '
+                                      'space to evaluate')
     args = parser.parse_args()
     args.func(args)
