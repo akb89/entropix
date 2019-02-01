@@ -9,7 +9,8 @@ import entropix.utils.files as futils
 
 
 def _process(counts_dirpath, wiki_filepath):
-    counts = entropix.count(counts_dirpath, wiki_filepath)
+    counts = entropix.count(corpus_filepath=wiki_filepath,
+                            output_dirpath=counts_dirpath)
     corpus_size, vocab_size, entropy = entropix.compute(counts)
     return wiki_filepath, corpus_size, vocab_size, entropy
 

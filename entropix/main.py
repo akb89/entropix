@@ -45,7 +45,8 @@ def _count(args):
         os.makedirs(output_dirpath)
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
-    count.count_words(output_dirpath, args.corpus)
+    count.count_words(corpus_filepath=args.corpus,
+                      output_dirpath=output_dirpath)
 
 
 def _generate(args):
@@ -58,7 +59,8 @@ def _generate(args):
         os.makedirs(output_dirpath)
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
-    generate.generate_distributional_model(output_dirpath, args.corpus, args.threshold)
+    generate.generate_distributional_model(output_dirpath, args.corpus,
+                                           args.threshold)
 
 
 def main():
