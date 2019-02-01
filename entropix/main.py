@@ -38,18 +38,22 @@ def _compute(args):
 
 
 def _count(args):
-    if not args.output:
-        output_dirpath = os.path.dirname(args.corpus)
+    if args.save:
+        if not args.output:
+            output_dirpath = os.path.dirname(args.corpus)
+        else:
+            output_dirpath = args.output
+        if not os.path.exists(output_dirpath):
+            logger.info('Creating directory {}'.format(output_dirpath))
+            os.makedirs(output_dirpath)
+        else:
+            logger.info('Saving to directory {}'.format(output_dirpath))
+        count.count_words(corpus_filepath=args.corpus,
+                          min_count=args.min_count,
+                          output_dirpath=output_dirpath)
     else:
-        output_dirpath = args.output
-    if not os.path.exists(output_dirpath):
-        logger.info('Creating directory {}'.format(output_dirpath))
-        os.makedirs(output_dirpath)
-    else:
-        logger.info('Saving to directory {}'.format(output_dirpath))
-    count.count_words(corpus_filepath=args.corpus,
-                      min_count = args.min_count,
-                      output_dirpath=output_dirpath)
+        count.count_words(corpus_filepath=args.corpus,
+                          min_count=args.min_count)
 
 
 def _generate(args):
@@ -81,6 +85,8 @@ def main():
     parser_count.add_argument('-m', '--min-count', default=0, type=int,
                               help='omit words below this count in output'
                                    'vocabulary')
+    parser_count.add_argument('-s', '--save', action='store_true',
+                              help='save counts to output')
     parser_count.set_defaults(func=_count)
     parser_compute = subparsers.add_parser(
         'compute', formatter_class=argparse.RawTextHelpFormatter,
