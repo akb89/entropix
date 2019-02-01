@@ -16,6 +16,7 @@ def reduce_matrix_via_svd(model_filepath, dim, dense_model_filepath,
     M = sparse.load_npz(model_filepath)
     if dim == 0:
         dim = M.shape[1] - 1
+    logger.info('Applying SVD on sparse matrix with k = {}'.format(dim))
     U, S, Vt = svds(M, k=dim)
     logger.info('Saving singular values to {}'.format(diag_matrix_filepath))
     sparse.save_npz(diag_matrix_filepath, S)
