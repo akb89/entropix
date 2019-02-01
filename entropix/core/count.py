@@ -30,7 +30,8 @@ def count_words(output_dirpath, corpus_filepath, min_count=0):
     if min_count == 0:
         counts = _counts
     else:
-        counts = {word: count for word, count in _counts.items() if count >= min_count}
+        counts = {word: count for word, count in _counts.items()
+                  if count >= min_count}
     logger.info('Saving counts to {}'.format(output_filepath))
     with open(output_filepath, 'w', encoding='utf-8') as output_stream:
         for word, wcount in sorted(counts.items(),

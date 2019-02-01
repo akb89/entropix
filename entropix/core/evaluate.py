@@ -58,8 +58,7 @@ def evaluate_distributional_space(model_filepath, vocab_filepath):
     model = np.load(model_filepath)
     pairs, humans = _get_men_pairs_and_sim()
     system_actual = []
-    human_actual = []  # This is needed because we may not be able to
-                       # calculate cosine for all pairs
+    human_actual = []
     count = 0
     for (first, second), human in zip(pairs, humans):
         if first not in vocab or second not in vocab:
