@@ -62,7 +62,7 @@ def _generate(args):
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
     generate.generate_distributional_model(output_dirpath, args.corpus,
-                                           args.threshold)
+                                           args.min_count, args.win_size)
 
 
 def main():
@@ -105,9 +105,9 @@ def main():
     parser_generate.add_argument('-o', '--output',
                                  help='absolute path to output directory. '
                                  'If not set, will default to corpus dir')
-    parser_generate.add_argument('-t', '--threshold', default=0, type=int,
+    parser_generate.add_argument('-m', '--min-count', default=0, type=int,
                                  help='frequency threshold on vocabulary')
-    parser_generate.add_argument('-w', '--winsize', default=2, type=int,
+    parser_generate.add_argument('-w', '--win-size', default=2, type=int,
                                  help='size of context window')
     args = parser.parse_args()
     args.func(args)

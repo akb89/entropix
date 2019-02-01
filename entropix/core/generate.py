@@ -35,8 +35,8 @@ def _get_output_filenames(output_dirpath, corpus_filepath, min_count,
     return output_filepath_matrix, output_filepath_map
 
 
-def generate_distributional_model(output_dirpath, corpus_filepath, min_count=0,
-                                  win_size=2):
+def generate_distributional_model(output_dirpath, corpus_filepath, min_count,
+                                  win_size):
     """Generate a count-based distributional model."""
     output_filepath_matrix, output_filepath_map =\
         _get_output_filenames(output_dirpath, corpus_filepath, min_count,
