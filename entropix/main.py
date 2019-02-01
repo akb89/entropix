@@ -48,12 +48,14 @@ def _count(args):
             os.makedirs(output_dirpath)
         else:
             logger.info('Saving to directory {}'.format(output_dirpath))
-        count.count_words(corpus_filepath=args.corpus,
-                          min_count=args.min_count,
-                          output_dirpath=output_dirpath)
+        counts = count.count_words(corpus_filepath=args.corpus,
+                                   min_count=args.min_count,
+                                   output_dirpath=output_dirpath)
     else:
-        count.count_words(corpus_filepath=args.corpus,
-                          min_count=args.min_count)
+        counts = count.count_words(corpus_filepath=args.corpus,
+                                   min_count=args.min_count)
+    logger.info('Corpus size = {}'.format(sum(counts.values())))
+    logger.info('Vocab size = {}'.format(len(counts)))
 
 
 def _generate(args):
