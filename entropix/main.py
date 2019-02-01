@@ -58,7 +58,7 @@ def _generate(args):
         os.makedirs(output_dirpath)
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
-    generate.generate_model(output_dirpath, args.corpus, args.threshold)
+    generate.generate_distributional_model(output_dirpath, args.corpus, args.threshold)
 
 
 def main():

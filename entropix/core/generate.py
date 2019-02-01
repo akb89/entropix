@@ -8,7 +8,7 @@ import entropix.core.count as count
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('generate_model')
+__all__ = ('generate_distributional_model')
 
 
 def _get_output_filenames(output_dirpath, corpus_filepath, min_count,
