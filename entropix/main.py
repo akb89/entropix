@@ -11,6 +11,7 @@ import logging.config
 import entropix.utils.config as cutils
 import entropix.core.count as count
 import entropix.core.compute as compute
+import entropix.core.evaluate as evaluate
 import entropix.core.generate as generate
 
 logging.config.dictConfig(
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 def _evaluate(args):
     logger.info('Evaluating model against MEN {}'.format(args.model))
+    evaluate.evaluate_distributional_space(args.model, args.vocab)
 
 
 def _compute(args):
@@ -86,11 +88,13 @@ def main():
     parser_evaluate = subparsers.add_parser(
         'evaluate', formatter_class=argparse.RawTextHelpFormatter,
         help='evaluate a given distributional space against the MEN dataset')
-    parser_evaluate.set_defaults(fund=_evaluate)
-    parser_evaluate.add_argument('-m', '-model', required=True,
-                                 help='absolute path to .npy matrix '
+    parser_evaluate.set_defaults(func=_evaluate)
+    parser_evaluate.add_argument('-m', '--model', required=True,
+                                 help='absolute path to .npz matrix '
                                       'corresponding to the distributional '
                                       'space to evaluate')
+    parser_evaluate.add_argument('-v', '--vocab', required=True,
+                                 help='absolute path to .map vocabulary file')
     parser_generate = subparsers.add_parser(
         'generate', formatter_class=argparse.RawTextHelpFormatter,
         help='generate raw frequency count based model')

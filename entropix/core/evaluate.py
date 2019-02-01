@@ -3,8 +3,10 @@ import os
 import logging
 
 import math
-import scipy as sp
-import numpy as np
+from scipy import sparse
+from scipy import stats
+
+from tqdm import tqdm
 
 __all__ = ('evaluate_distributional_space')
 
@@ -16,15 +18,15 @@ MEN_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
 
 # Note: this is scipy's spearman, without tie adjustment
 def _spearman(x, y):
-    return sp.stats.spearmanr(x, y)[0]
+    return stats.spearmanr(x, y)[0]
 
 
 def _cosine_similarity(peer_v, query_v):
-    if len(peer_v) != len(query_v):
+    if peer_v.shape != query_v.shape:
         raise ValueError('Vectors must be of same length')
-    num = np.dot(peer_v, query_v)
-    den_a = np.dot(peer_v, peer_v)
-    den_b = np.dot(query_v, query_v)
+    num = peer_v.dot(query_v.transpose()).data[0]
+    den_a = peer_v.dot(peer_v.transpose()).data[0]
+    den_b = query_v.dot(query_v.transpose()).data[0]
     return num / (math.sqrt(den_a) * math.sqrt(den_b))
 
 
@@ -42,7 +44,7 @@ def _get_men_pairs_and_sim():
 
 def _load_vocabulary(vocab_filepath):
     vocab = {}
-    with open(vocab_filepath, 'r', encodig='utf-8') as vocab_stream:
+    with open(vocab_filepath, 'r', encoding='utf-8') as vocab_stream:
         for line in vocab_stream:
             line = line.strip()
             vocab[line.split('\t')[1]] = line.split('\t')[0]
@@ -55,12 +57,12 @@ def evaluate_distributional_space(model_filepath, vocab_filepath):
     logger.info('Loading vocabulary...')
     vocab = _load_vocabulary(vocab_filepath)
     logger.info('Loading distributional space from {}'.format(model_filepath))
-    model = np.load(model_filepath)
+    model = sparse.load_npz(model_filepath)
     pairs, humans = _get_men_pairs_and_sim()
     system_actual = []
     human_actual = []
     count = 0
-    for (first, second), human in zip(pairs, humans):
+    for (first, second), human in tqdm(zip(pairs, humans), total=len(pairs)):
         if first not in vocab or second not in vocab:
             logger.error('Could not find one of more pair item in model '
                          'vocabulary: {}, {}'.format(first, second))
