@@ -13,6 +13,7 @@ import entropix.core.count as count
 import entropix.core.compute as compute
 import entropix.core.evaluate as evaluate
 import entropix.core.generate as generate
+import entropix.core.reduce as reduce
 
 logging.config.dictConfig(
     cutils.load(
@@ -59,6 +60,7 @@ def _count(args):
 
 
 def _generate(args):
+    logger.info('Generating distributional model from {}'.format(args.corpus))
     if not args.output:
         output_dirpath = os.path.dirname(args.corpus)
     else:
@@ -70,6 +72,15 @@ def _generate(args):
         logger.info('Saving to directory {}'.format(output_dirpath))
     generate.generate_distributional_model(output_dirpath, args.corpus,
                                            args.min_count, args.win_size)
+
+
+def _reduce(args):
+    logger.info('Applying SVD to model {}'.format(args.model))
+    model_basename = args.model.split('.npz')[0]
+    dense_model_filepath = '{}.dense.npz'.format(model_basename)
+    diag_matrix_filepath = '{}.diag.npz'.format(model_basename)
+    reduce.reduce_matrix_via_svd(args.model, args.dim, dense_model_filepath,
+                                 diag_matrix_filepath)
 
 
 def main():
@@ -121,5 +132,15 @@ def main():
                                  help='frequency threshold on vocabulary')
     parser_generate.add_argument('-w', '--win-size', default=2, type=int,
                                  help='size of context window')
+    parser_reduce = subparsers.add_parser(
+        'reduce', formatter_class=argparse.RawTextHelpFormatter,
+        help='apply svd to input matrix')
+    parser_reduce.set_defaults(func=_reduce)
+    parser_reduce.add_argument('-m', '--model', required=True,
+                               help='absolute path to .npz matrix '
+                                    'corresponding to the distributional '
+                                    'space to reduce')
+    parser_reduce.add_argument('-k', '--dim', default=0, type=int,
+                               help='number of dimensions in final model')
     args = parser.parse_args()
     args.func(args)
