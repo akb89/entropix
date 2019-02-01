@@ -11,6 +11,7 @@ import logging.config
 import entropix.utils.config as cutils
 import entropix.core.count as count
 import entropix.core.compute as compute
+import entropix.core.generate as generate
 
 logging.config.dictConfig(
     cutils.load(
@@ -47,6 +48,19 @@ def _count(args):
     count.count_words(output_dirpath, args.corpus)
 
 
+def _generate(args):
+    if not args.output:
+        output_dirpath = os.path.dirname(args.corpus)
+    else:
+        output_dirpath = args.output
+    if not os.path.exists(output_dirpath):
+        logger.info('Creating directory {}'.format(output_dirpath))
+        os.makedirs(output_dirpath)
+    else:
+        logger.info('Saving to directory {}'.format(output_dirpath))
+    generate.generate_model(output_dirpath, args.corpus, args.threshold)
+
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -75,5 +89,19 @@ def main():
                                  help='absolute path to .npy matrix '
                                       'corresponding to the distributional '
                                       'space to evaluate')
+    parser_generate = subparsers.add_parser(
+        'generate', formatter_class=argparse.RawTextHelpFormatter,
+        help='generate raw frequency count based model')
+    parser_generate.set_defaults(func=_generate)
+    parser_generate.add_argument('-c', '--corpus', required=True,
+                                 help='an input .txt corpus to compute \
+                                 counts on')
+    parser_generate.add_argument('-o', '--output',
+                                 help='absolute path to output directory. '
+                                 'If not set, will default to corpus dir')
+    parser_generate.add_argument('-t', '--threshold', default=0, type=int,
+                                 help='frequency threshold on vocabulary')
+    parser_generate.add_argument('-w', '--winsize', default=2, type=int,
+                                 help='size of context window')
     args = parser.parse_args()
     args.func(args)
