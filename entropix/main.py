@@ -48,6 +48,7 @@ def _count(args):
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
     count.count_words(corpus_filepath=args.corpus,
+                      min_count = args.min_count,
                       output_dirpath=output_dirpath)
 
 
@@ -77,6 +78,9 @@ def main():
     parser_count.add_argument('-o', '--output',
                               help='absolute path to output directory. '
                                    'If not set, will default to corpus dir')
+    parser_count.add_argument('-m', '--min-count', default=0, type=int,
+                              help='omit words below this count in output'
+                                   'vocabulary')
     parser_count.set_defaults(func=_count)
     parser_compute = subparsers.add_parser(
         'compute', formatter_class=argparse.RawTextHelpFormatter,

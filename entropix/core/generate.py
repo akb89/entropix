@@ -42,7 +42,9 @@ def generate_distributional_model(output_dirpath, corpus_filepath, min_count,
         _get_output_filenames(output_dirpath, corpus_filepath, min_count,
                               win_size)
 
-    word_to_count_dic = count.count_words(output_dirpath, corpus_filepath)
+    word_to_count_dic = count.count_words(corpus_filepath=corpus_filepath,
+                                          min_count=min_count,
+                                          output_dirpath=output_dirpath)
     word_to_idx_dic = {}
     i = 0
     for word, frequency in word_to_count_dic.items():
