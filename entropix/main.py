@@ -112,7 +112,7 @@ def main():
     parser_generate.add_argument('-w', '--winsize', default=2, type=int,
                                  help='size of context window')
     parser_cosine = subparsers.add_parser(
-        '_compute_pairwise_cosines', formatter_class=argparse.RawTextHelpFormatter,
+        'compute_pairwise_cosines', formatter_class=argparse.RawTextHelpFormatter,
         help='generate pairiwise cosine similarity between vocabulary items')
     parser_cosine.set_defaults(func=_compute_pairwise_cosines)
     parser_cosine.add_argument('-v', '--vocabulary',

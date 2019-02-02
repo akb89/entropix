@@ -84,7 +84,7 @@ def generate_model(output_dirpath, corpus_filepath, min_count=0, win_size=2):
                           shape=(len(word_to_idx_dic), len(word_to_idx_dic)),
                           dtype='f')
     logger.info('Matrix info: {} non-zero entres, {} shape, {:.6f} density'
-                 .format(M.getnnz(), M.shape, M.getnnz()*1.0/(M.shape[0]*M.shape[1])))
+                .format(M.getnnz(), M.shape, M.getnnz()*1.0/(M.shape[0]*M.shape[1])))
     logger.info('Saving matrix to {}.npz'.format(output_filepath_matrix))
     sparse.save_npz(output_filepath_matrix, M)
 
@@ -92,22 +92,3 @@ def generate_model(output_dirpath, corpus_filepath, min_count=0, win_size=2):
         for word, idx in word_to_idx_dic.items():
             print('{}\t{}'.format(idx, word), file=output_stream)
     return M, word_to_idx_dic
-    #filter entries based on min_count
-#    filtered_idx_to_word_dic={k:w for w,k in word_to_idx_dic.items()
-#                              if word_to_counts_dic[w]>min_count} ## > or >=?
-
-#    shifted_map={k:inc for k, inc in zip(accepted_idx_to_word_map.keys(),
-#                 range(len(accepted_idx_to_word_map)))}
-
-#    keep_indexes = []
-#    i = 0
-#    for row, column in zip(final_rows, final_columns):
-#        if row in accepted_idx_to_word_map and column in accepted_idx_to_word_map:
-#            keep_indexes.append(i)
-#        i += 1
-
-
-#    final_data = [1]*len(keep_indexes)
-#    final_rows = [shifted_map[final_rows[i]] for i in keep_indexes]
-#    final_columns = [shifted_map[final_columns[i]] for i in keep_indexes]
-#    n_dim = len(shifted_map)
