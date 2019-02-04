@@ -20,9 +20,10 @@ if __name__ == '__main__':
 
     WIKI_DIRPATH = '/home/kabbach/witokit/data/wiki/'
     MODEL_DIRPATH = '/home/kabbach/entropix/models/'
-    NUM_THREADS = 22
+    NUM_THREADS = 10
     MIN_COUNT = 300
     WIN_SIZE = 5
+    DIM = 0  # apply max SVD
 
     assert os.path.exists(WIKI_DIRPATH)
     assert os.path.exists(MODEL_DIRPATH)
@@ -37,3 +38,15 @@ if __name__ == '__main__':
             print('Done processing file {}'.format(wikipath))
             print('Completed processing of {}/{} files'
                   .format(FILE_NUM, len(WIKI_FILEPATHS)))
+    FILE_NUM = 0
+    for wikipath in WIKI_FILEPATHS:
+        FILE_NUM += 1
+        model_filepath = entropix.get_model_filepath(
+            MODEL_DIRPATH, wikipath, MIN_COUNT, WIN_SIZE)
+        print('Applying SVD to {}'.format(model_filepath))
+        sing_values_filepath = entropix.get_sing_values_filepath(model_filepath)
+        sing_vectors_filepaths = entropix.get_sing_vectors_filepaths(model_filepath)
+        entropix.reduce(model_filepath=wikipath, dim=DIM,
+                        sing_values_filepath=sing_values_filepath,
+                        sing_vectors_filepaths=sing_vectors_filepaths)
+        print('Done reducing {}/{} models'.format(FILE_NUM, len(WIKI_FILEPATHS)))

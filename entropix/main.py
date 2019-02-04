@@ -9,6 +9,7 @@ import logging
 import logging.config
 
 import entropix.utils.config as cutils
+import entropix.utils.files as futils
 import entropix.core.counter as counter
 import entropix.core.calculator as calculator
 import entropix.core.evaluator as evaluator
@@ -76,11 +77,10 @@ def _generate(args):
 
 def _reduce(args):
     logger.info('Applying SVD to model {}'.format(args.model))
-    model_basename = args.model.split('.npz')[0]
-    dense_model_filepath = '{}.dense.npz'.format(model_basename)
-    diag_matrix_filepath = '{}.diag.npz'.format(model_basename)
-    reducer.reduce_matrix_via_svd(args.model, args.dim, dense_model_filepath,
-                                  diag_matrix_filepath)
+    sing_values_filepath = futils.get_sing_values_filepath(args.model)
+    sing_vectors_filepaths = futils.get_sing_vectors_filepath(args.model)
+    reducer.reduce_matrix_via_svd(args.model, args.dim, sing_values_filepath,
+                                  sing_vectors_filepaths)
 
 
 def _compute_pairwise_cosines(args):

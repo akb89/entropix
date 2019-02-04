@@ -5,7 +5,26 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('get_input_filepaths')
+__all__ = ('get_input_filepaths', 'get_vocab_filepath', 'get_cosines_filepath',
+           'get_cosines_distribution_filepath', 'get_counts_filepath',
+           'get_sparsematrix_filepath', 'get_sing_values_filepath',
+           'get_sing_vectors_filepath')
+
+
+def _get_model_basename(sparse_model_filepath):
+    return sparse_model_filepath.split('.npz')[0]
+
+
+def get_sing_vectors_filepath(sparse_model_filepath):
+    """Return absolute path to singular vectors .npz file."""
+    model_basename = _get_model_basename(sparse_model_filepath)
+    return '{}.singvectors.npz'.format(model_basename)
+
+
+def get_sing_values_filepath(sparse_model_filepath):
+    """Return absolute path to singular values .npz file."""
+    model_basename = _get_model_basename(sparse_model_filepath)
+    return '{}.singvalues.npz'.format(model_basename)
 
 
 def get_input_filepaths(dirpath):

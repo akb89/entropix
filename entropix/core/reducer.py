@@ -10,15 +10,15 @@ logger = logging.getLogger(__name__)
 __all__ = ('reduce_matrix_via_svd')
 
 
-def reduce_matrix_via_svd(model_filepath, dim, dense_model_filepath,
-                          diag_matrix_filepath):
+def reduce_matrix_via_svd(model_filepath, dim, sing_values_filepath,
+                          sing_vectors_filepaths):
     """Apply SVD to matrix and save singular values and vectors to files."""
     M = sparse.load_npz(model_filepath)
     if dim == 0:
         dim = M.shape[1] - 1
     logger.info('Applying SVD on sparse matrix with k = {}'.format(dim))
     U, S, Vt = svds(M, k=dim)
-    logger.info('Saving singular values to {}'.format(diag_matrix_filepath))
-    sparse.save_npz(diag_matrix_filepath, S)
-    logger.info('Saving singular vectors to {}'.format(dense_model_filepath))
-    sparse.save_npz(dense_model_filepath, U)
+    logger.info('Saving singular values to {}'.format(sing_values_filepath))
+    sparse.save_npz(sing_values_filepath, S)
+    logger.info('Saving singular vectors to {}'.format(sing_vectors_filepaths))
+    sparse.save_npz(sing_vectors_filepaths, U)
