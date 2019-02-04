@@ -33,6 +33,10 @@ def count_words(corpus_filepath, min_count=0, output_dirpath=None):
     else:
         counts = {word: count for word, count in _counts.items()
                   if count >= min_count}
+        logger.info('Filtering out vocabulary words with counts lower '
+                    'than {}, shrinking size by {:.2f}% from {} to {}.'
+                    .format(min_count, 100-len(counts)*100.0/len(_counts),
+                            len(_counts), len(counts)))
     if output_dirpath:
         logger.info('Saving counts to {}'.format(output_filepath))
         with open(output_filepath, 'w', encoding='utf-8') as output_stream:
