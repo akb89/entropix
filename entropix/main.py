@@ -13,6 +13,7 @@ import entropix.core.count as count
 import entropix.core.compute as compute
 import entropix.core.generate as generate
 import entropix.core.cosine_distribution as cosine_distribution
+import entropix.core.generate_sentences_datasets as sentences_dataset
 
 logging.config.dictConfig(
     cutils.load(
@@ -77,6 +78,19 @@ def _compute_pairwise_cosines(args):
                                             vocabulary)
 
 
+def _generate_sentences_datasets(args):
+    if not args.output:
+        output_dirpath = os.path.dirname(args.space)
+    else:
+        output_dirpath = args.output
+    if not os.path.exists(output_dirpath):
+        logger.info('Creating directory {}'.format(output_dirpath))
+        os.makedirs(output_dirpath)
+    else:
+        logger.info('Saving to directory {}'.format(output_dirpath))
+    sentences_dataset.generate(output_dirpath, args.input, args.space)
+
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -128,5 +142,16 @@ def main():
                                help='number of threads')
     parser_cosine.add_argument('-b', '--bin_size', default=0.1, type=float,
                                help='bin size for the distribution output')
+    parser_coinco = subparsers.add_parser(
+        'generate_sentences_datasets', formatter_class=argparse.RawTextHelpFormatter,
+        help='generate three sets of sentences from the coinco dataset')
+    parser_coinco.set_defaults(func=_generate_sentences_datasets)
+    parser_coinco.add_argument('-i', '--input', required = True,
+                               help='path to coinco original file')
+    parser_coinco.add_argument('-s', '--space', required=True,
+                               help='distributional space')
+    parser_cosine.add_argument('-o', '--output',
+                               help='absolute path to output directory. '
+                               'If not set, will default to input dir')
     args = parser.parse_args()
     args.func(args)
