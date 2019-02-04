@@ -5,6 +5,8 @@ import os
 from collections import defaultdict
 import logging
 
+import entropix.utils.files as futils
+
 logger = logging.getLogger(__name__)
 
 __all__ = ('count_words')
@@ -12,15 +14,7 @@ __all__ = ('count_words')
 
 def count_words(corpus_filepath, min_count=0, output_dirpath=None):
     """Count words in a corpus."""
-    if output_dirpath:
-        if corpus_filepath.endswith('.txt'):
-            output_filepath = os.path.join(
-                output_dirpath, '{}.counts'.format(
-                    os.path.basename(corpus_filepath).split('.txt')[0]))
-        else:
-            output_filepath = os.path.join(
-                output_dirpath,
-                '{}.counts'.format(os.path.basename(corpus_filepath)))
+    output_filepath = futils.get_counts_filepath(corpus_filepath, output_dirpath)
     _counts = defaultdict(int)
     logger.info('Counting words in {}'.format(corpus_filepath))
     with open(corpus_filepath, 'r', encoding='utf-8') as input_stream:

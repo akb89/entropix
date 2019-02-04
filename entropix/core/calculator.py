@@ -12,6 +12,8 @@ import functools
 from scipy import sparse
 from scipy import spatial
 
+import entropix.utils.files as futils
+
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -57,15 +59,7 @@ def _load_vocabulary(vocabulary_filepath):
 
 
 def _load_space(space_filepath):
-    basename_space_filepath = os.path.basename(space_filepath)
-    map_filepath = '{}.vocab'.format(basename_space_filepath)
-    if basename_space_filepath.endswith('.npz'):
-        map_filepath = '{}.vocab'.format(basename_space_filepath[:-len('.npz')])
-
-    if not os.path.exists(os.path.join(os.path.dirname(space_filepath),
-                                       map_filepath)):
-        logger.error('There is no .map file in the space folder')
-        raise IOError
+    map_filepath = futils.get_vocab_filepath(space_filepath)
 
     try:
         M = sparse.load_npz(space_filepath)
@@ -76,13 +70,12 @@ def _load_space(space_filepath):
 
     try:
         idx_to_word_dic = {}
-        with open(os.path.join(os.path.dirname(space_filepath), map_filepath),
-                  encoding='utf-8') as input_stream:
+        with open(vocab_filepath, encoding='utf-8') as input_stream:
             for line in input_stream:
                 linesplit = line.strip().split()
                 idx_to_word_dic[int(linesplit[0])] = linesplit[1]
     except Exception as err:
-        logger.error('Impossible to load map file.'
+        logger.error('Impossible to load vocab file.'
                      'Error {}'.format(err))
 
     return M, idx_to_word_dic
@@ -110,11 +103,9 @@ def compute_pairwise_cosine_sim(output_dirpath, space_filepath, threads_number,
     Compute paiwise cosine similarity between vocabulary items.
     The function also computes the distribution of pariwise cosine sim.
     """
-    cosinepairs_filepath = os.path.join(output_dirpath,
-                                        '{}.cos.gz'.format(
-                                            os.path.basename(space_filepath)))
-    distribution_filepath = os.path.join(output_dirpath,
-                                         'cosine_distribution.{}.txt')
+    cosinepairs_filepath = futils.get_cosines_filepath(output_dirpath,
+                                                       space_filepath)
+    distribution_filepath = futils.get_cosines_distribution_filepath(output_dirpath)
     vocabulary = set()
     number_of_bins = 1/bin_size
     freqdist = [0]*int(number_of_bins)

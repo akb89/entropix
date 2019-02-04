@@ -5,42 +5,21 @@ from scipy import sparse
 
 from tqdm import tqdm
 import entropix.core.count as count
+import entropix.utils.files as futils
 
 logger = logging.getLogger(__name__)
 
 __all__ = ('generate_distributional_model')
 
 
-def _get_output_filenames(output_dirpath, corpus_filepath, min_count,
-                          win_size):
-    if corpus_filepath.endswith('.txt'):
-        output_filepath_matrix = os.path.join(
-            output_dirpath, '{}.mincount-{}.win-{}'.format(
-                os.path.basename(corpus_filepath).split('.txt')[0], min_count,
-                win_size))
-
-        output_filepath_map = os.path.join(
-            output_dirpath, '{}.mincount-{}.win-{}.vocab'.format(
-                os.path.basename(corpus_filepath).split('.txt')[0], min_count,
-                win_size))
-    else:
-        output_filepath_matrix = os.path.join(
-            output_dirpath,
-            '{}.mincount-{}.win-{}'.format(os.path.basename(corpus_filepath),
-                                           min_count, win_size))
-        output_filepath_map = os.path.join(
-            output_dirpath,
-            '{}.mincount-{}.win-{}.vocab'
-            .format(os.path.basename(corpus_filepath), min_count, win_size))
-    return output_filepath_matrix, output_filepath_map
-
-
-def generate_distributional_model(output_dirpath, corpus_filepath, min_count,
-                                  win_size):
+def generate_distributional_model(output_dirpath, corpus_filepath,
+                                  min_count, win_size):
     """Generate a count-based distributional model."""
-    output_filepath_matrix, output_filepath_map =\
-        _get_output_filenames(output_dirpath, corpus_filepath, min_count,
-                              win_size)
+    output_filepath_matrix = futils.get_sparsematrix_filepath(
+                                    output_dirpath, corpus_filepath,
+                                    min_count, win_size)
+    output_filepath_map = futils.get_vocab_filepath(output_filepath_matrix)
+
     word_to_count_dic = count.count_words(corpus_filepath=corpus_filepath,
                                           min_count=min_count)
     word_to_idx_dic = {word: idx for idx, word
