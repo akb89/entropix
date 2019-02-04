@@ -4,7 +4,7 @@ import logging
 from scipy import sparse
 
 from tqdm import tqdm
-import entropix.core.count as count
+import entropix.core.counter as count
 
 logger = logging.getLogger(__name__)
 
