@@ -85,7 +85,7 @@ def _reduce(args):
 
 def _compute_pairwise_cosines(args):
     if not args.output:
-        output_dirpath = os.path.dirname(args.space)
+        output_dirpath = os.path.dirname(args.model)
     else:
         output_dirpath = args.output
     if not os.path.exists(output_dirpath):
@@ -93,13 +93,9 @@ def _compute_pairwise_cosines(args):
         os.makedirs(output_dirpath)
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
-    if not args.vocabulary:
-        vocabulary = ''
-    else:
-        vocabulary = args.vocabulary
-    calculator.compute_pairwise_cosine_sim(output_dirpath, args.space,
-                                           args.threads_number, args.bin_size,
-                                           vocabulary)
+    calculator.compute_pairwise_cosine_sim(output_dirpath, args.model,
+                                           args.num_threads, args.bin_size,
+                                           args.vocab)
 
 
 def main():

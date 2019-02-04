@@ -50,14 +50,18 @@ def get_counts_filepath(corpus_filepath, output_dirpath):
     a parameter, in the output directory passed as a parameter.
     """
     if output_dirpath:
-        if corpus_filepath.endswith('.txt'):
-            output_filepath = os.path.join(
-                output_dirpath, '{}.counts'.format(
-                    os.path.basename(corpus_filepath).split('.txt')[0]))
-        else:
-            output_filepath = os.path.join(
-                output_dirpath,
-                '{}.counts'.format(os.path.basename(corpus_filepath)))
+        dirname = output_dirpath
+    else:
+        dirname = os.path.dirname(corpus_filepath)
+
+    if corpus_filepath.endswith('.txt'):
+        output_filepath = os.path.join(
+            dirname, '{}.counts'.format(
+                os.path.basename(corpus_filepath).split('.txt')[0]))
+    else:
+        output_filepath = os.path.join(
+            dirname,
+            '{}.counts'.format(os.path.basename(corpus_filepath)))
 
     return output_filepath
 
