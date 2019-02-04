@@ -3,7 +3,6 @@ Compute entropy metrics. Also compute paiwise cosine similarity between
 vocabulary items and their distribution.
 """
 
-import os
 import logging
 import math
 import multiprocessing
@@ -12,9 +11,10 @@ import functools
 from scipy import sparse
 from scipy import spatial
 
+from tqdm import tqdm
+
 import entropix.utils.files as futils
 
-from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -50,35 +50,26 @@ def compute_entropy(counts):
     return corpus_size, vocab_size, entropy
 
 
-def _load_vocabulary(vocabulary_filepath):
-    vocab = set()
-    with open(vocabulary_filepath, encoding='utf-8') as input_stream:
+def _load_wordlist(wordlist_filepath):
+    words = set()
+    with open(wordlist_filepath, encoding='utf-8') as input_stream:
         for line in input_stream:
-            vocab.add(line.strip().lower())
-    return vocab
+            words.add(line.strip().lower())
+    return words
 
 
-def _load_space(space_filepath):
-    map_filepath = futils.get_vocab_filepath(space_filepath)
+def _load_vocabulary(model_filepath):
+    vocab_filepath = futils.get_vocab_filepath(model_filepath)
+    idx_to_word_dic = {}
+    with open(vocab_filepath, encoding='utf-8') as input_stream:
+        for line in input_stream:
+            linesplit = line.strip().split('\t')
+            idx_to_word_dic[int(linesplit[0])] = linesplit[1]
+    return idx_to_word_dic
 
-    try:
-        M = sparse.load_npz(space_filepath)
-    except IOError as err:
-        logger.error('The space file cannot be loaded. '
-                     'Please specify a .npz file.'
-                     'Error {} .'.format(err))
 
-    try:
-        idx_to_word_dic = {}
-        with open(vocab_filepath, encoding='utf-8') as input_stream:
-            for line in input_stream:
-                linesplit = line.strip().split()
-                idx_to_word_dic[int(linesplit[0])] = linesplit[1]
-    except Exception as err:
-        logger.error('Impossible to load vocab file.'
-                     'Error {}'.format(err))
-
-    return M, idx_to_word_dic
+def _load_model(model_filepath):
+    return sparse.load_npz(model_filepath)
 
 
 def _process(M, idx_to_word_dic, idx):
@@ -97,15 +88,16 @@ def _process(M, idx_to_word_dic, idx):
     return cosines_dic, idx
 
 
-def compute_pairwise_cosine_sim(output_dirpath, space_filepath, threads_number,
-                                bin_size, vocabulary_filepath=''):
+def compute_pairwise_cosine_sim(output_dirpath, model_filepath, num_threads,
+                                bin_size, wordlist_filepath=None):
     """
     Compute paiwise cosine similarity between vocabulary items.
     The function also computes the distribution of pariwise cosine sim.
     """
     cosinepairs_filepath = futils.get_cosines_filepath(output_dirpath,
-                                                       space_filepath)
-    distribution_filepath = futils.get_cosines_distribution_filepath(output_dirpath)
+                                                       model_filepath)
+    distribution_filepath = futils.get_cosines_distribution_filepath(
+        output_dirpath)
     vocabulary = set()
     number_of_bins = 1/bin_size
     freqdist = [0]*int(number_of_bins)
@@ -113,10 +105,11 @@ def compute_pairwise_cosine_sim(output_dirpath, space_filepath, threads_number,
       output_cosinepairs, open(distribution_filepath, 'w', encoding='utf-8') \
       as output_distribution:
 
-        if not vocabulary_filepath:
-            vocabulary = _load_vocabulary(vocabulary_filepath)
+        if wordlist_filepath:
+            words = _load_wordlist(wordlist_filepath)
 
-        M, idx_to_word_dic = _load_space(space_filepath)
+        M = _load_model(model_filepath)
+        idx_to_word_dic = _load_vocabulary(model_filepath)
 
         if vocabulary:
             idx_to_word_dic = {k: w for k, w in idx_to_word_dic.items()
@@ -124,10 +117,9 @@ def compute_pairwise_cosine_sim(output_dirpath, space_filepath, threads_number,
             logger.info('{} out of {} vocabulary items found.'
                         .format(len(idx_to_word_dic), len(vocabulary)))
 
-        with multiprocessing.Pool(threads_number) as pool:
+        with multiprocessing.Pool(num_threads) as pool:
             process = functools.partial(_process, M, idx_to_word_dic)
-            for partial_cosine_dic, idx in tqdm(pool.imap_unordered(process,
-                                                idx_to_word_dic.keys())):
+            for partial_cosine_dic, idx in tqdm(pool.imap_unordered(process, idx_to_word_dic.keys())):
                 for index_pair, cosine in partial_cosine_dic.items():
                     idx, idx2 = index_pair
                     word1, word2 = idx_to_word_dic[idx], idx_to_word_dic[idx2]

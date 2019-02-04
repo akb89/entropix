@@ -25,9 +25,6 @@ def get_vocab_filepath(model_filepath):
     if basename_model_filepath.endswith('.npz'):
         vocab_filepath = '{}.vocab'.format(model_filepath[:-len('.npz')])
     vocab_filepath = os.path.join(dirname, vocab_filepath)
-#    if not os.path.exists(vocab_filepath):
-#        logger.error('There is no .vocab file in directory {}'.format(dirname))
-#        raise IOError
     return vocab_filepath
 
 

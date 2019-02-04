@@ -1,7 +1,5 @@
 """Count words."""
 
-import os
-
 from collections import defaultdict
 import logging
 
@@ -12,9 +10,10 @@ logger = logging.getLogger(__name__)
 __all__ = ('count_words')
 
 
-def count_words(corpus_filepath, min_count=0, output_dirpath=None):
+def count_words(corpus_filepath, min_count, output_dirpath=None):
     """Count words in a corpus."""
-    output_filepath = futils.get_counts_filepath(corpus_filepath, output_dirpath)
+    output_filepath = futils.get_counts_filepath(corpus_filepath,
+                                                 output_dirpath)
     _counts = defaultdict(int)
     logger.info('Counting words in {}'.format(corpus_filepath))
     with open(corpus_filepath, 'r', encoding='utf-8') as input_stream:

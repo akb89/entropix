@@ -1,10 +1,9 @@
 """A basic count-based model using sparse matrices and no ppmi."""
-import os
 import logging
 from scipy import sparse
 
 from tqdm import tqdm
-import entropix.core.counter as count
+import entropix.core.counter as counter
 import entropix.utils.files as futils
 
 logger = logging.getLogger(__name__)
@@ -16,12 +15,11 @@ def generate_distributional_model(output_dirpath, corpus_filepath,
                                   min_count, win_size):
     """Generate a count-based distributional model."""
     output_filepath_matrix = futils.get_sparsematrix_filepath(
-                                    output_dirpath, corpus_filepath,
-                                    min_count, win_size)
+        output_dirpath, corpus_filepath, min_count, win_size)
     output_filepath_map = futils.get_vocab_filepath(output_filepath_matrix)
 
-    word_to_count_dic = count.count_words(corpus_filepath=corpus_filepath,
-                                          min_count=min_count)
+    word_to_count_dic = counter.count_words(corpus_filepath=corpus_filepath,
+                                            min_count=min_count)
     word_to_idx_dic = {word: idx for idx, word
                        in enumerate(word_to_count_dic.keys())}
     rows = []

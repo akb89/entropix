@@ -8,8 +8,6 @@ from scipy import stats
 
 from tqdm import tqdm
 
-import entropix.utils.files as futils
-
 __all__ = ('evaluate_distributional_space')
 
 logger = logging.getLogger(__name__)
