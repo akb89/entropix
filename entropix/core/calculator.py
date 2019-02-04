@@ -1,5 +1,8 @@
-"""Compute paiwise cosine similarity between vocabulary items
-and their distribution."""
+"""
+Compute entropy metrics. Also compute paiwise cosine similarity between
+vocabulary items and their distribution.
+"""
+
 import os
 import logging
 import math
@@ -11,26 +14,53 @@ from scipy import spatial
 
 from tqdm import tqdm
 
-
 logger = logging.getLogger(__name__)
 
-__all__ = ('cosine_distribution')
+__all__ = ('compute_entropy', 'compute_pairwise_cosine_sim')
+
+
+def compute_entropy(counts):
+    """Compute entropy from a counts dict."""
+    total_count = sum(counts.values())
+    logger.info('Total vocab size = {}'.format(total_count))
+    corpus_size = 0
+    if total_count > 1e9:
+        corpus_size = '{}B'.format(round(total_count / 1e9))
+    elif total_count > 1e6:
+        corpus_size = '{}M'.format(round(total_count / 1e6))
+    elif total_count > 1e3:
+        corpus_size = '{}K'.format(round(total_count / 1e3))
+    else:
+        corpus_size = '{}'.format(round(total_count))
+    logger.info('Corpus size = {}'.format(corpus_size))
+    vocab_size = 0
+    if len(counts) > 1e6:
+        vocab_size = '{}M'.format(round(len(counts) / 1e6))
+    elif len(counts) > 1e3:
+        vocab_size = '{}K'.format(round(len(counts) / 1e3))
+    else:
+        vocab_size = '{}'.format(round(len(counts)))
+    logger.info('Vocab size = {}'.format(vocab_size))
+    probs = [count/total_count for count in counts.values()]
+    logprobs = [prob * math.log2(prob) for prob in probs]
+    entropy = -sum(logprobs)
+    logger.info('Entropy = {}'.format(entropy))
+    return corpus_size, vocab_size, entropy
 
 
 def _load_vocabulary(vocabulary_filepath):
-    voc = set()
-
+    vocab = set()
     with open(vocabulary_filepath, encoding='utf-8') as input_stream:
         for line in input_stream:
-            voc.add(line.strip().lower())
-    return voc
+            vocab.add(line.strip().lower())
+    return vocab
 
 
 def _load_space(space_filepath):
     basename_space_filepath = os.path.basename(space_filepath)
-    map_filepath = '{}.map'.format(basename_space_filepath)
+    map_filepath = '{}.vocab'.format(basename_space_filepath)
     if basename_space_filepath.endswith('.npz'):
-        map_filepath = '{}.map'.format(basename_space_filepath[:-len('.npz')])
+        map_filepath = '{}.vocab'.format(basename_space_filepath[:-len('.npz')])
 
     if not os.path.exists(os.path.join(os.path.dirname(space_filepath),
                                        map_filepath)):
@@ -74,26 +104,25 @@ def _process(M, idx_to_word_dic, idx):
     return cosines_dic, idx
 
 
-def cosine_distribution(output_dirpath, space_filepath, threads_number,
-                        bin_size, vocabulary_filepath=''):
-    """Compute paiwise cosine similarity between vocabulary items and their
-    distribution."""
-
+def compute_pairwise_cosine_sim(output_dirpath, space_filepath, threads_number,
+                                bin_size, vocabulary_filepath=''):
+    """
+    Compute paiwise cosine similarity between vocabulary items.
+    The function also computes the distribution of pariwise cosine sim.
+    """
     cosinepairs_filepath = os.path.join(output_dirpath,
                                         '{}.cos.gz'.format(
-                                         os.path.basename(space_filepath)))
+                                            os.path.basename(space_filepath)))
     distribution_filepath = os.path.join(output_dirpath,
                                          'cosine_distribution.{}.txt')
-
     vocabulary = set()
     number_of_bins = 1/bin_size
     freqdist = [0]*int(number_of_bins)
-
     with gzip.open(cosinepairs_filepath, 'wt', encoding='utf-8') as \
       output_cosinepairs, open(distribution_filepath, 'w', encoding='utf-8') \
       as output_distribution:
 
-        if not len(vocabulary_filepath) == 0:
+        if not vocabulary_filepath:
             vocabulary = _load_vocabulary(vocabulary_filepath)
 
         M, idx_to_word_dic = _load_space(space_filepath)

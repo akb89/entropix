@@ -9,12 +9,11 @@ import logging
 import logging.config
 
 import entropix.utils.config as cutils
-import entropix.core.count as count
-import entropix.core.compute as compute
-import entropix.core.evaluate as evaluate
-import entropix.core.generate as generate
-import entropix.core.cosine_distribution as cosine_distribution
-import entropix.core.reduce as reduce
+import entropix.core.counter as count
+import entropix.core.calculator as compute
+import entropix.core.evaluator as evaluate
+import entropix.core.generator as generate
+import entropix.core.reducer as reduce
 
 logging.config.dictConfig(
     cutils.load(
