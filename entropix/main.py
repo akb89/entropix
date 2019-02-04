@@ -9,11 +9,11 @@ import logging
 import logging.config
 
 import entropix.utils.config as cutils
-import entropix.core.counter as count
-import entropix.core.calculator as compute
-import entropix.core.evaluator as evaluate
-import entropix.core.generator as generate
-import entropix.core.reducer as reduce
+import entropix.core.counter as counter
+import entropix.core.calculator as calculator
+import entropix.core.evaluator as evaluator
+import entropix.core.generator as generator
+import entropix.core.reducer as reducer
 
 logging.config.dictConfig(
     cutils.load(
@@ -24,10 +24,10 @@ logger = logging.getLogger(__name__)
 
 def _evaluate(args):
     logger.info('Evaluating model against MEN {}'.format(args.model))
-    evaluate.evaluate_distributional_space(args.model, args.vocab)
+    evaluator.evaluate_distributional_space(args.model, args.vocab)
 
 
-def _compute(args):
+def _compute_entropy(args):
     logger.info('Computing entropy from file {}'.format(args.counts))
     counts = {}
     with open(args.counts, 'r', encoding='utf-8') as input_stream:
@@ -35,7 +35,7 @@ def _compute(args):
             line = line.strip()
             word_count = line.split('\t')
             counts[word_count[0]] = int(word_count[1])
-    compute.compute_entropy(counts)
+    calculator.compute_entropy(counts)
 
 
 def _count(args):
@@ -49,12 +49,12 @@ def _count(args):
             os.makedirs(output_dirpath)
         else:
             logger.info('Saving to directory {}'.format(output_dirpath))
-        counts = count.count_words(corpus_filepath=args.corpus,
-                                   min_count=args.min_count,
-                                   output_dirpath=output_dirpath)
+        counts = counter.count_words(corpus_filepath=args.corpus,
+                                     min_count=args.min_count,
+                                     output_dirpath=output_dirpath)
     else:
-        counts = count.count_words(corpus_filepath=args.corpus,
-                                   min_count=args.min_count)
+        counts = counter.count_words(corpus_filepath=args.corpus,
+                                     min_count=args.min_count)
     logger.info('Corpus size = {}'.format(sum(counts.values())))
     logger.info('Vocab size = {}'.format(len(counts)))
 
@@ -70,8 +70,8 @@ def _generate(args):
         os.makedirs(output_dirpath)
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
-    generate.generate_distributional_model(output_dirpath, args.corpus,
-                                           args.min_count, args.win_size)
+    generator.generate_distributional_model(output_dirpath, args.corpus,
+                                            args.min_count, args.win_size)
 
 
 def _reduce(args):
@@ -79,8 +79,8 @@ def _reduce(args):
     model_basename = args.model.split('.npz')[0]
     dense_model_filepath = '{}.dense.npz'.format(model_basename)
     diag_matrix_filepath = '{}.diag.npz'.format(model_basename)
-    reduce.reduce_matrix_via_svd(args.model, args.dim, dense_model_filepath,
-                                 diag_matrix_filepath)
+    reducer.reduce_matrix_via_svd(args.model, args.dim, dense_model_filepath,
+                                  diag_matrix_filepath)
 
 
 def _compute_pairwise_cosines(args):
@@ -97,9 +97,9 @@ def _compute_pairwise_cosines(args):
         vocabulary = ''
     else:
         vocabulary = args.vocabulary
-    cosine_distribution.cosine_distribution(output_dirpath, args.space,
-                                            args.threads_number, args.bin_size,
-                                            vocabulary)
+    calculator.compute_pairwise_cosine_sim(output_dirpath, args.space,
+                                           args.threads_number, args.bin_size,
+                                           vocabulary)
 
 
 def main():
@@ -122,11 +122,33 @@ def main():
     parser_count.set_defaults(func=_count)
     parser_compute = subparsers.add_parser(
         'compute', formatter_class=argparse.RawTextHelpFormatter,
+        help='compute entropy or pairwise cosine similarity metrics')
+    compute_sub = parser_compute.add_subparsers()
+    parser_compute_entropy = compute_sub.add_parser(
+        'entropy', formatter_class=argparse.RawTextHelpFormatter,
         help='compute entropy from input .counts file')
-    parser_compute.set_defaults(func=_compute)
-    parser_compute.add_argument('-c', '--counts', required=True,
-                                help='input .counts counts file to compute '
-                                     'entropy from')
+    parser_compute_entropy.set_defaults(func=_compute_entropy)
+    parser_compute_entropy.add_argument(
+        '-c', '--counts', required=True,
+        help='input .counts counts file to compute entropy from')
+    parser_compute_cosine = compute_sub.add_parser(
+        'cosine', formatter_class=argparse.RawTextHelpFormatter,
+        help='compute pairwise cosine similarity between vocabulary items')
+    parser_compute_cosine.set_defaults(func=_compute_pairwise_cosines)
+    parser_compute_cosine.add_argument(
+        '-v', '--vocab', help='set of vocabulary items to compute the '
+                              'distribution for. If not set, will default to '
+                              'whole vocabulary')
+    parser_compute_cosine.add_argument('-m', '--model', required=True,
+                                       help='distributional space')
+    parser_compute_cosine.add_argument(
+        '-o', '--output', help='absolute path to output directory. If not '
+                               'set, will default to space dir')
+    parser_compute_cosine.add_argument('-n', '--num-threads', default=1,
+                                       type=int, help='number of threads')
+    parser_compute_cosine.add_argument('-b', '--bin-size', default=0.1,
+                                       type=float, help='bin size for the '
+                                                        'distribution output')
     parser_evaluate = subparsers.add_parser(
         'evaluate', formatter_class=argparse.RawTextHelpFormatter,
         help='evaluate a given distributional space against the MEN dataset')
@@ -151,23 +173,6 @@ def main():
                                  help='frequency threshold on vocabulary')
     parser_generate.add_argument('-w', '--win-size', default=2, type=int,
                                  help='size of context window')
-    parser_cosine = subparsers.add_parser(
-        'compute_pairwise_cosines', formatter_class=argparse.RawTextHelpFormatter,
-        help='generate pairiwise cosine similarity between vocabulary items')
-    parser_cosine.set_defaults(func=_compute_pairwise_cosines)
-    parser_cosine.add_argument('-v', '--vocab',
-                               help='set of vocabulary items to compute '
-                               'the distribution for.'
-                               'If not set, will default to whole vocabulary')
-    parser_cosine.add_argument('-s', '--space', required=True,
-                               help='distributional space')
-    parser_cosine.add_argument('-o', '--output',
-                               help='absolute path to output directory. '
-                               'If not set, will default to space dir')
-    parser_cosine.add_argument('-t', '--threads-number', default=1, type=int,
-                               help='number of threads')
-    parser_cosine.add_argument('-b', '--bin-size', default=0.1, type=float,
-                               help='bin size for the distribution output')
     parser_reduce = subparsers.add_parser(
         'reduce', formatter_class=argparse.RawTextHelpFormatter,
         help='apply svd to input matrix')

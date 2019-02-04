@@ -8,9 +8,9 @@ import entropix
 import entropix.utils.files as futils
 
 
-def _process(counts_dirpath, wiki_filepath):
+def _process(counts_dirpath, min_count, wiki_filepath):
     counts = entropix.count(corpus_filepath=wiki_filepath,
-                            output_dirpath=counts_dirpath)
+                            output_dirpath=counts_dirpath, min_count=min_count)
     corpus_size, vocab_size, entropy = entropix.compute(counts)
     return wiki_filepath, corpus_size, vocab_size, entropy
 
@@ -22,6 +22,7 @@ if __name__ == '__main__':
     COUNTS_DIRPATH = '/home/kabbach/witokit/data/counts/xp001/'
     RESULTS_FILEPATH = '/home/kabbach/entropix/xp001.results'
     NUM_THREADS = 51
+    MIN_COUNT = 0
 
     assert os.path.exists(WIKI_DIRPATH)
     assert os.path.exists(COUNTS_DIRPATH)
@@ -30,7 +31,7 @@ if __name__ == '__main__':
     results = {}
     wiki_filepaths = futils.get_input_filepaths(WIKI_DIRPATH)
     with multiprocessing.Pool(NUM_THREADS) as pool:
-        process = functools.partial(_process, COUNTS_DIRPATH)
+        process = functools.partial(_process, COUNTS_DIRPATH, MIN_COUNT)
         for wikipath, corpus_size, vocab_size, entropy in pool.imap_unordered(process, wiki_filepaths):
             file_num += 1
             print('Done processing file {}'.format(wikipath))
