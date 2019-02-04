@@ -66,6 +66,11 @@ def get_counts_filepath(corpus_filepath, output_dirpath):
     return output_filepath
 
 
+def get_weightedmatrix_filepath(output_dirpath, model_filepath):
+    return '{}.weighted'.format(os.path.join(output_dirpath,
+                                os.path.basename(model_filepath).strip('.npz')))
+
+
 def get_sparsematrix_filepath(output_dirpath, corpus_filepath,
                               min_count, win_size):
     """
