@@ -32,7 +32,7 @@ if __name__ == '__main__':
     with multiprocessing.Pool(NUM_THREADS) as pool:
         process = functools.partial(_process, MODEL_DIRPATH, MIN_COUNT,
                                     WIN_SIZE)
-        for wikipath, corpus_size, vocab_size, entropy in pool.imap_unordered(process, WIKI_FILEPATHS):
+        for wikipath in pool.imap_unordered(process, WIKI_FILEPATHS):
             FILE_NUM += 1
             print('Done processing file {}'.format(wikipath))
             print('Completed processing of {}/{} files'
