@@ -106,3 +106,4 @@ venv.bak/
 data/
 svd_test.py
 *.results
+models/

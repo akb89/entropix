@@ -9,19 +9,20 @@ import entropix.utils.files as futils
 
 
 def _process(counts_dirpath, min_count, wiki_filepath):
-    counts = entropix.count(counts_dirpath, wiki_filepath, min_count)
+    counts = entropix.count(corpus_filepath=wiki_filepath,
+                            output_dirpath=counts_dirpath, min_count=min_count)
     corpus_size, vocab_size, entropy = entropix.compute(counts)
     return wiki_filepath, corpus_size, vocab_size, entropy
 
 
 if __name__ == '__main__':
-    print('Running entropix XP#002')
+    print('Running entropix XP#004')
 
-    WIKI_DIRPATH = '/home/kabbach/witokit/data/wiki/'
-    COUNTS_DIRPATH = '/home/kabbach/witokit/data/counts/xp002/'
-    RESULTS_FILEPATH = '/home/kabbach/entropix/xp002.results'
-    NUM_THREADS = 51
-    MIN_COUNT = 10
+    WIKI_DIRPATH = '/home/kabbach/witokit/data/ud23/tokenized/'
+    COUNTS_DIRPATH = '/home/kabbach/witokit/data/counts/xp004/'
+    RESULTS_FILEPATH = '/home/kabbach/entropix/xp004.results'
+    NUM_THREADS = 38
+    MIN_COUNT = 0
 
     assert os.path.exists(WIKI_DIRPATH)
     assert os.path.exists(COUNTS_DIRPATH)
@@ -44,12 +45,12 @@ if __name__ == '__main__':
             results[os.path.basename(wikipath)] = partial
     print('Saving results to file {}'.format(RESULTS_FILEPATH))
     with open(RESULTS_FILEPATH, 'w', encoding='utf-8') as output_stream:
-        print('{:20}\t{:>11}\t{:>10}\t{:>7}'
+        print('{:30}\t{:>11}\t{:>10}\t{:>7}'
               .format('Wiki', 'Corpus size', 'Vocab size', 'Entropy'),
               file=output_stream)
         print('-'*63, file=output_stream)
         for key in sorted(results.keys()):
-            print('{:20}\t{:>11}\t{:>10}\t{:>7}'
+            print('{:30}\t{:>11}\t{:>10}\t{:>7}'
                   .format(key, results[key]['corpus_size'],
                           results[key]['vocab_size'], results[key]['entropy']),
                   file=output_stream)

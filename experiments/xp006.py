@@ -9,19 +9,20 @@ import entropix.utils.files as futils
 
 
 def _process(counts_dirpath, min_count, wiki_filepath):
-    counts = entropix.count(counts_dirpath, wiki_filepath, min_count)
+    counts = entropix.count(corpus_filepath=wiki_filepath,
+                            output_dirpath=counts_dirpath, min_count=min_count)
     corpus_size, vocab_size, entropy = entropix.compute(counts)
     return wiki_filepath, corpus_size, vocab_size, entropy
 
 
 if __name__ == '__main__':
-    print('Running entropix XP#003')
+    print('Running entropix XP#006')
 
     WIKI_DIRPATH = '/home/kabbach/witokit/data/wiki/'
-    COUNTS_DIRPATH = '/home/kabbach/witokit/data/counts/xp003/'
-    RESULTS_FILEPATH = '/home/kabbach/entropix/xp003.results'
+    COUNTS_DIRPATH = '/home/kabbach/witokit/data/counts/xp006/'
+    RESULTS_FILEPATH = '/home/kabbach/entropix/xp006.results'
     NUM_THREADS = 51
-    MIN_COUNT = 50
+    MIN_COUNT = 200
 
     assert os.path.exists(WIKI_DIRPATH)
     assert os.path.exists(COUNTS_DIRPATH)
