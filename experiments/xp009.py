@@ -1,7 +1,6 @@
 """Generating entropies and counts for a set of wikipedia dumps."""
 
 import os
-
 import entropix
 import entropix.utils.files as futils
 
@@ -12,7 +11,6 @@ if __name__ == '__main__':
     MODEL_DIRPATH = '/home/kabbach/entropix/models/'
     MIN_COUNT = 300
     WIN_SIZE = 5
-    DIM = 0  # apply max SVD
 
     assert os.path.exists(WIKI_DIRPATH)
     assert os.path.exists(MODEL_DIRPATH)
@@ -32,7 +30,16 @@ if __name__ == '__main__':
         print('Applying SVD to {}'.format(model_filepath))
         sing_values_filepath = entropix.get_sing_values_filepath(model_filepath)
         sing_vectors_filepath = entropix.get_sing_vectors_filepath(model_filepath)
-        entropix.reduce(model_filepath=model_filepath, dim=DIM,
-                        sing_values_filepath=sing_values_filepath,
-                        sing_vectors_filepath=sing_vectors_filepath)
+        for dim in [100, 300, 500, 1000, 2000, 5000]:
+            try:
+                print('Reducing matrix via SVD and k = {}'.format(dim))
+                U, S = entropix.reduce(
+                    model_filepath=model_filepath, dim=dim,
+                    sing_values_filepath=sing_values_filepath,
+                    sing_vectors_filepath=sing_vectors_filepath, compact=True)
+                print('Final matrix rank = {}'.format(S.size))
+                break
+            except Exception as err:
+                print('All singular values are non-null. Trying again')
+                continue
         print('Done reducing {}/{} models'.format(FILE_NUM, len(WIKI_FILEPATHS)))
