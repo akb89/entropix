@@ -93,12 +93,12 @@ def get_sparsematrix_filepath(output_dirpath, corpus_filepath,
     """
     if corpus_filepath.endswith('.txt'):
         output_filepath_matrix = os.path.join(
-            output_dirpath, '{}.mincount-{}.win-{}'.format(
+            output_dirpath, '{}.mincount-{}.win-{}.npz'.format(
                 os.path.basename(corpus_filepath).split('.txt')[0], min_count,
                 win_size))
     else:
         output_filepath_matrix = os.path.join(
             output_dirpath,
-            '{}.mincount-{}.win-{}'.format(os.path.basename(corpus_filepath),
-                                           min_count, win_size))
+            '{}.mincount-{}.win-{}.npz'.format(
+                os.path.basename(corpus_filepath), min_count, win_size))
     return output_filepath_matrix
