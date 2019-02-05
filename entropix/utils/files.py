@@ -63,6 +63,13 @@ def get_cosines_distribution_filepath(dirpath):
     return os.path.join(os.path.join(dirpath, 'pwcosines.dist.txt'))
 
 
+def get_singvectors_distribution_filepath(dirpath):
+    """
+    Return the filepath, into the specified folder, to singvectors.dist.txt file.
+    """
+    return os.path.join(os.path.join(dirpath, 'singvectos.dist.txt'))
+
+
 def get_counts_filepath(corpus_filepath, output_dirpath):
     """
     Return the .counts filepath associated to the corpus filepath passed as
@@ -83,6 +90,11 @@ def get_counts_filepath(corpus_filepath, output_dirpath):
             '{}.counts'.format(os.path.basename(corpus_filepath)))
 
     return output_filepath
+
+
+def get_weightedmatrix_filepath(output_dirpath, model_filepath):
+    return '{}.weighted'.format(os.path.join(output_dirpath,
+                                os.path.basename(model_filepath).strip('.npz')))
 
 
 def get_sparsematrix_filepath(output_dirpath, corpus_filepath,
