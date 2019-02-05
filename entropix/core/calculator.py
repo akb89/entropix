@@ -8,8 +8,10 @@ import math
 import multiprocessing
 import gzip
 import functools
+import numpy as np
 from scipy import sparse
 from scipy import spatial
+from scipy.stats import shapiro
 
 from tqdm import tqdm
 
@@ -18,7 +20,7 @@ import entropix.utils.files as futils
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('compute_entropy', 'compute_pairwise_cosine_sim')
+__all__ = ('compute_entropy', 'compute_pairwise_cosine_sim', 'compute_singvectors_distribution')
 
 
 def compute_entropy(counts):
@@ -134,3 +136,35 @@ def compute_pairwise_cosine_sim(output_dirpath, model_filepath, num_threads,
                   file=output_distribution)
 
     return freqdist
+
+
+def compute_singvectors_distribution(output_dirpath, model):
+    """Compute IPR and entropy metrics on singular vectors"""
+    output_filepath = futils.get_singvectors_distribution_filepath(dirpath)
+    Umatrix_filepath = '{}.singvectors.npy'.format(model)
+    Dmatrix_filepath = '{}.singvalues.npy'.format(model)
+
+    sing_values = np.load(Dmatrix_filepath)
+    sing_vectors = np.load(Umatrix_filepath)
+
+    lam_list = []
+    entropy_list = []
+    for lam, column in zip(sing_values, sing_vectors.T):
+        if lam > 0:
+            distribution = np.histogram(column, bins='fd')[0]
+            normalized_distribution = [x/sum(distribution) for x in distribution]
+            entropy = 0
+            for value in normalized_distribution:
+                if value > 0:
+                    entropy -= value*math.log2(value)
+
+            entropy_list.append(entropy)
+            lam_list.append(lam)
+
+     # printing distribution to file
+    with open(output_filepath, encoding='utf-8') as output_stream:
+        print('lambda_i\tH(u_i)', file=output_stream)
+        for lam, h in zip(lam_list, entropy_list):
+            print('{}\t{}'.format(lam, h), file=output_stream)
+
+    return entropy_list

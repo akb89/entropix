@@ -119,6 +119,19 @@ def _weigh(args):
     weigher.weigh(output_dirpath, args.model, args.counts, func)
 
 
+def _compute_singvectors_distribution(args):
+    if not args.output:
+        output_dirpath = os.path.dirname(args.model)
+    else:
+        output_dirpath = args.output
+    if not os.path.exists(output_dirpath):
+        logger.info('Creating directory {}'.format(output_dirpath))
+        os.makedirs(output_dirpath)
+    else:
+        logger.info('Saving to directory {}'.format(output_dirpath))
+    calculator.compute_singvectors_distribution(output_dirpath, args.model)
+
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -166,6 +179,16 @@ def main():
     parser_compute_cosine.add_argument('-b', '--bin-size', default=0.1,
                                        type=float, help='bin size for the '
                                                         'distribution output')
+    parser_compute_ipr = compute_sub.add_parser(
+        'ipr', formatter_class=argparse.RawTextHelpFormatter,
+        help='compute ipr from input singular vectors matrix')
+    parser_compute_ipr.set_defaults(func=_compute_singvectors_distribution)
+    parser_compute_ipr.add_argument('-m', '--model', required=True,
+                                     help='absolute path to .npz matrix '
+                                          'corresponding to the dsm.')
+    parser_compute_ipr.add_argument('-o', '--output',
+                                     help='absolute path to output directory.'
+                                     'If not set, will default to matrix dir.')
     parser_evaluate = subparsers.add_parser(
         'evaluate', formatter_class=argparse.RawTextHelpFormatter,
         help='evaluate a given distributional space against the MEN dataset')

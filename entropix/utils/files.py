@@ -44,6 +44,13 @@ def get_cosines_distribution_filepath(dirpath):
     return os.path.join(os.path.join(dirpath, 'pwcosines.dist.txt'))
 
 
+def get_singvectors_distribution_filepath(dirpath):
+    """
+    Return the filepath, into the specified folder, to singvectors.dist.txt file.
+    """
+    return os.path.join(os.path.join(dirpath, 'singvectos.dist.txt'))
+
+
 def get_counts_filepath(corpus_filepath, output_dirpath):
     """
     Return the .counts filepath associated to the corpus filepath passed as
