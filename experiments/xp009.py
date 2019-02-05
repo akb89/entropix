@@ -31,8 +31,8 @@ if __name__ == '__main__':
         print('Done generating model {}'.format(model_filepath))
         print('Applying SVD to {}'.format(model_filepath))
         sing_values_filepath = entropix.get_sing_values_filepath(model_filepath)
-        sing_vectors_filepaths = entropix.get_sing_vectors_filepath(model_filepath)
-        entropix.reduce(model_filepath=wikipath, dim=DIM,
+        sing_vectors_filepath = entropix.get_sing_vectors_filepath(model_filepath)
+        entropix.reduce(model_filepath=model_filepath, dim=DIM,
                         sing_values_filepath=sing_values_filepath,
-                        sing_vectors_filepaths=sing_vectors_filepaths)
+                        sing_vectors_filepath=sing_vectors_filepath)
         print('Done reducing {}/{} models'.format(FILE_NUM, len(WIKI_FILEPATHS)))
