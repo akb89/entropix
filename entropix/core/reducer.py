@@ -17,7 +17,7 @@ def reduce_matrix_via_svd(model_filepath, dim, sing_values_filepath,
     If compact is true, only non-null singular values will be kept.
     """
     M = sparse.load_npz(model_filepath)
-    if dim == 0:
+    if dim == 0 or dim >= M.shape[1]:
         dim = M.shape[1] - 1
     logger.info('Applying SVD on sparse matrix with k = {}'.format(dim))
     U, S, _ = svds(M, k=dim, which='LM', return_singular_vectors='u')
