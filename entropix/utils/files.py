@@ -5,7 +5,26 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('get_input_filepaths')
+__all__ = ('get_input_filepaths', 'get_vocab_filepath', 'get_cosines_filepath',
+           'get_cosines_distribution_filepath', 'get_counts_filepath',
+           'get_sparsematrix_filepath', 'get_sing_values_filepath',
+           'get_sing_vectors_filepath')
+
+
+def _get_model_basename(sparse_model_filepath):
+    return sparse_model_filepath.split('.npz')[0]
+
+
+def get_sing_vectors_filepath(sparse_model_filepath):
+    """Return absolute path to singular vectors .npz file."""
+    model_basename = _get_model_basename(sparse_model_filepath)
+    return '{}.singvectors.npy'.format(model_basename)
+
+
+def get_sing_values_filepath(sparse_model_filepath):
+    """Return absolute path to singular values .npz file."""
+    model_basename = _get_model_basename(sparse_model_filepath)
+    return '{}.singvalues.npy'.format(model_basename)
 
 
 def get_input_filepaths(dirpath):
@@ -44,6 +63,13 @@ def get_cosines_distribution_filepath(dirpath):
     return os.path.join(os.path.join(dirpath, 'pwcosines.dist.txt'))
 
 
+def get_singvectors_distribution_filepath(dirpath):
+    """
+    Return the filepath, into the specified folder, to singvectors.dist.txt file.
+    """
+    return os.path.join(os.path.join(dirpath, 'singvectos.dist.txt'))
+
+
 def get_counts_filepath(corpus_filepath, output_dirpath):
     """
     Return the .counts filepath associated to the corpus filepath passed as
@@ -66,6 +92,11 @@ def get_counts_filepath(corpus_filepath, output_dirpath):
     return output_filepath
 
 
+def get_weightedmatrix_filepath(output_dirpath, model_filepath):
+    return '{}.weighted'.format(os.path.join(output_dirpath,
+                                os.path.basename(model_filepath).strip('.npz')))
+
+
 def get_sparsematrix_filepath(output_dirpath, corpus_filepath,
                               min_count, win_size):
     """
@@ -74,12 +105,12 @@ def get_sparsematrix_filepath(output_dirpath, corpus_filepath,
     """
     if corpus_filepath.endswith('.txt'):
         output_filepath_matrix = os.path.join(
-            output_dirpath, '{}.mincount-{}.win-{}'.format(
+            output_dirpath, '{}.mincount-{}.win-{}.npz'.format(
                 os.path.basename(corpus_filepath).split('.txt')[0], min_count,
                 win_size))
     else:
         output_filepath_matrix = os.path.join(
             output_dirpath,
-            '{}.mincount-{}.win-{}'.format(os.path.basename(corpus_filepath),
-                                           min_count, win_size))
+            '{}.mincount-{}.win-{}.npz'.format(
+                os.path.basename(corpus_filepath), min_count, win_size))
     return output_filepath_matrix

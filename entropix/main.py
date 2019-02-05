@@ -9,11 +9,13 @@ import logging
 import logging.config
 
 import entropix.utils.config as cutils
+import entropix.utils.files as futils
 import entropix.core.counter as counter
 import entropix.core.calculator as calculator
 import entropix.core.evaluator as evaluator
 import entropix.core.generator as generator
 import entropix.core.reducer as reducer
+import entropix.core.weigher as weigher
 
 logging.config.dictConfig(
     cutils.load(
@@ -76,11 +78,10 @@ def _generate(args):
 
 def _reduce(args):
     logger.info('Applying SVD to model {}'.format(args.model))
-    model_basename = args.model.split('.npz')[0]
-    dense_model_filepath = '{}.dense.npz'.format(model_basename)
-    diag_matrix_filepath = '{}.diag.npz'.format(model_basename)
-    reducer.reduce_matrix_via_svd(args.model, args.dim, dense_model_filepath,
-                                  diag_matrix_filepath)
+    sing_values_filepath = futils.get_sing_values_filepath(args.model)
+    sing_vectors_filepaths = futils.get_sing_vectors_filepath(args.model)
+    reducer.reduce_matrix_via_svd(args.model, args.dim, sing_values_filepath,
+                                  sing_vectors_filepaths)
 
 
 def _compute_pairwise_cosines(args):
@@ -96,6 +97,39 @@ def _compute_pairwise_cosines(args):
     calculator.compute_pairwise_cosine_sim(output_dirpath, args.model,
                                            args.num_threads, args.bin_size,
                                            args.vocab)
+
+
+def _weigh(args):
+    if not args.output:
+        output_dirpath = os.path.dirname(args.model)
+    else:
+        output_dirpath = args.output
+    if not os.path.exists(output_dirpath):
+        logger.info('Creating directory {}'.format(output_dirpath))
+        os.makedirs(output_dirpath)
+    else:
+        logger.info('Saving to directory {}'.format(output_dirpath))
+
+    if args.weighing_func not in ['ppmi']:
+        logger.error('Unsupported weighing function {}'
+                     .format(args.weighing_func))
+        raise Exception
+    if args.weighing_func == 'ppmi':
+        func = weigher.ppmi
+    weigher.weigh(output_dirpath, args.model, args.counts, func)
+
+
+def _compute_singvectors_distribution(args):
+    if not args.output:
+        output_dirpath = os.path.dirname(args.model)
+    else:
+        output_dirpath = args.output
+    if not os.path.exists(output_dirpath):
+        logger.info('Creating directory {}'.format(output_dirpath))
+        os.makedirs(output_dirpath)
+    else:
+        logger.info('Saving to directory {}'.format(output_dirpath))
+    calculator.compute_singvectors_distribution(output_dirpath, args.model)
 
 
 def main():
@@ -145,6 +179,16 @@ def main():
     parser_compute_cosine.add_argument('-b', '--bin-size', default=0.1,
                                        type=float, help='bin size for the '
                                                         'distribution output')
+    parser_compute_ipr = compute_sub.add_parser(
+        'ipr', formatter_class=argparse.RawTextHelpFormatter,
+        help='compute ipr from input singular vectors matrix')
+    parser_compute_ipr.set_defaults(func=_compute_singvectors_distribution)
+    parser_compute_ipr.add_argument('-m', '--model', required=True,
+                                     help='absolute path to .npz matrix '
+                                          'corresponding to the dsm.')
+    parser_compute_ipr.add_argument('-o', '--output',
+                                     help='absolute path to output directory.'
+                                     'If not set, will default to matrix dir.')
     parser_evaluate = subparsers.add_parser(
         'evaluate', formatter_class=argparse.RawTextHelpFormatter,
         help='evaluate a given distributional space against the MEN dataset')
@@ -179,5 +223,21 @@ def main():
                                     'space to reduce')
     parser_reduce.add_argument('-k', '--dim', default=0, type=int,
                                help='number of dimensions in final model')
+    parser_weigh = subparsers.add_parser(
+        'weigh', formatter_class=argparse.RawTextHelpFormatter,
+        help='weigh sparse matrix according to weighing function')
+    parser_weigh.set_defaults(func=_weigh)
+    parser_weigh.add_argument('-m', '--model', required=True,
+                              help='absolute path to .npz matrix '
+                              'corresponding to the distributional '
+                              'space to weigh')
+    parser_weigh.add_argument('-c', '--counts', required=True,
+                              help='absolute path to .counts file '
+                              'storing counts for vocabulary items')
+    parser_weigh.add_argument('-o', '--output',
+                              help='absolute path to output directory. '
+                              'If not set, will default to model dir')
+    parser_weigh.add_argument('-w', '--weighing-func', choices=['ppmi'],
+                              help='weighing function')
     args = parser.parse_args()
     args.func(args)
