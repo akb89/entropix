@@ -8,7 +8,7 @@ import entropix.utils.files as futils
 if __name__ == '__main__':
     print('Running entropix XP#009')
 
-    WIKI_DIRPATH = '/home/kabbach/witokit/data/wiki/'
+    WIKI_DIRPATH = '/home/kabbach/witokit/data/wiki/small/'
     MODEL_DIRPATH = '/home/kabbach/entropix/models/'
     MIN_COUNT = 300
     WIN_SIZE = 5
