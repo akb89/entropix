@@ -7,21 +7,21 @@ logger = logging.getLogger(__name__)
 
 __all__ = ('get_input_filepaths', 'get_vocab_filepath', 'get_cosines_filepath',
            'get_cosines_distribution_filepath', 'get_counts_filepath',
-           'get_sparsematrix_filepath', 'get_sing_values_filepath',
-           'get_sing_vectors_filepath')
+           'get_sparsematrix_filepath', 'get_singvalues_filepath',
+           'get_singvectors_filepath')
 
 
 def _get_model_basename(sparse_model_filepath):
     return sparse_model_filepath.split('.npz')[0]
 
 
-def get_sing_vectors_filepath(sparse_model_filepath):
+def get_singvectors_filepath(sparse_model_filepath):
     """Return absolute path to singular vectors .npz file."""
     model_basename = _get_model_basename(sparse_model_filepath)
     return '{}.singvectors.npy'.format(model_basename)
 
 
-def get_sing_values_filepath(sparse_model_filepath):
+def get_singvalues_filepath(sparse_model_filepath):
     """Return absolute path to singular values .npz file."""
     model_basename = _get_model_basename(sparse_model_filepath)
     return '{}.singvalues.npy'.format(model_basename)
@@ -63,11 +63,13 @@ def get_cosines_distribution_filepath(dirpath):
     return os.path.join(os.path.join(dirpath, 'pwcosines.dist.txt'))
 
 
-def get_singvectors_distribution_filepath(dirpath):
+def get_singvectors_distribution_filepath(dirpath, model_filepath):
     """
     Return the filepath, into the specified folder, to singvectors.dist.txt file.
     """
-    return os.path.join(os.path.join(dirpath, 'singvectos.dist.txt'))
+    model_basename = _get_model_basename(model_filepath)
+    return os.path.join(os.path.join(dirpath, '{}.singvectors.dist.txt'
+                                     .format(model_basename)))
 
 
 def get_counts_filepath(corpus_filepath, output_dirpath):

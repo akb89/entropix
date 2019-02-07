@@ -140,29 +140,36 @@ def compute_pairwise_cosine_sim(output_dirpath, model_filepath, num_threads,
 
 def compute_singvectors_distribution(output_dirpath, model):
     """Compute IPR and entropy metrics on singular vectors"""
-    output_filepath = futils.get_singvectors_distribution_filepath(dirpath)
-    Umatrix_filepath = '{}.singvectors.npy'.format(model)
-    Dmatrix_filepath = '{}.singvalues.npy'.format(model)
+    output_filepath = futils.get_singvectors_distribution_filepath(output_dirpath, model)
+    Umatrix_filepath = futils.get_singvectors_filepath(model)
+    Dmatrix_filepath = futils.get_singvalues_filepath(model)
 
+    logger.info('Loading singular values from {}'.format(Dmatrix_filepath))
     sing_values = np.load(Dmatrix_filepath)
+    logger.info('Loading singular vectors from {}'.format(Umatrix_filepath))
     sing_vectors = np.load(Umatrix_filepath)
 
+    logger.info('Computing entropy')
     lam_list = []
     entropy_list = []
-    for lam, column in zip(sing_values, sing_vectors.T):
-        if lam > 0:
-            distribution = np.histogram(column, bins='fd')[0]
-            normalized_distribution = [x/sum(distribution) for x in distribution]
-            entropy = 0
-            for value in normalized_distribution:
-                if value > 0:
-                    entropy -= value*math.log2(value)
+    for lam, column in tqdm(zip(sing_values, sing_vectors.T)):
+        print(column)
+        print(round(np.mean(column), 3))
+        distribution = np.histogram(column, bins='fd')[0]
+#        distribution = np.histogram(column)[0]
+        N = len(column)
+        normalized_distribution = [x/N for x in distribution if x > 0]
+#        print(normalized_distribution)
+        input()
+        entropy = 0
+        for value in tqdm(normalized_distribution):
+            entropy -= value*math.log2(value)
 
-            entropy_list.append(entropy)
-            lam_list.append(lam)
+        entropy_list.append(entropy)
+        lam_list.append(lam)
 
-     # printing distribution to file
-    with open(output_filepath, encoding='utf-8') as output_stream:
+    logger.info('Writing results to {}'.format(output_filepath))
+    with open(output_filepath, 'w', encoding='utf-8') as output_stream:
         print('lambda_i\tH(u_i)', file=output_stream)
         for lam, h in zip(lam_list, entropy_list):
             print('{}\t{}'.format(lam, h), file=output_stream)
