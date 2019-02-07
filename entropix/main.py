@@ -16,6 +16,7 @@ import entropix.core.evaluator as evaluator
 import entropix.core.generator as generator
 import entropix.core.reducer as reducer
 import entropix.core.weigher as weigher
+import entropix.core.clusterer as clusterer
 
 logging.config.dictConfig(
     cutils.load(
@@ -241,5 +242,9 @@ def main():
                               'If not set, will default to model dir')
     parser_weigh.add_argument('-w', '--weighing-func', choices=['ppmi'],
                               help='weighing function')
+    parser_cluster = subparsers.add_parser(
+        'cluster', formatter_class=argparse.RawTextHelpFormatter,
+        help='cluster vectors')
+#    parser_cluster.add_argument()
     args = parser.parse_args()
     args.func(args)

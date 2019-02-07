@@ -103,6 +103,7 @@ def compute_pairwise_cosine_sim(output_dirpath, model_filepath, num_threads,
         output_dirpath)
     number_of_bins = 1/bin_size
     freqdist = [0]*int(number_of_bins)
+    words_shortlist = None
     with gzip.open(cosinepairs_filepath, 'wt', encoding='utf-8') as \
       output_cosinepairs, open(distribution_filepath, 'w', encoding='utf-8') \
       as output_distribution:
