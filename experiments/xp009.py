@@ -28,8 +28,8 @@ if __name__ == '__main__':
                           win_size=WIN_SIZE)
         print('Done generating model {}'.format(model_filepath))
         print('Applying SVD to {}'.format(model_filepath))
-        sing_values_filepath = entropix.get_sing_values_filepath(model_filepath)
-        sing_vectors_filepath = entropix.get_sing_vectors_filepath(model_filepath)
+        sing_values_filepath = entropix.get_singvalues_filepath(model_filepath)
+        sing_vectors_filepath = entropix.get_singvectors_filepath(model_filepath)
         for dim in [100, 300, 500, 1000, 2000, 5000, 10000, 0]:
             try:
                 print('Reducing matrix via SVD and k = {}'.format(dim))
