@@ -78,8 +78,8 @@ def _generate(args):
 
 def _reduce(args):
     logger.info('Applying SVD to model {}'.format(args.model))
-    sing_values_filepath = futils.get_sing_values_filepath(args.model)
-    sing_vectors_filepaths = futils.get_sing_vectors_filepath(args.model)
+    sing_values_filepath = futils.get_singvalues_filepath(args.model)
+    sing_vectors_filepaths = futils.get_singvectors_filepath(args.model)
     reducer.reduce_matrix_via_svd(args.model, args.dim, sing_values_filepath,
                                   sing_vectors_filepaths)
 

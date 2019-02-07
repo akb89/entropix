@@ -152,13 +152,18 @@ def compute_singvectors_distribution(output_dirpath, model):
     logger.info('Computing entropy')
     lam_list = []
     entropy_list = []
-    for lam, column in tqdm([(x, y) for x, y in zip(sing_values, sing_vectors.T) if x > 0]):
+    for lam, column in tqdm(zip(sing_values, sing_vectors.T)):
+        print(column)
+        print(round(np.mean(column), 3))
         distribution = np.histogram(column, bins='fd')[0]
-        normalized_distribution = [x/sum(distribution) for x in distribution]
+#        distribution = np.histogram(column)[0]
+        N = len(column)
+        normalized_distribution = [x/N for x in distribution if x > 0]
+#        print(normalized_distribution)
+        input()
         entropy = 0
-        for value in normalized_distribution:
-            if value > 0:
-                entropy -= value*math.log2(value)
+        for value in tqdm(normalized_distribution):
+            entropy -= value*math.log2(value)
 
         entropy_list.append(entropy)
         lam_list.append(lam)
