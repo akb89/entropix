@@ -21,7 +21,8 @@ import entropix.utils.files as futils
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('compute_entropy', 'compute_pairwise_cosine_sim', 'compute_singvectors_distribution')
+__all__ = ('compute_entropy', 'compute_pairwise_cosine_sim',
+           'compute_singvectors_distribution')
 
 
 def compute_entropy(counts):
