@@ -61,8 +61,7 @@ def _load_wordlist(wordlist_filepath):
     return words
 
 
-def _load_vocabulary(model_filepath):
-    vocab_filepath = futils.get_vocab_filepath(model_filepath)
+def _load_vocabulary(vocab_filepath):
     idx_to_word_dic = {}
     with open(vocab_filepath, encoding='utf-8') as input_stream:
         for line in input_stream:
@@ -91,8 +90,8 @@ def _process(M, idx_to_word_dic, idx):
     return cosines_dic, idx
 
 
-def compute_pairwise_cosine_sim(output_dirpath, model_filepath, num_threads,
-                                bin_size, wordlist_filepath=None):
+def compute_pairwise_cosine_sim(output_dirpath, model_filepath, vocab_filepath,
+                                num_threads, bin_size, wordlist_filepath=None):
     """
     Compute paiwise cosine similarity between vocabulary items.
     The function also computes the distribution of pariwise cosine sim.
@@ -100,9 +99,10 @@ def compute_pairwise_cosine_sim(output_dirpath, model_filepath, num_threads,
     cosinepairs_filepath = futils.get_cosines_filepath(output_dirpath,
                                                        model_filepath)
     distribution_filepath = futils.get_cosines_distribution_filepath(
-        output_dirpath)
+        output_dirpath, model_filepath)
     number_of_bins = 1/bin_size
     freqdist = [0]*int(number_of_bins)
+    words_shortlist = None
     with gzip.open(cosinepairs_filepath, 'wt', encoding='utf-8') as \
       output_cosinepairs, open(distribution_filepath, 'w', encoding='utf-8') \
       as output_distribution:
@@ -111,7 +111,7 @@ def compute_pairwise_cosine_sim(output_dirpath, model_filepath, num_threads,
             words_shortlist = _load_wordlist(wordlist_filepath)
 
         M = _load_model(model_filepath)
-        idx_to_word_dic = _load_vocabulary(model_filepath)
+        idx_to_word_dic = _load_vocabulary(vocab_filepath)
 
         if words_shortlist:
             idx_to_word_dic = {k: w for k, w in idx_to_word_dic.items()

@@ -52,15 +52,17 @@ def get_cosines_filepath(dirpath, model_filepath):
     Return the .cos.gz filepath associated to the model filepath
     passed as a parameter, in the folder passed as a paremeter.
     """
+    model_filepath_basename = _get_model_basename(os.path.basename(model_filepath))
     return os.path.join(dirpath,
-                        '{}.cos.gz'.format(os.path.basename(model_filepath)))
+                        '{}.cos.gz'.format(model_filepath_basename))
 
 
-def get_cosines_distribution_filepath(dirpath):
+def get_cosines_distribution_filepath(dirpath, model_filepath):
     """
     Return the filepath, into the specified folder, to pwcosines.dist.txt file.
     """
-    return os.path.join(os.path.join(dirpath, 'pwcosines.dist.txt'))
+    model_filepath_basename = _get_model_basename(os.path.basename(model_filepath))
+    return os.path.join(os.path.join(dirpath, '{}.pwcosines.dist.txt'.format(model_filepath_basename)))
 
 
 def get_singvectors_distribution_filepath(dirpath, model_filepath):
