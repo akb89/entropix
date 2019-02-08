@@ -129,7 +129,7 @@ def _compute_singvectors_distribution(args):
         os.makedirs(output_dirpath)
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
-    calculator.compute_singvectors_distribution(output_dirpath, args.model)
+    calculator.compute_singvectors_distribution(output_dirpath, args.model, args.save)
 
 
 def main():
@@ -189,6 +189,8 @@ def main():
     parser_compute_ipr.add_argument('-o', '--output',
                                      help='absolute path to output directory.'
                                      'If not set, will default to matrix dir.')
+    parser_compute_ipr.add_argument('-s', '--save', action='store_true',
+                                     help='save plots to output')
     parser_evaluate = subparsers.add_parser(
         'evaluate', formatter_class=argparse.RawTextHelpFormatter,
         help='evaluate a given distributional space against the MEN dataset')

@@ -12,6 +12,7 @@ import numpy as np
 from scipy import sparse
 from scipy import spatial
 from scipy.stats import shapiro
+import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
@@ -138,7 +139,7 @@ def compute_pairwise_cosine_sim(output_dirpath, model_filepath, num_threads,
     return freqdist
 
 
-def compute_singvectors_distribution(output_dirpath, model):
+def compute_singvectors_distribution(output_dirpath, model, save_figs):
     """Compute IPR and entropy metrics on singular vectors"""
     output_filepath = futils.get_singvectors_distribution_filepath(output_dirpath, model)
     Umatrix_filepath = futils.get_singvectors_filepath(model)
@@ -153,14 +154,18 @@ def compute_singvectors_distribution(output_dirpath, model):
     lam_list = []
     entropy_list = []
     for lam, column in tqdm(zip(sing_values, sing_vectors.T)):
-        print(column)
-        print(round(np.mean(column), 3))
-        distribution = np.histogram(column, bins='fd')[0]
-#        distribution = np.histogram(column)[0]
+        distribution, bins = np.histogram(column, bins='auto')
+
+        if save_figs:
+            fig = plt.figure()
+            ax = plt.subplot(111)
+            ax.bar(bins[:-1], distribution, 0.02)
+            plt.title('{}'.format(lam))
+            fig.savefig('{}/distribution_{}.png'.format(output_dirpath, lam))
+
         N = len(column)
         normalized_distribution = [x/N for x in distribution if x > 0]
-#        print(normalized_distribution)
-        input()
+
         entropy = 0
         for value in tqdm(normalized_distribution):
             entropy -= value*math.log2(value)
