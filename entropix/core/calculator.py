@@ -122,7 +122,7 @@ def compute_pairwise_cosine_sim(output_dirpath, model_filepath, vocab_filepath,
 
         with multiprocessing.Pool(num_threads) as pool:
             process = functools.partial(_process, M, idx_to_word_dic)
-            for partial_cosine_dic, idx in tqdm(pool.imap_unordered(process, idx_to_word_dic.keys())):
+            for partial_cosine_dic, idx in pool.imap_unordered(process, idx_to_word_dic.keys()):
                 for index_pair, cosine in partial_cosine_dic.items():
                     idx, idx2 = index_pair
                     word1, word2 = idx_to_word_dic[idx], idx_to_word_dic[idx2]
