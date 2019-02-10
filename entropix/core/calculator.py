@@ -12,7 +12,7 @@ import numpy as np
 import scipy
 from scipy import sparse
 from scipy import spatial
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
@@ -138,12 +138,12 @@ def compute_singvectors_distribution(output_dirpath, model, save_figs):
     for lam, column in tqdm(zip(sing_values, sing_vectors.T)):
         distribution, bins = np.histogram(column, bins='auto')
 
-        if save_figs:
-            fig = plt.figure()
-            ax = plt.subplot(111)
-            ax.bar(bins[:-1], distribution, 0.02)
-            plt.title('{}'.format(lam))
-            fig.savefig('{}/distribution_{}.png'.format(output_dirpath, lam))
+        # if save_figs:
+        #     fig = plt.figure()
+        #     ax = plt.subplot(111)
+        #     ax.bar(bins[:-1], distribution, 0.02)
+        #     plt.title('{}'.format(lam))
+        #     fig.savefig('{}/distribution_{}.png'.format(output_dirpath, lam))
 
         N = len(column)
         normalized_distribution = [x/N for x in distribution if x > 0]
