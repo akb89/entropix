@@ -8,7 +8,14 @@ logger = logging.getLogger(__name__)
 __all__ = ('get_input_filepaths', 'get_vocab_filepath', 'get_cosines_filepath',
            'get_cosines_distribution_filepath', 'get_counts_filepath',
            'get_sparsematrix_filepath', 'get_singvalues_filepath',
-           'get_singvectors_filepath', 'get_singvalues_filepaths')
+           'get_singvectors_filepath', 'get_singvalues_filepaths',
+           'get_models_filepaths')
+
+
+def get_models_filepaths(model_dirpath):
+    """Return all *.npz files under model directory."""
+    return [os.path.join(model_dirpath, filename) for filename in
+            os.listdir(model_dirpath) if filename.endswith('npz')]
 
 
 def get_singvalues_filepaths(model_dirpath):
@@ -103,8 +110,8 @@ def get_counts_filepath(corpus_filepath, output_dirpath):
 
 
 def get_weightedmatrix_filepath(output_dirpath, model_filepath):
-    return '{}.weighted'.format(os.path.join(output_dirpath,
-                                os.path.basename(model_filepath).strip('.npz')))
+    model_basename = os.path.basename(model_filepath)
+    return os.path.join(output_dirpath, '{}.ppmi'.format(model_basename.split('.npz')[0]))
 
 
 def get_sparsematrix_filepath(output_dirpath, corpus_filepath,
