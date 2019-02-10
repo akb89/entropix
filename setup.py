@@ -31,7 +31,7 @@ setup(
             'entropix = entropix.main:main'
         ],
     },
-    install_requires=['pyyaml>=4.2b1', 'tqdm==4.30.0', 'scipy>=1.2.0'],
+    install_requires=['pyyaml>=4.2b1', 'tqdm==4.30.0', 'scipy==1.2.0'],
     classifiers=['Development Status :: 2 - Pre-Alpha',
                  'Environment :: Web Environment',
                  'Intended Audience :: Developers',
