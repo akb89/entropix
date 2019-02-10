@@ -8,7 +8,13 @@ logger = logging.getLogger(__name__)
 __all__ = ('get_input_filepaths', 'get_vocab_filepath', 'get_cosines_filepath',
            'get_cosines_distribution_filepath', 'get_counts_filepath',
            'get_sparsematrix_filepath', 'get_singvalues_filepath',
-           'get_singvectors_filepath')
+           'get_singvectors_filepath', 'get_singvalues_filepaths')
+
+
+def get_singvalues_filepaths(model_dirpath):
+    """Return all *.singvalues.npy files under model directory."""
+    return [os.path.join(model_dirpath, filename) for filename in
+            os.listdir(model_dirpath) if filename.endswith('.singvalues.npy')]
 
 
 def _get_model_basename(sparse_model_filepath):

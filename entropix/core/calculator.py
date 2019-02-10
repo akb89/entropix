@@ -11,7 +11,6 @@ import functools
 import numpy as np
 from scipy import sparse
 from scipy import spatial
-from scipy.stats import shapiro
 import matplotlib.pyplot as plt
 
 from tqdm import tqdm
