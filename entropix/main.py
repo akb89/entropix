@@ -81,7 +81,7 @@ def _reduce(args):
     sing_values_filepath = futils.get_singvalues_filepath(args.model)
     sing_vectors_filepaths = futils.get_singvectors_filepath(args.model)
     reducer.reduce_matrix_via_svd(args.model, args.dim, sing_values_filepath,
-                                  sing_vectors_filepaths)
+                                  sing_vectors_filepaths, compact=args.compact)
 
 
 def _compute_pairwise_cosines(args):
@@ -227,6 +227,8 @@ def main():
                                     'space to reduce')
     parser_reduce.add_argument('-k', '--dim', default=0, type=int,
                                help='number of dimensions in final model')
+    parser_reduce.add_argument('-c', '--compact', action='store_true',
+                               help='whether or not to store a compact matrix')
     parser_weigh = subparsers.add_parser(
         'weigh', formatter_class=argparse.RawTextHelpFormatter,
         help='weigh sparse matrix according to weighing function')
