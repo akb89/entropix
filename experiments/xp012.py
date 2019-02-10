@@ -53,7 +53,7 @@ if __name__ == '__main__':
         print('{:46}\t{:>5}\t{:>20}\t{:>5}'
               .format('Model', 'Rank', 'H(Sigma)', '0.9E-Rank'),
               file=raw_stream)
-        for key, value in sorted(results):
+        for key in sorted(results):
             print('{:46}\t{:>5}\t{:>20}\t{:>5}'
-                  .format(key, value['rank'], value['hsigma'],
-                          value['red_e_rank']), file=raw_stream)
+                  .format(key, results[key]['rank'], results[key]['hsigma'],
+                          results[key]['red_e_rank']), file=raw_stream)
