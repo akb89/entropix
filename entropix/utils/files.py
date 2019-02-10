@@ -116,3 +116,14 @@ def get_sparsematrix_filepath(output_dirpath, corpus_filepath,
             '{}.mincount-{}.win-{}.npz'.format(
                 os.path.basename(corpus_filepath), min_count, win_size))
     return output_filepath_matrix
+
+def _create_tmp_folder(output_dirpath):
+    tmp_path = os.path.join(output_dirpath, 'tmp')
+    if not os.path.exists(tmp_path):
+        logger.info('Creating directory {}'.format(tmp_dirpath))
+        os.makedirs(tmp_dirpath)
+    return tmp_path
+
+def get_tmp_cosinedist_filepath(output_dirpath, idx):
+    tmp_path = _create_tmp_folder(output_dirpath)
+    return os.path.join(tmp_path, '{}.cosinesim'.format(idx))
