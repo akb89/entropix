@@ -50,10 +50,10 @@ if __name__ == '__main__':
                   .format(file_num, len(raw_model_singvalues_filepaths)))
             results[model_basename] = raw_results
     with open(raw_results_filpath, 'w', encoding='utf-8') as raw_stream:
-        print('{:46}\t{:>5}\t{:>20}\t{:>5}'
+        print('{:47}\t{:>5}\t{:>20}\t{:>5}'
               .format('Model', 'Rank', 'H(Sigma)', '0.9E-Rank'),
               file=raw_stream)
         for key in sorted(results):
-            print('{:46}\t{:>5}\t{:>20}\t{:>5}'
+            print('{:47}\t{:>5}\t{:>20}\t{:>5}'
                   .format(key, results[key]['rank'], results[key]['hsigma'],
                           results[key]['red_e_rank']), file=raw_stream)
