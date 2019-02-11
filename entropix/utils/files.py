@@ -133,11 +133,11 @@ def get_sparsematrix_filepath(output_dirpath, corpus_filepath,
     return output_filepath_matrix
 
 def _create_tmp_folder(output_dirpath):
-    tmp_path = os.path.join(output_dirpath, 'tmp')
-    if not os.path.exists(tmp_path):
+    tmp_dirpath = os.path.join(output_dirpath, 'tmp')
+    if not os.path.exists(tmp_dirpath):
         logger.info('Creating directory {}'.format(tmp_dirpath))
         os.makedirs(tmp_dirpath)
-    return tmp_path
+    return tmp_dirpath
 
 def get_tmp_cosinedist_filepath(output_dirpath, idx):
     tmp_path = _create_tmp_folder(output_dirpath)
