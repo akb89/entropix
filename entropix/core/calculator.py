@@ -6,7 +6,6 @@ vocabulary items and their distribution.
 import logging
 import math
 import multiprocessing
-import gzip
 import functools
 import numpy as np
 import scipy
@@ -68,7 +67,7 @@ def _process(output_dirpath, M, idx_to_word_dic, idx):
                 if not math.isnan(cosine):
                     cosines_dic[(idx, idx2)] = cosine
                     word1, word2 = idx_to_word_dic[idx], idx_to_word_dic[idx2]
-                    print('{}\t{}\t{}'.format(word1, word2, cosine), file=output_cosinepairs)
+                    print('{}\t{}\t{}'.format(word1, word2, cosine), file=output_stream)
                 else:
                     logger.info('Undefined cosine similarity for pair '
                                 '{} {}'.format(idx_to_word_dic[idx],
@@ -82,12 +81,11 @@ def compute_pairwise_cosine_sim(output_dirpath, model_filepath, vocab_filepath,
     Compute paiwise cosine similarity between vocabulary items.
     The function also computes the distribution of pariwise cosine sim.
     """
-    cosinepairs_filepath = futils.get_cosines_filepath(output_dirpath,
-                                                       model_filepath)
     distribution_filepath = futils.get_cosines_distribution_filepath(
         output_dirpath, model_filepath)
     number_of_bins = 1/bin_size
     freqdist = [0]*int(number_of_bins)
+    words_shortlist = []
     with open(distribution_filepath, 'w', encoding='utf-8') as output_distribution:
         if wordlist_filepath:
             words_shortlist = _load_wordlist(wordlist_filepath)
