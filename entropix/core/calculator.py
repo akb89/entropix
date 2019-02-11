@@ -56,19 +56,23 @@ def _load_model(model_filepath):
     return sparse.load_npz(model_filepath)
 
 
-def _process(M, idx_to_word_dic, idx):
+def _process(output_dirpath, M, idx_to_word_dic, idx):
     cosines_dic = {}
     vector = M.getrow(idx).toarray()
-    for idx2 in idx_to_word_dic:
-        if idx2 > idx:
-            vector2 = M.getrow(idx2).toarray()
-            cosine = 1-spatial.distance.cosine(vector, vector2)
-            if not math.isnan(cosine):
-                cosines_dic[(idx, idx2)] = cosine
-            else:
-                logger.info('Undefined cosine similarity for pair '
-                            '{} {}'.format(idx_to_word_dic[idx],
-                                           idx_to_word_dic[idx2]))
+    output_filepath = futils.get_tmp_cosinedist_filepath(output_dirpath, idx)
+    with open(output_filepath, 'w', encoding='utf-8') as output_stream:
+        for idx2 in idx_to_word_dic:
+            if idx2 > idx:
+                vector2 = M.getrow(idx2).toarray()
+                cosine = 1-spatial.distance.cosine(vector, vector2)
+                if not math.isnan(cosine):
+                    cosines_dic[(idx, idx2)] = cosine
+                    word1, word2 = idx_to_word_dic[idx], idx_to_word_dic[idx2]
+                    print('{}\t{}\t{}'.format(word1, word2, cosine), file=output_cosinepairs)
+                else:
+                    logger.info('Undefined cosine similarity for pair '
+                                '{} {}'.format(idx_to_word_dic[idx],
+                                               idx_to_word_dic[idx2]))
     return cosines_dic, idx
 
 
@@ -84,11 +88,7 @@ def compute_pairwise_cosine_sim(output_dirpath, model_filepath, vocab_filepath,
         output_dirpath, model_filepath)
     number_of_bins = 1/bin_size
     freqdist = [0]*int(number_of_bins)
-    words_shortlist = None
-    with gzip.open(cosinepairs_filepath, 'wt', encoding='utf-8') as \
-      output_cosinepairs, open(distribution_filepath, 'w', encoding='utf-8') \
-      as output_distribution:
-
+    with open(distribution_filepath, 'w', encoding='utf-8') as output_distribution:
         if wordlist_filepath:
             words_shortlist = _load_wordlist(wordlist_filepath)
 
@@ -102,15 +102,14 @@ def compute_pairwise_cosine_sim(output_dirpath, model_filepath, vocab_filepath,
                         .format(len(idx_to_word_dic), len(words_shortlist)))
 
         with multiprocessing.Pool(num_threads) as pool:
-            process = functools.partial(_process, M, idx_to_word_dic)
-            for partial_cosine_dic, idx in pool.imap_unordered(process, idx_to_word_dic.keys()):
+            process = functools.partial(_process, output_dirpath, M, idx_to_word_dic)
+            for partial_cosine_dic, idx in tqdm(pool.imap_unordered(process, idx_to_word_dic.keys())):
                 for index_pair, cosine in partial_cosine_dic.items():
                     idx, idx2 = index_pair
                     word1, word2 = idx_to_word_dic[idx], idx_to_word_dic[idx2]
                     freqdist[int(cosine/bin_size)] += 1
-                    print('{}\t{}\t{}'
-                          .format(word1, word2, cosine), file=output_cosinepairs)
 
+        # TODO: decide if the merging phase is necessary
         # write distribution to output file
         print('range\tN', file=output_distribution)
         for i, k in enumerate(freqdist):
