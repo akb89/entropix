@@ -1,32 +1,21 @@
-"""Generating entropies and counts for a set of wikipedia dumps."""
+"""SVD-reduce a set of ppmi count models generated after xp113."""
 
 import os
 import entropix
 import entropix.utils.files as futils
 
 if __name__ == '__main__':
-    print('Running entropix XP#009')
+    print('Running entropix XP#213')
 
-    WIKI_DIRPATH = '/home/kabbach/witokit/data/wiki/'
-    MODEL_DIRPATH = '/home/kabbach/entropix/models/'
-    MIN_COUNT = 0
-    WIN_SIZE = 5
+    MODEL_DIRPATH = '/home/kabbach/entropix/models/ppmi/'
 
-    assert os.path.exists(WIKI_DIRPATH)
     assert os.path.exists(MODEL_DIRPATH)
 
     FILE_NUM = 0
-    WIKI_FILEPATHS = futils.get_input_filepaths(WIKI_DIRPATH)
+    MODEL_FILEPATHS = futils.get_models_filepaths(MODEL_DIRPATH)
     FILE_NUM = 0
-    for wikipath in WIKI_FILEPATHS:
-        print('Processing file {}'.format(wikipath))
+    for model_filepath in MODEL_FILEPATHS:
         FILE_NUM += 1
-        model_filepath = entropix.get_model_filepath(
-            MODEL_DIRPATH, wikipath, MIN_COUNT, WIN_SIZE)
-        entropix.generate(corpus_filepath=wikipath,
-                          output_dirpath=MODEL_DIRPATH, min_count=MIN_COUNT,
-                          win_size=WIN_SIZE)
-        print('Done generating model {}'.format(model_filepath))
         print('Applying SVD to {}'.format(model_filepath))
         sing_values_filepath = entropix.get_singvalues_filepath(model_filepath)
         sing_vectors_filepath = entropix.get_singvectors_filepath(model_filepath)
@@ -42,4 +31,5 @@ if __name__ == '__main__':
             except Exception as err:
                 print('All singular values are non-null. Trying again')
                 continue
-        print('Done reducing {}/{} models'.format(FILE_NUM, len(WIKI_FILEPATHS)))
+        print('Done reducing {}/{} models'
+              .format(FILE_NUM, len(MODEL_FILEPATHS)))

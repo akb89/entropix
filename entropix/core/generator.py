@@ -43,7 +43,7 @@ def generate_distributional_model(output_dirpath, corpus_filepath,
     columns = []
     data = []
     for row_idx in tqdm(data_dic):
-        for col_idx in tqdm(data_dic[row_idx]):
+        for col_idx in data_dic[row_idx]:
             rows.append(row_idx)
             columns.append(col_idx)
             rows.append(col_idx)
