@@ -81,7 +81,7 @@ def _reduce(args):
     sing_values_filepath = futils.get_singvalues_filepath(args.model)
     sing_vectors_filepaths = futils.get_singvectors_filepath(args.model)
     reducer.reduce_matrix_via_svd(args.model, args.dim, sing_values_filepath,
-                                  sing_vectors_filepaths)
+                                  sing_vectors_filepaths, compact=args.compact)
 
 
 def _compute_pairwise_cosines(args):
@@ -95,8 +95,8 @@ def _compute_pairwise_cosines(args):
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
     calculator.compute_pairwise_cosine_sim(output_dirpath, args.model,
-                                           args.num_threads, args.bin_size,
-                                           args.vocab)
+                                           args.vocab, args.num_threads,
+                                           args.bin_size, args.wordlist)
 
 
 def _weigh(args):
@@ -109,14 +109,7 @@ def _weigh(args):
         os.makedirs(output_dirpath)
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
-
-    if args.weighing_func not in ['ppmi']:
-        logger.error('Unsupported weighing function {}'
-                     .format(args.weighing_func))
-        raise Exception
-    if args.weighing_func == 'ppmi':
-        func = weigher.ppmi
-    weigher.weigh(output_dirpath, args.model, args.counts, func)
+    weigher.weigh(output_dirpath, args.model, args.weighing_func)
 
 
 def _compute_singvectors_distribution(args):
@@ -129,7 +122,7 @@ def _compute_singvectors_distribution(args):
         os.makedirs(output_dirpath)
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
-    calculator.compute_singvectors_distribution(output_dirpath, args.model)
+    calculator.compute_singvectors_distribution(output_dirpath, args.model, args.save)
 
 
 def main():
@@ -166,11 +159,13 @@ def main():
         help='compute pairwise cosine similarity between vocabulary items')
     parser_compute_cosine.set_defaults(func=_compute_pairwise_cosines)
     parser_compute_cosine.add_argument(
-        '-v', '--vocab', help='set of vocabulary items to compute the '
-                              'distribution for. If not set, will default to '
-                              'whole vocabulary')
+        '-w', '--wordlist', help='set of vocabulary items to compute the '
+                                 'distribution for. If not set, will default '
+                                 'to whole vocabulary')
     parser_compute_cosine.add_argument('-m', '--model', required=True,
                                        help='distributional space')
+    parser_compute_cosine.add_argument('-v', '--vocab', required=True,
+                                       help='vocabulary mapping for dsm')
     parser_compute_cosine.add_argument(
         '-o', '--output', help='absolute path to output directory. If not '
                                'set, will default to space dir')
@@ -189,6 +184,8 @@ def main():
     parser_compute_ipr.add_argument('-o', '--output',
                                      help='absolute path to output directory.'
                                      'If not set, will default to matrix dir.')
+    parser_compute_ipr.add_argument('-s', '--save', action='store_true',
+                                     help='save plots to output')
     parser_evaluate = subparsers.add_parser(
         'evaluate', formatter_class=argparse.RawTextHelpFormatter,
         help='evaluate a given distributional space against the MEN dataset')
@@ -223,6 +220,8 @@ def main():
                                     'space to reduce')
     parser_reduce.add_argument('-k', '--dim', default=0, type=int,
                                help='number of dimensions in final model')
+    parser_reduce.add_argument('-c', '--compact', action='store_true',
+                               help='whether or not to store a compact matrix')
     parser_weigh = subparsers.add_parser(
         'weigh', formatter_class=argparse.RawTextHelpFormatter,
         help='weigh sparse matrix according to weighing function')
@@ -231,9 +230,6 @@ def main():
                               help='absolute path to .npz matrix '
                               'corresponding to the distributional '
                               'space to weigh')
-    parser_weigh.add_argument('-c', '--counts', required=True,
-                              help='absolute path to .counts file '
-                              'storing counts for vocabulary items')
     parser_weigh.add_argument('-o', '--output',
                               help='absolute path to output directory. '
                               'If not set, will default to model dir')
