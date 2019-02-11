@@ -11,7 +11,6 @@ if __name__ == '__main__':
 
     RAW_MODEL_DIRPATH = '/home/kabbach/entropix/models/raw/'
     PPMI_MODEL_DIRPATH = '/home/kabbach/entropix/models/ppmi/'
-    COUNTS_DIRPATH = '/home/kabbach/witokit/data/counts/xp001/'
 
     assert os.path.exists(RAW_MODEL_DIRPATH)
     assert os.path.exists(PPMI_MODEL_DIRPATH)
@@ -22,10 +21,7 @@ if __name__ == '__main__':
         print('Processing file {}'.format(raw_model_filepath))
         file_num += 1
         model_basename = os.path.basename(raw_model_filepath).split('.mincount')[0]
-        counts_filepath = os.path.join(COUNTS_DIRPATH,
-                                       '{}.counts'.format(model_basename))
-        entropix.weigh(PPMI_MODEL_DIRPATH, raw_model_filepath, counts_filepath,
-                       'ppmi')
+        entropix.weigh(PPMI_MODEL_DIRPATH, raw_model_filepath, 'ppmi')
         print('Done processing model {}'.format(model_basename))
         print('Completed processing of {}/{} files'
               .format(file_num, len(raw_model_filepaths)))

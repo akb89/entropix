@@ -109,14 +109,7 @@ def _weigh(args):
         os.makedirs(output_dirpath)
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
-
-    if args.weighing_func not in ['ppmi']:
-        logger.error('Unsupported weighing function {}'
-                     .format(args.weighing_func))
-        raise Exception
-    if args.weighing_func == 'ppmi':
-        func = weigher.ppmi
-    weigher.weigh(output_dirpath, args.model, args.counts, func)
+    weigher.weigh(output_dirpath, args.model, args.weighing_func)
 
 
 def _compute_singvectors_distribution(args):
@@ -237,9 +230,6 @@ def main():
                               help='absolute path to .npz matrix '
                               'corresponding to the distributional '
                               'space to weigh')
-    parser_weigh.add_argument('-c', '--counts', required=True,
-                              help='absolute path to .counts file '
-                              'storing counts for vocabulary items')
     parser_weigh.add_argument('-o', '--output',
                               help='absolute path to output directory. '
                               'If not set, will default to model dir')
