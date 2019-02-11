@@ -19,6 +19,7 @@ if __name__ == '__main__':
     file_num = 0
     raw_model_filepaths = futils.get_models_filepaths(RAW_MODEL_DIRPATH)
     for raw_model_filepath in raw_model_filepaths:
+        print('Processing file {}'.format(raw_model_filepath))
         file_num += 1
         model_basename = os.path.basename(raw_model_filepath).split('.mincount')[0]
         counts_filepath = os.path.join(COUNTS_DIRPATH,
