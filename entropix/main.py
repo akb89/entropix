@@ -96,7 +96,7 @@ def _compute_pairwise_cosines(args):
         logger.info('Saving to directory {}'.format(output_dirpath))
     calculator.compute_pairwise_cosine_sim(output_dirpath, args.model,
                                            args.vocab, args.num_threads,
-                                           args.bin_size, args.wordlist)
+                                           args.bin_size)
 
 
 def _weigh(args):
@@ -158,10 +158,6 @@ def main():
         'cosine', formatter_class=argparse.RawTextHelpFormatter,
         help='compute pairwise cosine similarity between vocabulary items')
     parser_compute_cosine.set_defaults(func=_compute_pairwise_cosines)
-    parser_compute_cosine.add_argument(
-        '-w', '--wordlist', help='set of vocabulary items to compute the '
-                                 'distribution for. If not set, will default '
-                                 'to whole vocabulary')
     parser_compute_cosine.add_argument('-m', '--model', required=True,
                                        help='distributional space')
     parser_compute_cosine.add_argument('-v', '--vocab', required=True,

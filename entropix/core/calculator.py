@@ -11,11 +11,13 @@ import numpy as np
 import scipy
 from scipy import sparse
 from scipy import spatial
+from sklearn.metrics.pairwise import cosine_similarity
 #import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
 import entropix.utils.files as futils
+import entropix.utils.data as dutils
 
 
 logger = logging.getLogger(__name__)
@@ -34,86 +36,69 @@ def compute_entropy(counts):
     return total_count, len(counts), entropy
 
 
-def _load_wordlist(wordlist_filepath):
-    words = set()
-    with open(wordlist_filepath, encoding='utf-8') as input_stream:
-        for line in input_stream:
-            words.add(line.strip().lower())
-    return words
-
-
-def _load_vocabulary(vocab_filepath):
-    idx_to_word_dic = {}
-    with open(vocab_filepath, encoding='utf-8') as input_stream:
-        for line in input_stream:
-            linesplit = line.strip().split('\t')
-            idx_to_word_dic[int(linesplit[0])] = linesplit[1]
-    return idx_to_word_dic
-
-
-def _load_model(model_filepath):
-    return sparse.load_npz(model_filepath)
-
-
-def _process(output_dirpath, M, idx_to_word_dic, idx):
-    cosines_dic = {}
-    vector = M.getrow(idx).toarray()
+def _process(output_dirpath, M, idx_to_word_dic, bin_size, idx):
+    number_of_bins = 1/bin_size + 1
+    freqdist = [0]*int(number_of_bins)
+    vector = M.getrow(idx)
     output_filepath = futils.get_tmp_cosinedist_filepath(output_dirpath, idx)
-    with open(output_filepath, 'w', encoding='utf-8') as output_stream:
-        for idx2 in idx_to_word_dic:
-            if idx2 > idx:
-                vector2 = M.getrow(idx2).toarray()
-                cosine = 1-spatial.distance.cosine(vector, vector2)
-                if not math.isnan(cosine):
-                    cosines_dic[(idx, idx2)] = cosine
-                    word1, word2 = idx_to_word_dic[idx], idx_to_word_dic[idx2]
-                    print('{}\t{}\t{}'.format(word1, word2, cosine), file=output_stream)
-                else:
-                    logger.info('Undefined cosine similarity for pair '
-                                '{} {}'.format(idx_to_word_dic[idx],
-                                               idx_to_word_dic[idx2]))
-    return cosines_dic, idx
+    similarities = cosine_similarity(vector, M.T, dense_output=False).tocoo()
+
+    for row, col, value in zip(similarities.row, similarities.col, similarities.data):
+    #    print(number_of_bins, value, int(value/bin_size))
+        freqdist[int(value/bin_size)] += 1
+
+#        print(row, col, value)
+
+#    with open(output_filepath, 'w', encoding='utf-8') as output_stream:
+#        for idx2 in idx_to_word_dic:
+#            if idx2 > idx:
+#                vector2 = M.getrow(idx2)
+#                cosine = 1-spatial.distance.cosine(vector, vector2)
+
+#                if not math.isnan(cosine):
+#                    freqdist[int(cosine/bin_size)] += 1
+#                    word1, word2 = idx_to_word_dic[idx], idx_to_word_dic[idx2]
+#                    print('{}\t{}\t{}'.format(word1, word2, cosine), file=output_stream)
+#                else:
+#                    logger.info('Undefined cosine similarity for pair '
+#                                '{} {}'.format(idx_to_word_dic[idx],
+#                                               idx_to_word_dic[idx2]))
+    return freqdist, idx
 
 
 def compute_pairwise_cosine_sim(output_dirpath, model_filepath, vocab_filepath,
-                                num_threads, bin_size, wordlist_filepath=None):
+                                num_threads, bin_size):
     """
     Compute paiwise cosine similarity between vocabulary items.
     The function also computes the distribution of pariwise cosine sim.
     """
     distribution_filepath = futils.get_cosines_distribution_filepath(
         output_dirpath, model_filepath)
-    number_of_bins = 1/bin_size
+    number_of_bins = 1/bin_size + 1
     freqdist = [0]*int(number_of_bins)
-    words_shortlist = []
     with open(distribution_filepath, 'w', encoding='utf-8') as output_distribution:
-        if wordlist_filepath:
-            words_shortlist = _load_wordlist(wordlist_filepath)
+        M = dutils.load_model_from_npz(model_filepath)
 
-        M = _load_model(model_filepath)
-        idx_to_word_dic = _load_vocabulary(vocab_filepath)
+        similarities = cosine_similarity(M, dense_output=False).tocoo()
 
-        if words_shortlist:
-            idx_to_word_dic = {k: w for k, w in idx_to_word_dic.items()
-                               if w in words_shortlist}
-            logger.info('{} out of {} vocabulary items found.'
-                        .format(len(idx_to_word_dic), len(words_shortlist)))
+        for row_index, col_index, value in zip(similarities.row, similarities.col, similarities.data):
+            bin = int(value/bin_size)
+            freqdist[bin] +=1
+    #     idx_to_word_dic = dutils.load_vocab_mapping(vocab_filepath)
+    #     with multiprocessing.Pool(num_threads) as pool:
+    #         process = functools.partial(_process, output_dirpath, M,
+    #                                      idx_to_word_dic, bin_size)
+    #         for partial_freqdist, idx in tqdm(pool.imap_unordered(process, idx_to_word_dic.keys())):
+    #             for bin, value in enumerate(partial_freqdist):
+    #                 freqdist[bin] += value
 
-        with multiprocessing.Pool(num_threads) as pool:
-            process = functools.partial(_process, output_dirpath, M, idx_to_word_dic)
-            for partial_cosine_dic, idx in tqdm(pool.imap_unordered(process, idx_to_word_dic.keys())):
-                for index_pair, cosine in partial_cosine_dic.items():
-                    idx, idx2 = index_pair
-                    word1, word2 = idx_to_word_dic[idx], idx_to_word_dic[idx2]
-                    freqdist[int(cosine/bin_size)] += 1
-
-        # TODO: decide if the merging phase is necessary
         # write distribution to output file
-        print('range\tN', file=output_distribution)
-        for i, k in enumerate(freqdist):
-            print('{}<=x<{}\t{}'.format(round(i*bin_size, 5),
-                                        round((i+1)*bin_size, 5), k),
-                  file=output_distribution)
+
+        # print('range\tN', file=output_distribution)
+        # for i, k in enumerate(freqdist):
+        #     print('{}<=x<{}\t{}'.format(round(i*bin_size, 5),
+        #                                 round((i+1)*bin_size, 5), k),
+        #           file=output_distribution)
 
     return freqdist
 
