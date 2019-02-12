@@ -32,7 +32,7 @@ setup(
         ],
     },
     install_requires=['pyyaml>=4.2b1', 'tqdm==4.30.0', 'scipy==1.2.0',
-                      'matplotlib==3.0.2'],
+                      'matplotlib==3.0.2', 'scikit-learn==0.20.2'],
     classifiers=['Development Status :: 2 - Pre-Alpha',
                  'Environment :: Web Environment',
                  'Intended Audience :: Developers',
