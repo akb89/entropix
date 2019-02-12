@@ -125,6 +125,21 @@ def _compute_singvectors_distribution(args):
     calculator.compute_singvectors_distribution(output_dirpath, args.model, args.save)
 
 
+def restricted_energy(x):
+    x = float(x)
+    if x < 0.0 or x > 100.0:
+        raise argparse.ArgumentTypeError('{} energy not in range [0, 100]'
+                                         .format(x))
+    return x
+
+def restricted_alpha(x):
+    x = float(x)
+    if x < 0.0 or x > 1.0:
+        raise argparse.ArgumentTypeError('{} alpha not in range [0.0, 1.0]'
+                                         .format(x))
+    return x
+
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -175,13 +190,13 @@ def main():
         help='compute ipr from input singular vectors matrix')
     parser_compute_ipr.set_defaults(func=_compute_singvectors_distribution)
     parser_compute_ipr.add_argument('-m', '--model', required=True,
-                                     help='absolute path to .npz matrix '
-                                          'corresponding to the dsm.')
+                                    help='absolute path to .npz matrix '
+                                         'corresponding to the dsm.')
     parser_compute_ipr.add_argument('-o', '--output',
-                                     help='absolute path to output directory.'
-                                     'If not set, will default to matrix dir.')
+                                    help='absolute path to output directory.'
+                                    'If not set, will default to matrix dir.')
     parser_compute_ipr.add_argument('-s', '--save', action='store_true',
-                                     help='save plots to output')
+                                    help='save plots to output')
     parser_evaluate = subparsers.add_parser(
         'evaluate', formatter_class=argparse.RawTextHelpFormatter,
         help='evaluate a given distributional space against the MEN dataset')
@@ -208,16 +223,19 @@ def main():
                                  help='size of context window')
     parser_reduce = subparsers.add_parser(
         'reduce', formatter_class=argparse.RawTextHelpFormatter,
-        help='apply svd to input matrix')
+        help='reduce a space by composing singular vectors and values')
     parser_reduce.set_defaults(func=_reduce)
-    parser_reduce.add_argument('-m', '--model', required=True,
-                               help='absolute path to .npz matrix '
-                                    'corresponding to the distributional '
-                                    'space to reduce')
-    parser_reduce.add_argument('-k', '--dim', default=0, type=int,
-                               help='number of dimensions in final model')
-    parser_reduce.add_argument('-c', '--compact', action='store_true',
-                               help='whether or not to store a compact matrix')
+    parser_reduce.add_argument('-u', '--singvectors', required=True,
+                               help='absolute path to .singvectors.npy')
+    parser_reduce.add_argument('-s', '--singvalues', required=True,
+                               help='absolute path to .singvalues.npy')
+    parser_reduce.add_argument('-a', '--alpha', default=1.0,
+                               type=restricted_alpha,
+                               help='raise singvalues at power alpha')
+    parser_reduce.add_argument('-e', '--energy', default=100,
+                               type=restricted_energy,
+                               help='how much energy of the original sigma'
+                                    'to keep')
     parser_svd = subparsers.add_parser(
         'svd', formatter_class=argparse.RawTextHelpFormatter,
         help='apply svd to input matrix')
