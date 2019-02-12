@@ -2,11 +2,11 @@
 import os
 import logging
 
-import math
-from scipy import sparse
+import numpy as np
 from scipy import stats
+import scipy.spatial as spatial
 
-from tqdm import tqdm
+import entropix.utils.data as dutils
 
 __all__ = ('evaluate_distributional_space')
 
@@ -21,55 +21,37 @@ def _spearman(x, y):
     return stats.spearmanr(x, y)[0]
 
 
-def _cosine_similarity(peer_v, query_v):
-    if peer_v.shape != query_v.shape:
-        raise ValueError('Vectors must be of same length')
-    num = peer_v.dot(query_v.transpose()).data[0]
-    den_a = peer_v.dot(peer_v.transpose()).data[0]
-    den_b = query_v.dot(query_v.transpose()).data[0]
-    return num / (math.sqrt(den_a) * math.sqrt(den_b))
-
-
 def _get_men_pairs_and_sim():
-    pairs = []
-    humans = []
+    left = []
+    right = []
+    sim = []
     with open(MEN_FILEPATH, 'r', encoding='utf-8') as men_stream:
         for line in men_stream:
             line = line.rstrip('\n')
             items = line.split()
-            pairs.append((items[0], items[1]))
-            humans.append(float(items[2]))
-    return pairs, humans
-
-
-def _load_vocabulary(vocab_filepath):
-    vocab = {}
-    with open(vocab_filepath, 'r', encoding='utf-8') as vocab_stream:
-        for line in vocab_stream:
-            line = line.strip()
-            vocab[line.split('\t')[1]] = line.split('\t')[0]
-    return vocab
+            left.append(items[0])
+            right.append(items[1])
+            sim.append(float(items[2]))
+    return left, right, sim
 
 
 def evaluate_distributional_space(model_filepath, vocab_filepath):
     """Evaluate a numpy model against the MEN dataset."""
     logger.info('Checking embeddings quality against MEN similarity ratings')
     logger.info('Loading vocabulary...')
-    vocab = _load_vocabulary(vocab_filepath)
+    idx_to_word = dutils.load_vocab_mapping(vocab_filepath)
+    word_to_idx = {v: k for k, v in idx_to_word.items()}
     logger.info('Loading distributional space from {}'.format(model_filepath))
-    model = sparse.load_npz(model_filepath)
-    pairs, humans = _get_men_pairs_and_sim()
-    system_actual = []
-    human_actual = []
-    count = 0
-    for (first, second), human in tqdm(zip(pairs, humans), total=len(pairs)):
-        if first not in vocab or second not in vocab:
-            logger.error('Could not find one of more pair item in model '
-                         'vocabulary: {}, {}'.format(first, second))
-            continue
-        sim = _cosine_similarity(model[vocab[first]], model[vocab[second]])
-        system_actual.append(sim)
-        human_actual.append(human)
-        count += 1
-    spr = _spearman(human_actual, system_actual)
-    logger.info('SPEARMAN: {} calculated over {} items'.format(spr, count))
+    model = np.load(model_filepath)
+    #model = Word2Vec.load(model_filepath)
+    left, right, sim = _get_men_pairs_and_sim()
+    left_idx = [word_to_idx[word] for word in left]
+    right_idx = [word_to_idx[word] for word in right]
+    left_vectors = model[left_idx]
+    right_vectors = model[right_idx]
+    # left_vectors = np.asarray([model.wv[word] for word in left])
+    # right_vectors = np.asarray([model.wv[word] for word in right])
+    spa = 1 - spatial.distance.cdist(left_vectors, right_vectors, 'cosine')
+    diag = np.diagonal(spa)
+    spr = _spearman(sim, diag)
+    logger.info('SPEARMAN: {} calculated over {} items'.format(spr, len(left)))

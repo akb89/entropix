@@ -8,6 +8,8 @@ import argparse
 import logging
 import logging.config
 
+import numpy as np
+
 import entropix.utils.config as cutils
 import entropix.utils.files as futils
 import entropix.core.counter as counter
@@ -125,6 +127,25 @@ def _compute_singvectors_distribution(args):
     calculator.compute_singvectors_distribution(output_dirpath, args.model, args.save)
 
 
+def _reduce(args):
+    singvalues = np.load(args.singvalues)
+    singvectors = np.load(args.singvectors)
+    if args.save:
+        outname = '{}.reduced.energy{}.alpha{}.npy'.format(
+            os.path.basename(args.singvectors).split('.singvectors.npy')[0],
+            args.energy, args.alpha)
+        if args.outputdir:
+            os.makedirs(args.outputdir, exist_ok=True)
+            output_filepath = os.path.join(args.outputdir, outname)
+        else:
+            output_filepath = os.path.join(os.path.dirname(args.singvectors),
+                                           outname)
+        reducer.reduce(singvalues, singvectors, args.alpha, args.energy,
+                       output_filepath)
+    else:
+        reducer.reduce(singvalues, singvectors, args.alpha, args.energy)
+
+
 def restricted_energy(x):
     x = float(x)
     if x < 0.0 or x > 100.0:
@@ -236,6 +257,13 @@ def main():
                                type=restricted_energy,
                                help='how much energy of the original sigma'
                                     'to keep')
+    parser_reduce.add_argument('-o', '--save', action='store_true',
+                               help='whether or not to save the output '
+                                    'reduced matrix')
+    parser_reduce.add_argument('-d', '--outputdir',
+                               help='absolute path to output directory where'
+                                    'to save model. If not set, will default'
+                                    'to -u directory is -o is true')
     parser_svd = subparsers.add_parser(
         'svd', formatter_class=argparse.RawTextHelpFormatter,
         help='apply svd to input matrix')
