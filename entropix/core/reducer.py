@@ -7,11 +7,16 @@ from scipy.sparse.linalg import svds
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('reduce_matrix_via_svd')
+__all__ = ('apply_svd', 'reduce')
 
 
-def reduce_matrix_via_svd(model_filepath, dim, sing_values_filepath,
-                          sing_vectors_filepath, compact=False):
+def reduce(singvalues, singvectors, alpha):
+    """Return U*S^alpha."""
+    pass
+
+
+def apply_svd(model_filepath, dim, sing_values_filepath,
+              sing_vectors_filepath, compact=False):
     """Apply SVD to matrix and save singular values and vectors to files.
 
     If compact is true, only non-null singular values will be kept.

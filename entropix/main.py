@@ -76,7 +76,7 @@ def _generate(args):
                                             args.min_count, args.win_size)
 
 
-def _reduce(args):
+def _svd(args):
     logger.info('Applying SVD to model {}'.format(args.model))
     sing_values_filepath = futils.get_singvalues_filepath(args.model)
     sing_vectors_filepaths = futils.get_singvectors_filepath(args.model)
@@ -218,6 +218,18 @@ def main():
                                help='number of dimensions in final model')
     parser_reduce.add_argument('-c', '--compact', action='store_true',
                                help='whether or not to store a compact matrix')
+    parser_svd = subparsers.add_parser(
+        'svd', formatter_class=argparse.RawTextHelpFormatter,
+        help='apply svd to input matrix')
+    parser_svd.set_defaults(func=_svd)
+    parser_svd.add_argument('-m', '--model', required=True,
+                            help='absolute path to .npz matrix '
+                                 'corresponding to the distributional '
+                                 'space to reduce via svd')
+    parser_svd.add_argument('-k', '--dim', default=0, type=int,
+                            help='number of dimensions in final model')
+    parser_svd.add_argument('-c', '--compact', action='store_true',
+                            help='whether or not to store a compact matrix')
     parser_weigh = subparsers.add_parser(
         'weigh', formatter_class=argparse.RawTextHelpFormatter,
         help='weigh sparse matrix according to weighing function')
