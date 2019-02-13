@@ -9,6 +9,7 @@ import logging
 import logging.config
 
 import numpy as np
+import scipy
 
 import entropix.utils.config as cutils
 import entropix.utils.files as futils
@@ -31,7 +32,15 @@ def _evaluate(args):
     evaluator.evaluate_distributional_space(args.model, args.vocab)
 
 
-def _compute_entropy(args):
+def _compute_sentropy(args):
+    logger.info('Computing entropy of singular values from {}'
+                .format(args.model))
+    model = np.load(args.model)
+    entropy = scipy.stats.entropy(model, base=2)
+    logger.info('Entropy = {}'.format(entropy))
+
+
+def _compute_lentropy(args):
     logger.info('Computing entropy from file {}'.format(args.counts))
     counts = {}
     with open(args.counts, 'r', encoding='utf-8') as input_stream:
@@ -184,11 +193,18 @@ def main():
         'compute', formatter_class=argparse.RawTextHelpFormatter,
         help='compute entropy or pairwise cosine similarity metrics')
     compute_sub = parser_compute.add_subparsers()
-    parser_compute_entropy = compute_sub.add_parser(
-        'entropy', formatter_class=argparse.RawTextHelpFormatter,
-        help='compute entropy from input .counts file')
-    parser_compute_entropy.set_defaults(func=_compute_entropy)
-    parser_compute_entropy.add_argument(
+    parser_compute_sentropy = compute_sub.add_parser(
+        'sentropy', formatter_class=argparse.RawTextHelpFormatter,
+        help='compute entropy of inpu singular values')
+    parser_compute_sentropy.set_defaults(func=_compute_sentropy)
+    parser_compute_sentropy.add_argument(
+        '-m', '--model', required=True,
+        help='absolute path the .singvalues.npy file')
+    parser_compute_lentropy = compute_sub.add_parser(
+        'lentropy', formatter_class=argparse.RawTextHelpFormatter,
+        help='compute language entropy from input .counts file')
+    parser_compute_lentropy.set_defaults(func=_compute_lentropy)
+    parser_compute_lentropy.add_argument(
         '-c', '--counts', required=True,
         help='input .counts counts file to compute entropy from')
     parser_compute_cosine = compute_sub.add_parser(
