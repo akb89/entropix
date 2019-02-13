@@ -32,6 +32,10 @@ def _evaluate(args):
     evaluator.evaluate_distributional_space(args.model, args.vocab)
 
 
+def _compute_energy(args):
+    pass
+
+
 def _compute_sentropy(args):
     logger.info('Computing entropy of singular values from {}'
                 .format(args.model))
@@ -93,8 +97,8 @@ def _svd(args):
     logger.info('Applying SVD to model {}'.format(args.model))
     sing_values_filepath = futils.get_singvalues_filepath(args.model)
     sing_vectors_filepaths = futils.get_singvectors_filepath(args.model)
-    reducer.reduce_matrix_via_svd(args.model, args.dim, sing_values_filepath,
-                                  sing_vectors_filepaths, compact=args.compact)
+    reducer.svd(args.model, args.dim, sing_values_filepath,
+                sing_vectors_filepaths, compact=args.compact)
 
 
 def _compute_pairwise_cosines(args):
