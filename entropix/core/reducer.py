@@ -58,6 +58,10 @@ def reduce(singvalues, singvectors, top, alpha, energy, output_filepath=None):
         reduced_energy_rank = _get_reduced_rank(singvalues, energy)
         singvalues = singvalues[reduced_energy_rank:]
         singvectors = singvectors[:, reduced_energy_rank:]
+    if output_filepath:
+        singvalues_filepath = '{}.singvalues.npy'.format(
+            output_filepath.split('.npy')[0])
+        np.save(singvalues_filepath, singvalues)
     singvalues = np.diag(singvalues)
     if alpha == 1:
         reduced = np.matmul(singvectors, singvalues)

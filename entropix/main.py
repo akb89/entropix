@@ -10,6 +10,7 @@ import logging.config
 
 import numpy as np
 import scipy
+from scipy import sparse
 
 import entropix.utils.config as cutils
 import entropix.utils.files as futils
@@ -33,7 +34,19 @@ def _evaluate(args):
 
 
 def _compute_energy(args):
-    pass
+    if args.model.endswith('.npz'):
+        logger.info('Computing energy of matrix {}'.format(args.model))
+        model = sparse.load_npz(args.model)
+        energy = model.power(2).sum()
+    elif args.model.endswith('.npy'):
+        logger.info('Computing energy of singular values {}'
+                    .format(args.model))
+        model = np.load(args.model)
+        energy = np.sum(model**2)
+    else:
+        raise Exception('Unsupported model extension. Should be of .npz or '
+                        '.npy {}'.format(args.model))
+    logger.info('Energy = {}'.format(energy))
 
 
 def _compute_sentropy(args):
@@ -199,9 +212,16 @@ def main():
         'compute', formatter_class=argparse.RawTextHelpFormatter,
         help='compute entropy or pairwise cosine similarity metrics')
     compute_sub = parser_compute.add_subparsers()
+    parser_compute_energy = compute_sub.add_parser(
+        'energy', formatter_class=argparse.RawTextHelpFormatter,
+        help='compute energy of .npz or .npy model')
+    parser_compute_energy.set_defaults(func=_compute_energy)
+    parser_compute_energy.add_argument(
+        '-m', '--model', required=True,
+        help='absolute path the .singvalues.npy or .npz file')
     parser_compute_sentropy = compute_sub.add_parser(
         'sentropy', formatter_class=argparse.RawTextHelpFormatter,
-        help='compute entropy of inpu singular values')
+        help='compute entropy of input singular values')
     parser_compute_sentropy.set_defaults(func=_compute_sentropy)
     parser_compute_sentropy.add_argument(
         '-m', '--model', required=True,
