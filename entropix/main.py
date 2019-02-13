@@ -143,7 +143,8 @@ def _reduce(args):
         reducer.reduce(singvalues, singvectors, args.alpha, args.energy,
                        output_filepath)
     else:
-        reducer.reduce(singvalues, singvectors, args.alpha, args.energy)
+        reducer.reduce(singvalues, singvectors, args.top, args.alpha,
+                       args.energy)
 
 
 def restricted_energy(x):
@@ -250,6 +251,8 @@ def main():
                                help='absolute path to .singvectors.npy')
     parser_reduce.add_argument('-s', '--singvalues', required=True,
                                help='absolute path to .singvalues.npy')
+    parser_reduce.add_argument('-t', '--top', default=0, typ=int,
+                               help='keep all but top n highest singvalues')
     parser_reduce.add_argument('-a', '--alpha', default=1.0,
                                type=restricted_alpha,
                                help='raise singvalues at power alpha')
