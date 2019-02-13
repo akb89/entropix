@@ -37,6 +37,8 @@ def _compute_sentropy(args):
                 .format(args.model))
     model = np.load(args.model)
     entropy = scipy.stats.entropy(model, base=2)
+    logger.info('Rank = {}'.format(len(model)))
+    logger.info(model)
     logger.info('Entropy = {}'.format(entropy))
 
 
