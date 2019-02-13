@@ -251,7 +251,7 @@ def main():
                                help='absolute path to .singvectors.npy')
     parser_reduce.add_argument('-s', '--singvalues', required=True,
                                help='absolute path to .singvalues.npy')
-    parser_reduce.add_argument('-t', '--top', default=0, typ=int,
+    parser_reduce.add_argument('-t', '--top', default=0, type=int,
                                help='keep all but top n highest singvalues')
     parser_reduce.add_argument('-a', '--alpha', default=1.0,
                                type=restricted_alpha,
