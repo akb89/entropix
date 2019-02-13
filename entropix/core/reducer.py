@@ -67,13 +67,15 @@ def apply_svd(model_filepath, dim, sing_values_filepath,
     if compact:
         if np.all(S):
             raise Exception('Compact option set to true but all singular '
-                            'values are non-null. Try using reduce with '
+                            'values are non-null. Try using svd with '
                             'a higher dim parameter')
         logger.info('Compact set to true: keeping non-null singular values '
                     'only')
         first_zero_rank = np.nonzero(S)[0].size
         S = S[:first_zero_rank]
         U = U[:, :first_zero_rank]
+    logger.info('Energy of original matrix = {}'.format(M.power(2).sum()))
+    logger.info('Energy of reduced matrix = {}'.format(np.sum(S ** 2)))
     logger.info('Saving singular values to {}'.format(sing_values_filepath))
     np.save(sing_values_filepath, S)
     logger.info('Saving singular vectors to {}'.format(sing_vectors_filepath))

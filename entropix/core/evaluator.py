@@ -43,15 +43,12 @@ def evaluate_distributional_space(model_filepath, vocab_filepath):
     word_to_idx = {v: k for k, v in idx_to_word.items()}
     logger.info('Loading distributional space from {}'.format(model_filepath))
     model = np.load(model_filepath)
-    #model = Word2Vec.load(model_filepath)
     left, right, sim = _get_men_pairs_and_sim()
     left_idx = [word_to_idx[word] for word in left]
     right_idx = [word_to_idx[word] for word in right]
     left_vectors = model[left_idx]
     right_vectors = model[right_idx]
-    # left_vectors = np.asarray([model.wv[word] for word in left])
-    # right_vectors = np.asarray([model.wv[word] for word in right])
-    spa = 1 - spatial.distance.cdist(left_vectors, right_vectors, 'cosine')
-    diag = np.diagonal(spa)
+    cos = 1 - spatial.distance.cdist(left_vectors, right_vectors, 'cosine')
+    diag = np.diagonal(cos)
     spr = _spearman(sim, diag)
     logger.info('SPEARMAN: {} calculated over {} items'.format(spr, len(left)))
