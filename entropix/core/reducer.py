@@ -20,14 +20,28 @@ def _get_reduced_rank(singvalues, energy_ratio):
     return len(singvalues)-1
 
 
-def _sort_values(singvalues, singvectors):
+def _get_sorted_singv(singvalues, singvectors):
     if singvalues[0] <= singvalues[1]:
         return singvalues, singvectors
     return singvalues[::-1], singvectors[:, ::-1]
 
 
-def reduce(singvalues, singvectors, alpha, energy, output_filepath=None):
-    """Return U*S^alpha."""
+def _get_top_sorted_singv(singvalues, singvectors, top):
+    """Return all but the top-n singvalues/vectors."""
+    if not (0 <= top < len(singvalues)):
+        raise Exception('Invalid top value: {}. Should be in '
+                        '[0, len(singvalues)={}]'.format(top, len(singvalues)))
+    sdsingvalues, sdsingvectors = _get_sorted_singv(singvalues, singvectors)
+    if top == 0:
+        return sdsingvalues, sdsingvectors
+    return sdsingvalues[:len(sdsingvalues)-top], sdsingvectors[:, :len(singvalues)-top]
+
+
+def reduce(singvalues, singvectors, top, alpha, energy, output_filepath=None):
+    """Return U*S^alpha.
+
+    Reduce singular values: remove top-n values, get energy*original_energy
+    """
     logger.info('Reducing singular vectors and values...')
     if not (0 <= energy <= 100):
         raise Exception('Invalid energy value: {}. Should be in [0, 100]'
@@ -35,12 +49,19 @@ def reduce(singvalues, singvectors, alpha, energy, output_filepath=None):
     if not (0 <= alpha <= 1):
         raise Exception('Invalid alpha value: {}. Should be in [0, 1]'
                         .format(alpha))
+    if not (0 <= top < len(singvalues)):
+        raise Exception('Invalid top value: {}. Should be in '
+                        '[0, len(singvalues)={}]'.format(top, len(singvalues)))
     # Make sure that singvalues/singvectors are ranked in incr. order of val
-    singvalues, singvectors = _sort_values(singvalues, singvectors)
+    singvalues, singvectors = _get_top_sorted_singv(singvalues, singvectors, top)
     if energy < 100:
         reduced_energy_rank = _get_reduced_rank(singvalues, energy)
         singvalues = singvalues[reduced_energy_rank:]
         singvectors = singvectors[:, reduced_energy_rank:]
+    if output_filepath:
+        singvalues_filepath = '{}.singvalues.npy'.format(
+            output_filepath.split('.npy')[0])
+        np.save(singvalues_filepath, singvalues)
     singvalues = np.diag(singvalues)
     if alpha == 1:
         reduced = np.matmul(singvectors, singvalues)

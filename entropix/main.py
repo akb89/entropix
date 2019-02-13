@@ -9,6 +9,8 @@ import logging
 import logging.config
 
 import numpy as np
+import scipy
+from scipy import sparse
 
 import entropix.utils.config as cutils
 import entropix.utils.files as futils
@@ -31,7 +33,33 @@ def _evaluate(args):
     evaluator.evaluate_distributional_space(args.model, args.vocab)
 
 
-def _compute_entropy(args):
+def _compute_energy(args):
+    if args.model.endswith('.npz'):
+        logger.info('Computing energy of matrix {}'.format(args.model))
+        model = sparse.load_npz(args.model)
+        energy = model.power(2).sum()
+    elif args.model.endswith('.npy'):
+        logger.info('Computing energy of singular values {}'
+                    .format(args.model))
+        model = np.load(args.model)
+        energy = np.sum(model**2)
+    else:
+        raise Exception('Unsupported model extension. Should be of .npz or '
+                        '.npy {}'.format(args.model))
+    logger.info('Energy = {}'.format(energy))
+
+
+def _compute_sentropy(args):
+    logger.info('Computing entropy of singular values from {}'
+                .format(args.model))
+    model = np.load(args.model)
+    entropy = scipy.stats.entropy(model, base=2)
+    logger.info('Rank = {}'.format(len(model)))
+    logger.info(model)
+    logger.info('Entropy = {}'.format(entropy))
+
+
+def _compute_lentropy(args):
     logger.info('Computing entropy from file {}'.format(args.counts))
     counts = {}
     with open(args.counts, 'r', encoding='utf-8') as input_stream:
@@ -82,8 +110,8 @@ def _svd(args):
     logger.info('Applying SVD to model {}'.format(args.model))
     sing_values_filepath = futils.get_singvalues_filepath(args.model)
     sing_vectors_filepaths = futils.get_singvectors_filepath(args.model)
-    reducer.reduce_matrix_via_svd(args.model, args.dim, sing_values_filepath,
-                                  sing_vectors_filepaths, compact=args.compact)
+    reducer.apply_svd(args.model, args.dim, sing_values_filepath,
+                      sing_vectors_filepaths, compact=args.compact)
 
 
 def _compute_pairwise_cosines(args):
@@ -131,19 +159,20 @@ def _reduce(args):
     singvalues = np.load(args.singvalues)
     singvectors = np.load(args.singvectors)
     if args.save:
-        outname = '{}.reduced.energy{}.alpha{}.npy'.format(
+        outname = '{}.reduced.top{}.energy{}.alpha{}.npy'.format(
             os.path.basename(args.singvectors).split('.singvectors.npy')[0],
-            args.energy, args.alpha)
+            args.top, args.energy, args.alpha)
         if args.outputdir:
             os.makedirs(args.outputdir, exist_ok=True)
             output_filepath = os.path.join(args.outputdir, outname)
         else:
             output_filepath = os.path.join(os.path.dirname(args.singvectors),
                                            outname)
-        reducer.reduce(singvalues, singvectors, args.alpha, args.energy,
-                       output_filepath)
+        reducer.reduce(singvalues, singvectors, args.top, args.alpha,
+                       args.energy, output_filepath)
     else:
-        reducer.reduce(singvalues, singvectors, args.alpha, args.energy)
+        reducer.reduce(singvalues, singvectors, args.top, args.alpha,
+                       args.energy)
 
 
 def restricted_energy(x):
@@ -183,11 +212,25 @@ def main():
         'compute', formatter_class=argparse.RawTextHelpFormatter,
         help='compute entropy or pairwise cosine similarity metrics')
     compute_sub = parser_compute.add_subparsers()
-    parser_compute_entropy = compute_sub.add_parser(
-        'entropy', formatter_class=argparse.RawTextHelpFormatter,
-        help='compute entropy from input .counts file')
-    parser_compute_entropy.set_defaults(func=_compute_entropy)
-    parser_compute_entropy.add_argument(
+    parser_compute_energy = compute_sub.add_parser(
+        'energy', formatter_class=argparse.RawTextHelpFormatter,
+        help='compute energy of .npz or .npy model')
+    parser_compute_energy.set_defaults(func=_compute_energy)
+    parser_compute_energy.add_argument(
+        '-m', '--model', required=True,
+        help='absolute path the .singvalues.npy or .npz file')
+    parser_compute_sentropy = compute_sub.add_parser(
+        'sentropy', formatter_class=argparse.RawTextHelpFormatter,
+        help='compute entropy of input singular values')
+    parser_compute_sentropy.set_defaults(func=_compute_sentropy)
+    parser_compute_sentropy.add_argument(
+        '-m', '--model', required=True,
+        help='absolute path the .singvalues.npy file')
+    parser_compute_lentropy = compute_sub.add_parser(
+        'lentropy', formatter_class=argparse.RawTextHelpFormatter,
+        help='compute language entropy from input .counts file')
+    parser_compute_lentropy.set_defaults(func=_compute_lentropy)
+    parser_compute_lentropy.add_argument(
         '-c', '--counts', required=True,
         help='input .counts counts file to compute entropy from')
     parser_compute_cosine = compute_sub.add_parser(
@@ -250,6 +293,8 @@ def main():
                                help='absolute path to .singvectors.npy')
     parser_reduce.add_argument('-s', '--singvalues', required=True,
                                help='absolute path to .singvalues.npy')
+    parser_reduce.add_argument('-t', '--top', default=0, type=int,
+                               help='keep all but top n highest singvalues')
     parser_reduce.add_argument('-a', '--alpha', default=1.0,
                                type=restricted_alpha,
                                help='raise singvalues at power alpha')
