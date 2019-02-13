@@ -28,8 +28,6 @@ def _get_sorted_singv(singvalues, singvectors):
 
 def _get_top_sorted_singv(singvalues, singvectors, top):
     """Return all but the top-n singvalues/vectors."""
-    print('top = {}'.format(top))
-    print('sin = {}'.format(len(singvalues)))
     if not (0 <= top < len(singvalues)):
         raise Exception('Invalid top value: {}. Should be in '
                         '[0, len(singvalues)={}]'.format(top, len(singvalues)))
