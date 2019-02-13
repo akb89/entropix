@@ -131,9 +131,9 @@ def _reduce(args):
     singvalues = np.load(args.singvalues)
     singvectors = np.load(args.singvectors)
     if args.save:
-        outname = '{}.reduced.energy{}.alpha{}.npy'.format(
+        outname = '{}.reduced.top{}.energy{}.alpha{}.npy'.format(
             os.path.basename(args.singvectors).split('.singvectors.npy')[0],
-            args.energy, args.alpha)
+            args.top, args.energy, args.alpha)
         if args.outputdir:
             os.makedirs(args.outputdir, exist_ok=True)
             output_filepath = os.path.join(args.outputdir, outname)
