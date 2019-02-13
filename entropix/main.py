@@ -140,8 +140,8 @@ def _reduce(args):
         else:
             output_filepath = os.path.join(os.path.dirname(args.singvectors),
                                            outname)
-        reducer.reduce(singvalues, singvectors, args.alpha, args.energy,
-                       output_filepath)
+        reducer.reduce(singvalues, singvectors, args.top, args.alpha,
+                       args.energy, output_filepath)
     else:
         reducer.reduce(singvalues, singvectors, args.top, args.alpha,
                        args.energy)
