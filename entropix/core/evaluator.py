@@ -50,5 +50,12 @@ def evaluate_distributional_space(model_filepath, vocab_filepath):
     right_vectors = model[right_idx]
     cos = 1 - spatial.distance.cdist(left_vectors, right_vectors, 'cosine')
     diag = np.diagonal(cos)
+    print(diag)
+    logger.info('Cosine distribution stats on MEN:')
+    logger.info('   Min = {}'.format(diag.min()))
+    logger.info('   Max = {}'.format(diag.max()))
+    logger.info('   Average = {}'.format(diag.mean()))
+    logger.info('   Median = {}'.format(np.median(diag)))
+    logger.info('   STD = {}'.format(np.std(diag)))
     spr = _spearman(sim, diag)
     logger.info('SPEARMAN: {} calculated over {} items'.format(spr, len(left)))

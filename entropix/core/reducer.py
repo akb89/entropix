@@ -4,6 +4,7 @@ import logging
 import numpy as np
 from scipy import sparse
 from scipy.sparse.linalg import svds
+from scipy.linalg import svd
 
 logger = logging.getLogger(__name__)
 
@@ -74,12 +75,9 @@ def reduce(singvalues, singvectors, top, alpha, energy, output_filepath=None):
     return reduced
 
 
-def apply_svd(model_filepath, dim, sing_values_filepath,
-              sing_vectors_filepath, compact=False):
-    """Apply SVD to matrix and save singular values and vectors to files.
 
-    If compact is true, only non-null singular values will be kept.
-    """
+def _apply_sparse_svd(model_filepath, dim, sing_values_filepath,
+                      sing_vectors_filepath, compact=False):
     M = sparse.load_npz(model_filepath)
     if dim == 0 or dim >= M.shape[1]:
         dim = M.shape[1] - 1
@@ -102,3 +100,28 @@ def apply_svd(model_filepath, dim, sing_values_filepath,
     logger.info('Saving singular vectors to {}'.format(sing_vectors_filepath))
     np.save(sing_vectors_filepath, U)
     return U, S
+
+
+def _apply_exact_svd(model_filepath, sing_values_filepath,
+                     sing_vectors_filepath):
+    logger.info('Applying SVD on dense matrix')
+    M = np.load(model_filepath)
+    U, S, _ = svd(M)
+    logger.info('Saving singular values to {}'.format(sing_values_filepath))
+    np.save(sing_values_filepath, S)
+    logger.info('Saving singular vectors to {}'.format(sing_vectors_filepath))
+    np.save(sing_vectors_filepath, U)
+
+
+def apply_svd(model_filepath, dim, sing_values_filepath,
+              sing_vectors_filepath, compact=False):
+    """Apply SVD to matrix and save singular values and vectors to files.
+
+    If compact is true, only non-null singular values will be kept.
+    """
+    if model_filepath.endswith('.npy'):
+        _apply_exact_svd(model_filepath, sing_values_filepath,
+                         sing_vectors_filepath)
+    else:
+        _apply_sparse_svd(model_filepath, dim, sing_values_filepath,
+                          sing_vectors_filepath, compact)

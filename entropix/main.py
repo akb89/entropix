@@ -19,6 +19,7 @@ import entropix.core.calculator as calculator
 import entropix.core.evaluator as evaluator
 import entropix.core.generator as generator
 import entropix.core.reducer as reducer
+import entropix.core.remover as remover
 import entropix.core.weigher as weigher
 
 logging.config.dictConfig(
@@ -194,6 +195,13 @@ def restricted_alpha(x):
     return x
 
 
+def _remove_mean(args):
+    logger.info('Removing mean vector from {}'.format(args.model))
+    output_filepath = '{}.nomean.npy'.format(args.model.split('.npy')[0])
+    model = np.load(args.model)
+    remover.remove_mean(model, output_filepath)
+
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -338,5 +346,11 @@ def main():
                               'If not set, will default to model dir')
     parser_weigh.add_argument('-w', '--weighing-func', choices=['ppmi'],
                               help='weighing function')
+    parser_remove = subparsers.add_parser(
+        'remove', formatter_class=argparse.RawTextHelpFormatter,
+        help='remove the mean vector')
+    parser_remove.set_defaults(func=_remove_mean)
+    parser_remove.add_argument('-m', '--model', required=True,
+                               help='absolute path to .npy matrix')
     args = parser.parse_args()
     args.func(args)

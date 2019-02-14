@@ -24,8 +24,10 @@ def get_singvalues_filepaths(model_dirpath):
             os.listdir(model_dirpath) if filename.endswith('.singvalues.npy')]
 
 
-def _get_model_basename(sparse_model_filepath):
-    return sparse_model_filepath.split('.npz')[0]
+def _get_model_basename(model_filepath):
+    if model_filepath.endswith('.npy'):
+        return model_filepath.split('.npy')[0]
+    return model_filepath.split('.npz')[0]
 
 
 def get_singvectors_filepath(sparse_model_filepath, dim, compact):
