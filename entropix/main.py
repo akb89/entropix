@@ -21,6 +21,7 @@ import entropix.core.generator as generator
 import entropix.core.reducer as reducer
 import entropix.core.remover as remover
 import entropix.core.weigher as weigher
+import entropix.core.extractor as extractor
 
 logging.config.dictConfig(
     cutils.load(
@@ -202,6 +203,20 @@ def _remove_mean(args):
     remover.remove_mean(model, output_filepath)
 
 
+def _extract(args):
+    if not args.output:
+        output_dirpath = os.path.dirname(args.model)
+    else:
+        output_dirpath = args.output
+    if not os.path.exists(output_dirpath):
+        logger.info('Creating directory {}'.format(output_dirpath))
+        os.makedirs(output_dirpath)
+    else:
+        logger.info('Saving to directory {}'.format(output_dirpath))
+
+    extractor.extract_top_participants(output_dirpath, args.model, args.vocab,
+                                       args.num_top_elements)
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -282,7 +297,7 @@ def main():
                                       'corresponding to the distributional '
                                       'space to evaluate')
     parser_evaluate.add_argument('-v', '--vocab', required=True,
-                                 help='absolute path to .map vocabulary file')
+                                 help='absolute path to .vocab file')
     parser_generate = subparsers.add_parser(
         'generate', formatter_class=argparse.RawTextHelpFormatter,
         help='generate raw frequency count based model')
@@ -352,5 +367,18 @@ def main():
     parser_remove.set_defaults(func=_remove_mean)
     parser_remove.add_argument('-m', '--model', required=True,
                                help='absolute path to .npy matrix')
+    parser_extract = subparsers.add_parser(
+        'extract', formatter_class=argparse.RawTextHelpFormatter,
+        help='extract top singular vector elements')
+    parser_extract.set_defaults(func=_extract)
+    parser_extract.add_argument('-m', '--model', required=True,
+                                help='absolute path to singular vector file')
+    parser_extract.add_argument('-v', '--vocab', required=True,
+                                help='absolute path to .vocab file')
+    parser_extract.add_argument('-o', '--output',
+                                help='absolute path to output directory. '
+                                'If not set, will default to matrix dir')
+    parser_extract.add_argument('-n', '--num-top-elements', default='20',
+                                type=int, help='number of elements to output')
     args = parser.parse_args()
     args.func(args)

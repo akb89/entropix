@@ -9,7 +9,7 @@ __all__ = ('get_input_filepaths', 'get_vocab_filepath', 'get_cosines_filepath',
            'get_cosines_distribution_filepath', 'get_counts_filepath',
            'get_sparsematrix_filepath', 'get_singvalues_filepath',
            'get_singvectors_filepath', 'get_singvalues_filepaths',
-           'get_models_filepaths')
+           'get_models_filepaths', 'get_topelements_filepath')
 
 
 def get_models_filepaths(model_dirpath):
@@ -148,3 +148,11 @@ def _create_tmp_folder(output_dirpath):
 def get_tmp_cosinedist_filepath(output_dirpath, idx):
     tmp_path = _create_tmp_folder(output_dirpath)
     return os.path.join(tmp_path, '{}.cosinesim'.format(idx))
+
+def get_topelements_filepath(output_dirpath, sing_vectors_filepath, N):
+    matrix_basename = os.path.basename(sing_vectors_filepath)
+    basename = matrix_basename
+    if matrix_basename.endswith('.singvectors.npy'):
+        basename = matrix_basename.split('.singvectors.npy')[0]
+
+    return os.path.join(output_dirpath, '{}.top-{}.words'.format(basename, N))
