@@ -30,7 +30,14 @@ def ppmi(csr_matrix):
 def weigh(output_dirpath, model_filepath, weighing_func):
     output_filepath_weighted_matrix =\
      futils.get_weightedmatrix_filepath(output_dirpath, model_filepath)
-    M = sparse.load_npz(model_filepath)
+    if model_filepath.endswith('.npy'):
+        DM = np.load(model_filepath)
+        M = sparse.csr_matrix(DM)
+    elif model_filepath.endswith('.npz'):
+        M = sparse.load_npz(model_filepath)
+    else:
+        raise Exception('Unsupported model extension. Should be .npz or .npy: '
+                        '{}'.format(model_filepath))
     if weighing_func == 'ppmi':
         weighted_M = ppmi(M)
         sparse.save_npz(output_filepath_weighted_matrix, weighted_M)

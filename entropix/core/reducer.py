@@ -59,26 +59,24 @@ def reduce(singvalues, singvectors, top, alpha, energy, output_filepath=None):
         reduced_energy_rank = _get_reduced_rank(singvalues, energy)
         singvalues = singvalues[reduced_energy_rank:]
         singvectors = singvectors[:, reduced_energy_rank:]
+    logger.info(singvalues)
     if output_filepath:
         singvalues_filepath = '{}.singvalues.npy'.format(
             output_filepath.split('.npy')[0])
         np.save(singvalues_filepath, singvalues)
-    singvalues = np.diag(singvalues)
-    if alpha == 1:
-        reduced = np.matmul(singvectors, singvalues)
-    elif 0 < alpha < 1:
-        reduced = np.matmul(singvectors, np.power(singvalues, alpha))
-    else:
+    if alpha == 0:
         reduced = singvectors
+    elif alpha == 1:
+        reduced = np.matmul(singvectors, np.diag(singvalues))
+    else:
+        reduced = np.matmul(singvectors, np.diag(np.power(singvalues, alpha)))
     if output_filepath:
         np.save(output_filepath, reduced)
     return reduced
 
 
-
-def _apply_sparse_svd(model_filepath, dim, sing_values_filepath,
+def _apply_sparse_svd(M, dim, sing_values_filepath,
                       sing_vectors_filepath, compact=False):
-    M = sparse.load_npz(model_filepath)
     if dim == 0 or dim >= M.shape[1]:
         dim = M.shape[1] - 1
     logger.info('Applying SVD on sparse matrix with k = {}'.format(dim))
@@ -119,9 +117,15 @@ def apply_svd(model_filepath, dim, sing_values_filepath,
 
     If compact is true, only non-null singular values will be kept.
     """
-    if model_filepath.endswith('.npy'):
-        _apply_exact_svd(model_filepath, sing_values_filepath,
-                         sing_vectors_filepath)
+    if model_filepath.endswith('.npz'):
+        M = sparse.load_npz(model_filepath)
+        _apply_sparse_svd(M, dim, sing_values_filepath, sing_vectors_filepath,
+                          compact)
+    elif model_filepath.endswith('.npy'):
+        DM = np.load(model_filepath)
+        M = sparse.csr_matrix(DM)
+        _apply_sparse_svd(M, dim, sing_values_filepath, sing_vectors_filepath,
+                          compact)
     else:
-        _apply_sparse_svd(model_filepath, dim, sing_values_filepath,
-                          sing_vectors_filepath, compact)
+        raise Exception('Unsupported model extension. Should be .npz or .npy: '
+                        '{}'.format(model_filepath))
