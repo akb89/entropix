@@ -70,7 +70,7 @@ def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
     logger.info('Completed first pass. Saving list of keep idx to {}'
                 .format(keep_filepath))
     with open(keep_filepath, 'w', encoding='utf-8') as keep_stream:
-        print(keep, file=keep_stream)
+        print('\n'.join([str(idx) for idx in keep]), file=keep_stream)
     logger.info('Starting second pass: reducing dimensions while maintaining '
                 'score')
     remove = []
@@ -85,4 +85,5 @@ def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
     logger.info('Finished second pass. Saving list of reduced keep idx to {}'
                 .format(keep_reduced_filepath))
     with open(keep_reduced_filepath, 'w', encoding='utf-8') as reduced_stream:
-        print([idx for idx in keep if idx not in remove], file=reduced_stream)
+        print('\n'.join([str(idx) for idx in keep if idx not in remove]),
+              file=reduced_stream)
