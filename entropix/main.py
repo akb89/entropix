@@ -183,13 +183,15 @@ def _reduce(args):
 def _sample(args):
     dirname = os.path.dirname(args.model)
     basename = os.path.basename(args.model).split('.singvectors.npy')[0]
-    keep_filepath = os.path.join(
-        dirname, '{}.{}.sampledims.keep.txt'.format(basename, args.dataset))
-    keep_reduced_filepath = os.path.join(
-        dirname,
-        '{}.{}.sampledims.keep.reduced.txt'.format(basename, args.dataset))
+    # keep_filepath = os.path.join(
+    #     dirname, '{}.{}.sampledims.keep.txt'.format(basename, args.dataset))
+    # keep_reduced_filepath = os.path.join(
+    #     dirname,
+    #     '{}.{}.sampledims.keep.reduced.txt'.format(basename, args.dataset))
+    keep_filepath_basename = os.path.join(
+        dirname, '{}.{}.sampledims.keep'.format(basename, args.dataset))
     sampler.sample_dimensions(args.model, args.vocab, args.dataset,
-                              keep_filepath, keep_reduced_filepath)
+                              keep_filepath_basename, args.iter, args.shuffle)
 
 
 def restricted_energy(x):
@@ -375,5 +377,9 @@ def main():
     parser_sample.add_argument('-d', '--dataset', required=True,
                                choices=['men', 'simlex', 'simverb'],
                                help='dataset to optimize on')
+    parser_sample.add_argument('-i', '--iter', type=int, default=1,
+                               help='number of iterations')
+    parser_sample.add_argument('-s', '--shuffle', action='store_true',
+                               help='whether or not to shuffle at each iter')
     args = parser.parse_args()
     args.func(args)
