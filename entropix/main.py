@@ -20,6 +20,7 @@ import entropix.core.evaluator as evaluator
 import entropix.core.generator as generator
 import entropix.core.reducer as reducer
 import entropix.core.remover as remover
+import entropix.core.sampler as sampler
 import entropix.core.weigher as weigher
 
 logging.config.dictConfig(
@@ -178,6 +179,17 @@ def _reduce(args):
     else:
         reducer.reduce(singvalues, singvectors, args.top, args.alpha,
                        args.energy)
+
+def _sample(args):
+    dirname = os.path.dirname(args.model)
+    basename = os.path.basename(args.model).split('.singvectors.npy')[0]
+    keep_filepath = os.path.join(
+        dirname, '{}.{}.sampledims.keep.txt'.format(basename, args.dataset))
+    keep_reduced_filepath = os.path.join(
+        dirname,
+        '{}.{}.sampledims.keep.reduced.txt'.format(basename, args.dataset))
+    sampler.sample_dimensions(args.model, args.vocab, args.dataset,
+                              keep_filepath, keep_reduced_filepath)
 
 
 def restricted_energy(x):
@@ -352,5 +364,16 @@ def main():
     parser_remove.set_defaults(func=_remove_mean)
     parser_remove.add_argument('-m', '--model', required=True,
                                help='absolute path to .npy matrix')
+    parser_sample = subparsers.add_parser(
+        'sample', formatter_class=argparse.RawTextHelpFormatter,
+        help='find min num of dimensions that maximize MEN score')
+    parser_sample.set_defaults(func=_sample)
+    parser_sample.add_argument('-m', '--model', required=True,
+                               help='absolute path to .singvectors.npy')
+    parser_sample.add_argument('-v', '--vocab', required=True,
+                               help='vocabulary mapping for dsm')
+    parser_sample.add_argument('-d', '--dataset', required=True,
+                               choices=['men', 'simlex', 'simverb'],
+                               help='dataset to optimize on')
     args = parser.parse_args()
     args.func(args)
