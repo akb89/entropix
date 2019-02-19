@@ -149,10 +149,10 @@ def get_tmp_cosinedist_filepath(output_dirpath, idx):
     tmp_path = _create_tmp_folder(output_dirpath)
     return os.path.join(tmp_path, '{}.cosinesim'.format(idx))
 
-def get_topelements_filepath(output_dirpath, sing_vectors_filepath, N):
+def get_topelements_filepath(output_dirpath, sing_vectors_filepath, N, ext):
     matrix_basename = os.path.basename(sing_vectors_filepath)
     basename = matrix_basename
     if matrix_basename.endswith('.singvectors.npy'):
         basename = matrix_basename.split('.singvectors.npy')[0]
 
-    return os.path.join(output_dirpath, '{}.top-{}.words'.format(basename, N))
+    return os.path.join(output_dirpath, '{}.top-{}.{}'.format(basename, N, ext))

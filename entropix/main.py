@@ -203,7 +203,7 @@ def _remove_mean(args):
     remover.remove_mean(model, output_filepath)
 
 
-def _extract(args):
+def _extract_top_participants(args):
     if not args.output:
         output_dirpath = os.path.dirname(args.model)
     else:
@@ -215,7 +215,8 @@ def _extract(args):
         logger.info('Saving to directory {}'.format(output_dirpath))
 
     extractor.extract_top_participants(output_dirpath, args.model, args.vocab,
-                                       args.num_top_elements)
+                                       args.num_top_elements, args.confusion_matrix)
+
 
 def main():
     """Launch entropix."""
@@ -367,18 +368,28 @@ def main():
     parser_remove.set_defaults(func=_remove_mean)
     parser_remove.add_argument('-m', '--model', required=True,
                                help='absolute path to .npy matrix')
+
     parser_extract = subparsers.add_parser(
         'extract', formatter_class=argparse.RawTextHelpFormatter,
-        help='extract top singular vector elements')
-    parser_extract.set_defaults(func=_extract)
-    parser_extract.add_argument('-m', '--model', required=True,
-                                help='absolute path to singular vector file')
-    parser_extract.add_argument('-v', '--vocab', required=True,
-                                help='absolute path to .vocab file')
-    parser_extract.add_argument('-o', '--output',
-                                help='absolute path to output directory. '
-                                'If not set, will default to matrix dir')
-    parser_extract.add_argument('-n', '--num-top-elements', default='20',
-                                type=int, help='number of elements to output')
+        help='extract top singular vector elements and associated statistics')
+    extract_sub = parser_extract.add_subparsers()
+    parser_extract_participants = extract_sub.add_parser(
+        'top-participants', formatter_class=argparse.RawTextHelpFormatter,
+        help='extract top participants for each singular vector')
+    parser_extract_participants.set_defaults(func=_extract_top_participants)
+    parser_extract_participants.add_argument('-m', '--model', required=True,
+                                             help='absolute path to singular '
+                                             'vectors file')
+    parser_extract_participants.add_argument('-v', '--vocab', required=True,
+                                             help='absolute path to .vocab file')
+    parser_extract_participants.add_argument('-o', '--output',
+                                             help='absolute path to output directory. '
+                                             'If not set, will default to matrix dir')
+    parser_extract_participants.add_argument('-n', '--num-top-elements', default='20',
+                                             type=int, help='number of elements to output.'
+                                             'Default is 20')
+    parser_extract_participants.add_argument('-c', '--confusion-matrix',
+                                             action='store_true',
+                                             help='If set, outputs confusion matrix')
     args = parser.parse_args()
     args.func(args)
