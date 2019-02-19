@@ -105,8 +105,7 @@ def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
         pass
     keep = [0, 1]  # start at 2-dims
     for iterx in range(1, num_iter+1):
-        #dims = [idx for idx in list(range(model.shape[1])) if idx not in keep]
-        dims = list(range(0, 10))
+        dims = [idx for idx in list(range(model.shape[1])) if idx not in keep]
         if shuffle:
             random.shuffle(dims)
         keep, max_spr = increase_dim(model, keep, dims, left_idx, right_idx,
