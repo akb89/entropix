@@ -2,7 +2,7 @@
 
 from .core.counter import count_words as count
 from .core.calculator import compute_entropy as compute
-from .core.calculator import compute_singvectors_distribution as singvectors_dist
+from .core.calculator import compute_singvectors_entropy as singvectors_dist
 from .core.calculator import compute_pairwise_cosine_sim as pwcosine_distribution
 from .core.evaluator import evaluate_distributional_space as evaluate
 from .core.generator import generate_distributional_model as generate

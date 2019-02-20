@@ -23,7 +23,7 @@ import entropix.utils.data as dutils
 logger = logging.getLogger(__name__)
 
 __all__ = ('compute_entropy', 'compute_pairwise_cosine_sim',
-           'compute_singvectors_distribution')
+           'compute_singvectors_entropy', 'compute_singvectors_ipr')
 
 
 def compute_entropy(counts):
@@ -103,35 +103,27 @@ def compute_pairwise_cosine_sim(output_dirpath, model_filepath, vocab_filepath,
     return freqdist
 
 
-def compute_singvectors_distribution(output_dirpath, model, save_figs):
-    """Compute IPR and entropy metrics on singular vectors"""
-    output_filepath = futils.get_singvectors_distribution_filepath(output_dirpath, model)
-    Umatrix_filepath = futils.get_singvectors_filepath(model)
-    Dmatrix_filepath = futils.get_singvalues_filepath(model)
+def compute_singvectors_entropy(output_dirpath, svec_filepath, sval_filepath):
+    """Compute entropy metrics on singular vectors"""
+    output_filepath = futils.get_singvectors_entropy_filepath(output_dirpath,
+                                                              svec_filepath)
 
-    logger.info('Loading singular values from {}'.format(Dmatrix_filepath))
-    sing_values = np.load(Dmatrix_filepath)
-    logger.info('Loading singular vectors from {}'.format(Umatrix_filepath))
-    sing_vectors = np.load(Umatrix_filepath)
+    logger.info('Loading singular values from {}'.format(sval_filepath))
+    sing_values = np.load(sval_filepath)
+    logger.info('Loading singular vectors from {}'.format(svec_filepath))
+    sing_vectors = np.load(svec_filepath)
 
     logger.info('Computing entropy')
     lam_list = []
     entropy_list = []
     for lam, column in tqdm(zip(sing_values, sing_vectors.T)):
-        distribution, bins = np.histogram(column, bins='auto')
-
-        # if save_figs:
-        #     fig = plt.figure()
-        #     ax = plt.subplot(111)
-        #     ax.bar(bins[:-1], distribution, 0.02)
-        #     plt.title('{}'.format(lam))
-        #     fig.savefig('{}/distribution_{}.png'.format(output_dirpath, lam))
+        distribution, bins = np.histogram(column)
 
         N = len(column)
         normalized_distribution = [x/N for x in distribution if x > 0]
 
         entropy = 0
-        for value in tqdm(normalized_distribution):
+        for value in normalized_distribution:
             entropy -= value*math.log2(value)
 
         entropy_list.append(entropy)
@@ -139,8 +131,36 @@ def compute_singvectors_distribution(output_dirpath, model, save_figs):
 
     logger.info('Writing results to {}'.format(output_filepath))
     with open(output_filepath, 'w', encoding='utf-8') as output_stream:
-        print('lambda_i\tH(u_i)', file=output_stream)
         for lam, h in zip(lam_list, entropy_list):
             print('{}\t{}'.format(lam, h), file=output_stream)
 
     return entropy_list
+
+
+def compute_singvectors_ipr(output_dirpath, svec_filepath, sval_filepath):
+    """Compute IPR metrics on singular vectors"""
+    output_filepath = futils.get_singvectors_ipr_filepath(output_dirpath,
+                                                          svec_filepath)
+
+    logger.info('Loading singular values from {}'.format(sval_filepath))
+    sing_values = np.load(sval_filepath)
+    logger.info('Loading singular vectors from {}'.format(svec_filepath))
+    sing_vectors = np.load(svec_filepath)
+
+    logger.info('Computing ipr')
+    lam_list = []
+    ipr_list = []
+    for lam, column in tqdm(zip(sing_values, sing_vectors.T)):
+        ipr = 0
+        for value in column:
+            ipr += math.pow(value, 4)
+
+        ipr_list.append(ipr)
+        lam_list.append(lam)
+
+    logger.info('Writing results to {}'.format(output_filepath))
+    with open(output_filepath, 'w', encoding='utf-8') as output_stream:
+        for lam, ipr in zip(lam_list, ipr_list):
+            print('{}\t{}'.format(lam, ipr), file=output_stream)
+
+    return ipr_list

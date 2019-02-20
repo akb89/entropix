@@ -60,3 +60,14 @@ def load_2d_array(input_filepath, index_set, symm=False):
                     matrix[idx2][idx1] = value
 
     return [[matrix[idx1][idx2] for idx2 in indexes] for idx1 in indexes]
+
+
+def load_2columns(input_filepath):
+    x = []
+    y = []
+    with open(input_filepath, encoding='utf-8') as input_stream:
+        for line in input_stream:
+            linesplit = line.strip().split()
+            x.append(float(linesplit[0]))
+            y.append(float(linesplit[1]))
+    return x, y

@@ -4,7 +4,9 @@ Visualization tools.
 
 import logging
 import collections
+import math
 import seaborn as sns
+import matplotlib.pyplot as plt
 import numpy as np
 
 import entropix.utils.files as futils
@@ -13,7 +15,7 @@ import entropix.utils.data as dutils
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('visualize_heatmap')
+__all__ = ('visualize_heatmap', 'visualize_singvalues')
 
 
 def visualize_heatmap(output_dirpath, input_filpath, filter_filepath):
@@ -33,3 +35,38 @@ def visualize_heatmap(output_dirpath, input_filpath, filter_filepath):
 
     fig = ax.get_figure()
     fig.savefig(heatmap_outfile)
+
+
+def visualize_singvalues(output_dirpath, input_filepath, filter_filepath):
+    graph_outfile = futils.get_png_filename(output_dirpath, input_filepath)
+
+    filter = None
+    if filter_filepath:
+        filter = dutils.load_index_set(filter_filepath)
+
+    sing_values = np.load(input_filepath)
+    if filter:
+        sing_values = [sing_values[i] for i in sorted(filter)]
+
+    ax = sns.lineplot(x=range(len(sing_values)), y=sing_values)
+    fig = ax.get_figure()
+    fig.savefig(graph_outfile)
+
+
+def visualize_ipr_scatter(output_dirpath, input_filepath, filter_filepath):
+    graph_outfile = futils.get_png_filename(output_dirpath, input_filepath)
+
+    filter = None
+    if filter_filepath:
+        filter = dutils.load_index_set(filter_filepath)
+
+    x, y = dutils.load_2columns(input_filepath)
+
+    x = [math.log2(el) for el in x]
+    if filter:
+        x = [x[i] for i in sorted(filter)]
+        y = [y[i] for i in sorted(filter)]
+
+    ax = sns.scatterplot(x=x, y=y)
+    fig = ax.get_figure()
+    fig.savefig(graph_outfile)

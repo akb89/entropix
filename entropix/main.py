@@ -149,9 +149,9 @@ def _weigh(args):
     weigher.weigh(output_dirpath, args.model, args.weighing_func)
 
 
-def _compute_singvectors_distribution(args):
+def _compute_singvectors_entropy(args):
     if not args.output:
-        output_dirpath = os.path.dirname(args.model)
+        output_dirpath = os.path.dirname(args.s_vectors)
     else:
         output_dirpath = args.output
     if not os.path.exists(output_dirpath):
@@ -159,7 +159,22 @@ def _compute_singvectors_distribution(args):
         os.makedirs(output_dirpath)
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
-    calculator.compute_singvectors_distribution(output_dirpath, args.model, args.save)
+    calculator.compute_singvectors_entropy(output_dirpath, args.s_vectors,
+                                           args.s_values)
+
+
+def _compute_singvectors_ipr(args):
+    if not args.output:
+        output_dirpath = os.path.dirname(args.s_vectors)
+    else:
+        output_dirpath = args.output
+    if not os.path.exists(output_dirpath):
+        logger.info('Creating directory {}'.format(output_dirpath))
+        os.makedirs(output_dirpath)
+    else:
+        logger.info('Saving to directory {}'.format(output_dirpath))
+    calculator.compute_singvectors_ipr(output_dirpath, args.s_vectors,
+                                       args.s_values)
 
 
 def _reduce(args):
@@ -236,6 +251,43 @@ def _visualize_heatmap(args):
 
     visualizer.visualize_heatmap(output_dirpath, args.input, filter_filepath)
 
+
+def _visualize_singvalues(args):
+    if not args.output:
+        output_dirpath = os.path.dirname(args.input)
+    else:
+        output_dirpath = args.output
+    if not os.path.exists(output_dirpath):
+        logger.info('Creating directory {}'.format(output_dirpath))
+        os.makedirs(output_dirpath)
+    else:
+        logger.info('Saving to directory {}'.format(output_dirpath))
+
+    filter_filepath = None
+    if args.filter:
+        filter_filepath = args.filter
+
+    visualizer.visualize_singvalues(output_dirpath, args.input, filter_filepath)
+
+
+def _visualize_ipr_scatter(args):
+    if not args.output:
+        output_dirpath = os.path.dirname(args.input)
+    else:
+        output_dirpath = args.output
+    if not os.path.exists(output_dirpath):
+        logger.info('Creating directory {}'.format(output_dirpath))
+        os.makedirs(output_dirpath)
+    else:
+        logger.info('Saving to directory {}'.format(output_dirpath))
+
+    filter_filepath = None
+    if args.filter:
+        filter_filepath = args.filter
+
+    visualizer.visualize_ipr_scatter(output_dirpath, args.input, filter_filepath)
+
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -295,18 +347,32 @@ def main():
     parser_compute_cosine.add_argument('-b', '--bin-size', default=0.1,
                                        type=float, help='bin size for the '
                                                         'distribution output')
-    parser_compute_ipr = compute_sub.add_parser(
-        'ipr', formatter_class=argparse.RawTextHelpFormatter,
+    parser_compute_sv_entropy = compute_sub.add_parser(
+        'svec-entropy', formatter_class=argparse.RawTextHelpFormatter,
+        help='compute entropy from input singular vectors matrix')
+    parser_compute_sv_entropy.set_defaults(func=_compute_singvectors_entropy)
+    parser_compute_sv_entropy.add_argument('-u', '--s-vectors', required=True,
+                                           help='absolute path to .singvectors.npy '
+                                           ' file')
+    parser_compute_sv_entropy.add_argument('-d', '--s-values', required=True,
+                                           help='absolute path to .singvalues.npy '
+                                           ' file')
+    parser_compute_sv_entropy.add_argument('-o', '--output',
+                                           help='absolute path to output directory.'
+                                           'If not set, will default to svectors dir.')
+    parser_compute_sv_ipr = compute_sub.add_parser(
+        'svec-ipr', formatter_class=argparse.RawTextHelpFormatter,
         help='compute ipr from input singular vectors matrix')
-    parser_compute_ipr.set_defaults(func=_compute_singvectors_distribution)
-    parser_compute_ipr.add_argument('-m', '--model', required=True,
-                                    help='absolute path to .npz matrix '
-                                         'corresponding to the dsm.')
-    parser_compute_ipr.add_argument('-o', '--output',
-                                    help='absolute path to output directory.'
-                                    'If not set, will default to matrix dir.')
-    parser_compute_ipr.add_argument('-s', '--save', action='store_true',
-                                    help='save plots to output')
+    parser_compute_sv_ipr.set_defaults(func=_compute_singvectors_ipr)
+    parser_compute_sv_ipr.add_argument('-u', '--s-vectors', required=True,
+                                       help='absolute path to .singvectors.npy '
+                                       ' file')
+    parser_compute_sv_ipr.add_argument('-d', '--s-values', required=True,
+                                       help='absolute path to .singvalues.npy '
+                                       ' file')
+    parser_compute_sv_ipr.add_argument('-o', '--output',
+                                       help='absolute path to output directory.'
+                                       'If not set, will default to svectors dir.')
     parser_evaluate = subparsers.add_parser(
         'evaluate', formatter_class=argparse.RawTextHelpFormatter,
         help='evaluate a given distributional space against the MEN dataset')
@@ -424,5 +490,29 @@ def main():
     parser_visualize_heatmap.add_argument('-f', '--filter', help='absolute path '
                                           'to file storing the required subset '
                                           'of the matrix')
+    parser_visualize_singvalues = visualizer_sub.add_parser(
+        'singular-values', formatter_class=argparse.RawTextHelpFormatter,
+        help='visualize singular values distribution')
+    parser_visualize_singvalues.set_defaults(func=_visualize_singvalues)
+    parser_visualize_singvalues.add_argument('-i', '--input', required=True,
+                                             help='absolute path to .singvalues.npy '
+                                             'file.')
+    parser_visualize_singvalues.add_argument('-o', '--output',
+                                             help='absolute path to output directory. '
+                                             'If not set, will default to input dir')
+    parser_visualize_singvalues.add_argument('-f', '--filter', help='absolute path '
+                                             'to file storing the required subset')
+    parser_visualize_ipr = visualizer_sub.add_parser(
+        'ipr-scatter', formatter_class=argparse.RawTextHelpFormatter,
+        help='visualize singular values distribution')
+    parser_visualize_ipr.set_defaults(func=_visualize_ipr_scatter)
+    parser_visualize_ipr.add_argument('-i', '--input', required=True,
+                                       help='absolute path to .singvectors.ipr '
+                                       'file.')
+    parser_visualize_ipr.add_argument('-o', '--output',
+                                      help='absolute path to output directory. '
+                                      'If not set, will default to input dir')
+    parser_visualize_ipr.add_argument('-f', '--filter', help='absolute path '
+                                      'to file storing the required subset')
     args = parser.parse_args()
     args.func(args)

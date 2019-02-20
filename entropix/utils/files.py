@@ -85,13 +85,26 @@ def get_cosines_distribution_filepath(dirpath, model_filepath):
     return os.path.join(os.path.join(dirpath, '{}.pwcosines.dist.txt'.format(model_filepath_basename)))
 
 
-def get_singvectors_distribution_filepath(dirpath, model_filepath):
+def _get_basename_wo_extension(filepath, ext):
+    return os.path.basename(filepath).split(ext)[0]
+
+
+def get_singvectors_entropy_filepath(dirpath, singvectors_filepath):
     """
-    Return the filepath, into the specified folder, to singvectors.dist.txt file.
+    Return the filepath, into the specified folder, to singvectors.ent file.
     """
-    model_basename = _get_model_basename(model_filepath)
-    return os.path.join(os.path.join(dirpath, '{}.singvectors.dist.txt'
-                                     .format(model_basename)))
+    singvectors_basename = _get_basename_wo_extension(singvectors_filepath, '.npy')
+    return os.path.join(os.path.join(dirpath, '{}.ent'
+                                     .format(singvectors_basename)))
+
+
+def get_singvectors_ipr_filepath(dirpath, singvectors_filepath):
+    """
+    Return the filepath, into the specified folder, to singvectors.ipr file.
+    """
+    singvectors_basename = _get_basename_wo_extension(singvectors_filepath, '.npy')
+    return os.path.join(os.path.join(dirpath, '{}.ipr'
+                                     .format(singvectors_basename)))
 
 
 def get_counts_filepath(corpus_filepath, output_dirpath):
