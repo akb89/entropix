@@ -94,6 +94,10 @@ def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
     model = np.load(singvectors_filepath)
     logger.info('Sampling dimensions over a total of {} dims, optimizing '
                 'on {}...'.format(model.shape[1], dataset))
+    if shuffle:
+        logger.info('Shuffling mode ON')
+    else:
+        logger.info('Shuffling mode OFF')
     model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
     if dataset not in ['men', 'simlex', 'simverb']:
         raise Exception('Unsupported eval dataset: {}'.format(dataset))
