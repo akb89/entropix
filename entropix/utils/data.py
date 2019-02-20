@@ -2,6 +2,8 @@
 
 import os
 import logging
+import collections
+import math
 from scipy import sparse
 
 logger = logging.getLogger(__name__)
@@ -31,3 +33,30 @@ def load_words_set(wordlist_filepath):
         for line in input_stream:
             words.add(line.strip().lower())
     return words
+
+def load_index_set(indexlist_filepath):
+    """Load indexes (int) from a file into a set"""
+    idxs = set()
+    with open(indexlist_filepath, encoding='utf-8') as input_stream:
+        for line in input_stream:
+            idxs.add(int(line.strip()))
+    return idxs
+
+
+def load_2d_array(input_filepath, index_set, symm=False):
+    indexes = set()
+    matrix = collections.defaultdict(lambda: collections.defaultdict(float))
+    with open(input_filepath, encoding='utf-8') as input_stream:
+        for line in input_stream:
+            idx1, idx2, value = line.strip().split()
+            idx1, idx2 = int(idx1), int(idx2)
+            value = math.log2(float(value)+1)
+
+            if not index_set or (idx1 in index_set and idx2 in index_set):
+                indexes.add(idx1)
+                indexes.add(idx2)
+                matrix[idx1][idx2] = value
+                if symm:
+                    matrix[idx2][idx1] = value
+
+    return [[matrix[idx1][idx2] for idx2 in indexes] for idx1 in indexes]

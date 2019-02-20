@@ -22,6 +22,7 @@ import entropix.core.reducer as reducer
 import entropix.core.remover as remover
 import entropix.core.weigher as weigher
 import entropix.core.extractor as extractor
+import entropix.core.visualizer as visualizer
 
 logging.config.dictConfig(
     cutils.load(
@@ -218,6 +219,23 @@ def _extract_top_participants(args):
                                        args.num_top_elements, args.confusion_matrix)
 
 
+def _visualize_heatmap(args):
+    if not args.output:
+        output_dirpath = os.path.dirname(args.input)
+    else:
+        output_dirpath = args.output
+    if not os.path.exists(output_dirpath):
+        logger.info('Creating directory {}'.format(output_dirpath))
+        os.makedirs(output_dirpath)
+    else:
+        logger.info('Saving to directory {}'.format(output_dirpath))
+
+    filter_filepath = None
+    if args.filter:
+        filter_filepath = args.filter
+
+    visualizer.visualize_heatmap(output_dirpath, args.input, filter_filepath)
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -368,7 +386,6 @@ def main():
     parser_remove.set_defaults(func=_remove_mean)
     parser_remove.add_argument('-m', '--model', required=True,
                                help='absolute path to .npy matrix')
-
     parser_extract = subparsers.add_parser(
         'extract', formatter_class=argparse.RawTextHelpFormatter,
         help='extract top singular vector elements and associated statistics')
@@ -391,5 +408,21 @@ def main():
     parser_extract_participants.add_argument('-c', '--confusion-matrix',
                                              action='store_true',
                                              help='If set, outputs confusion matrix')
+    parser_visualizer = subparsers.add_parser(
+        'visualize', formatter_class=argparse.RawTextHelpFormatter,
+        help='produce graphic visualization of results')
+    visualizer_sub = parser_visualizer.add_subparsers()
+    parser_visualize_heatmap = visualizer_sub.add_parser(
+        'heatmap', formatter_class=argparse.RawTextHelpFormatter,
+        help='produce heatmap from matrix')
+    parser_visualize_heatmap.set_defaults(func=_visualize_heatmap)
+    parser_visualize_heatmap.add_argument('-i', '--input', required=True,
+                                          help='absolute path to input file')
+    parser_visualize_heatmap.add_argument('-o', '--output',
+                                          help='absolute path to output directory. '
+                                          'If not set, will default to input dir')
+    parser_visualize_heatmap.add_argument('-f', '--filter', help='absolute path '
+                                          'to file storing the required subset '
+                                          'of the matrix')
     args = parser.parse_args()
     args.func(args)

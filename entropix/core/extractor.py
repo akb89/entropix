@@ -16,20 +16,12 @@ __all__ = ('extract_top_participants')
 
 
 def _compute_intersection(lists, output_filepath):
-
     with open(output_filepath, 'w', encoding='utf-8') as output_stream:
-        print('\t'.join(str(x) for x in range(len(lists))), file=output_stream)
         for idx1, l1 in enumerate(lists):
-            s = '{}\t'.format(idx1)
-            for i in range(idx1):
-                s += '\t'
             for idx2, l2 in enumerate(lists[idx1+1:]):
                 intersection = list(set(l1) & set(l2))
-                s += '{}\t'.format(len(intersection))
-            print(s, file=output_stream)
-
-
-
+                print('{}\t{}\t{}'.format(idx1, idx1+idx2+1, len(intersection)),
+                      file=output_stream)
 
 def extract_top_participants(output_dirpath, sing_vectors_filepath,
                              vocab_filepath, num_top_elements, save_cm):

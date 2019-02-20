@@ -9,7 +9,8 @@ __all__ = ('get_input_filepaths', 'get_vocab_filepath', 'get_cosines_filepath',
            'get_cosines_distribution_filepath', 'get_counts_filepath',
            'get_sparsematrix_filepath', 'get_singvalues_filepath',
            'get_singvectors_filepath', 'get_singvalues_filepaths',
-           'get_models_filepaths', 'get_topelements_filepath')
+           'get_models_filepaths', 'get_topelements_filepath',
+           'get_png_filename')
 
 
 def get_models_filepaths(model_dirpath):
@@ -156,3 +157,8 @@ def get_topelements_filepath(output_dirpath, sing_vectors_filepath, N, ext):
         basename = matrix_basename.split('.singvectors.npy')[0]
 
     return os.path.join(output_dirpath, '{}.top-{}.{}'.format(basename, N, ext))
+
+
+def get_png_filename(output_dirpath, input_filepath):
+    input_basename = os.path.basename(input_filepath)
+    return os.path.join(output_dirpath, '{}.png'.format(input_basename))
