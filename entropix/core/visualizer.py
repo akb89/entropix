@@ -61,8 +61,6 @@ def visualize_ipr_scatter(output_dirpath, input_filepath, filter_filepath):
         filter = dutils.load_index_set(filter_filepath)
 
     x, y = dutils.load_2columns(input_filepath)
-
-    x = [math.log2(el) for el in x]
     if filter:
         x = [x[i] for i in sorted(filter)]
         y = [y[i] for i in sorted(filter)]
