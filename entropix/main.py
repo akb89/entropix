@@ -180,18 +180,16 @@ def _reduce(args):
         reducer.reduce(singvalues, singvectors, args.top, args.alpha,
                        args.energy)
 
+
 def _sample(args):
     dirname = os.path.dirname(args.model)
     basename = os.path.basename(args.model).split('.singvectors.npy')[0]
-    # keep_filepath = os.path.join(
-    #     dirname, '{}.{}.sampledims.keep.txt'.format(basename, args.dataset))
-    # keep_reduced_filepath = os.path.join(
-    #     dirname,
-    #     '{}.{}.sampledims.keep.reduced.txt'.format(basename, args.dataset))
     keep_filepath_basename = os.path.join(
-        dirname, '{}.{}.sampledims.keep'.format(basename, args.dataset))
+        dirname, '{}.{}.sampledims.mode-{}.rate-{}.keep'.format(
+            basename, args.dataset, args.mode, args.rate))
     sampler.sample_dimensions(args.model, args.vocab, args.dataset,
-                              keep_filepath_basename, args.iter, args.shuffle)
+                              keep_filepath_basename, args.iter, args.shuffle,
+                              args.mode, args.rate)
 
 
 def restricted_energy(x):
@@ -381,5 +379,10 @@ def main():
                                help='number of iterations')
     parser_sample.add_argument('-s', '--shuffle', action='store_true',
                                help='whether or not to shuffle at each iter')
+    parser_sample.add_argument('-a', '--mode', choices=['seq', 'mix'],
+                               default='seq',
+                               help='whether to use seq or mix algorithm')
+    parser_sample.add_argument('-r', '--rate', type=int, default=10,
+                               help='reduce every r dim in mix mode')
     args = parser.parse_args()
     args.func(args)
