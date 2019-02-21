@@ -52,20 +52,26 @@ def increase_dim(model, keep, dims, left_idx, right_idx, sim, dataset,
     logger.info('Finished dim increase. Saving list of keep idx to {}'
                 .format(keep_filepath))
     with open(keep_filepath, 'w', encoding='utf-8') as keep_stream:
-        print('\n'.join([str(idx) for idx in keep]), file=keep_stream)
-    return keep, max_spr
+        print('\n'.join([str(idx) for idx in sorted(keep)]), file=keep_stream)
+    return set(keep), max_spr
 
 
 def reduce_dim(model, keep, left_idx, right_idx, sim, dataset, max_spr,
                output_basename, iterx, step, shuffle):
     logger.info('Reducing dimensions while maintaining highest score. '
                 'Step = {}'.format(step))
-    remove = []
-    for dim_idx in keep:
-        dims = [idx for idx in keep if idx not in remove and idx != dim_idx]
-        spr = evaluate(model[:, dims], left_idx, right_idx, sim, dataset)
+    remove = set()
+    if shuffle:
+        dim_indexes = list(keep)
+        random.shuffle(dim_indexes)
+    else:
+        dim_indexes = sorted(keep)
+    for dim_idx in dim_indexes:
+        dims = keep.difference(remove)
+        dims.remove(dim_idx)
+        spr = evaluate(model[:, list(dims)], left_idx, right_idx, sim, dataset)
         if spr >= max_spr:
-            remove.append(dim_idx)
+            remove.add(dim_idx)
             logger.info('Constant max = {} removing dim_idx = {}. New dim = {}'
                         .format(max_spr, dim_idx, len(dims)))
     if shuffle:
@@ -76,14 +82,12 @@ def reduce_dim(model, keep, left_idx, right_idx, sim, dataset, max_spr,
             output_basename, iterx, step)
     logger.info('Finished reducing dims. Saving list of reduced keep idx to {}'
                 .format(reduce_filepath))
-    keep = [idx for idx in keep if idx not in remove]
+    keep = keep.difference(remove)
     with open(reduce_filepath, 'w', encoding='utf-8') as reduced_stream:
-        print('\n'.join([str(idx) for idx in keep]),
+        print('\n'.join([str(idx) for idx in sorted(keep)]),
               file=reduced_stream)
     if remove:
         step += 1
-        if shuffle:
-            random.shuffle(keep)
         reduce_dim(model, keep, left_idx, right_idx, sim, dataset, max_spr,
                    output_basename, iterx, step, shuffle)
     return keep
@@ -115,8 +119,6 @@ def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
         keep, max_spr = increase_dim(model, keep, dims, left_idx, right_idx,
                                      sim, dataset, output_basename, iterx,
                                      shuffle)
-        if shuffle:
-            random.shuffle(keep)
         keep = reduce_dim(model, keep, left_idx, right_idx, sim, dataset,
                           max_spr, output_basename, iterx, step=1,
                           shuffle=shuffle)
