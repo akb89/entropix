@@ -11,27 +11,15 @@ __all__ = ('sample_dimensions')
 logger = logging.getLogger(__name__)
 
 
-def evaluate(model, left_idx, right_idx, sim, dataset):
-    if dataset not in ['men', 'simlex', 'simverb']:
-        raise Exception('Unsupported eval dataset: {}'.format(dataset))
-    if dataset == 'men':
-        return evaluator.evaluate_on_men(model, left_idx, right_idx, sim)
-    if dataset == 'simlex':
-        return
-    if dataset == 'simverb':
-        return
-    raise Exception('Unsupported eval dataset: {}'.format(dataset))
-
-
-def increase_dim(model, keep, dims, left_idx, right_idx, sim, dataset,
+def increase_dim(model, keep, dims, left_idx, right_idx, sim,
                  output_basename, iterx, shuffle, mode, rate):
     logger.info('Increasing dimensions to maximize score. Iteration = {}'
                 .format(iterx))
-    max_spr = evaluate(model[:, list(keep)], left_idx, right_idx, sim, dataset)
+    max_spr = evaluator.evaluate(model[:, list(keep)], left_idx, right_idx, sim)
     init_len_keep = len(keep)
     for idx, dim_idx in enumerate(dims):
         keep.add(dim_idx)
-        spr = evaluate(model[:, list(keep)], left_idx, right_idx, sim, dataset)
+        spr = evaluator.evaluate(model[:, list(keep)], left_idx, right_idx, sim)
         if spr > max_spr:
             max_spr = spr
             logger.info('New max = {} with dim = {} at idx = {}'
@@ -39,7 +27,7 @@ def increase_dim(model, keep, dims, left_idx, right_idx, sim, dataset,
         else:
             keep.remove(dim_idx)
         if mode == 'mix' and len(keep) > init_len_keep and idx % rate == 0:
-            keep = reduce_dim(model, keep, left_idx, right_idx, sim, dataset,
+            keep = reduce_dim(model, keep, left_idx, right_idx, sim,
                               max_spr, output_basename, iterx, step=1,
                               shuffle=shuffle, save=False)
     if shuffle:
@@ -53,7 +41,7 @@ def increase_dim(model, keep, dims, left_idx, right_idx, sim, dataset,
     return keep, max_spr
 
 
-def reduce_dim(model, keep, left_idx, right_idx, sim, dataset, max_spr,
+def reduce_dim(model, keep, left_idx, right_idx, sim, max_spr,
                output_basename, iterx, step, shuffle, save):
     logger.info('Reducing dimensions while maintaining highest score. '
                 'Step = {}'.format(step))
@@ -66,7 +54,7 @@ def reduce_dim(model, keep, left_idx, right_idx, sim, dataset, max_spr,
     for dim_idx in dim_indexes:
         dims = keep.difference(remove)
         dims.remove(dim_idx)
-        spr = evaluate(model[:, list(dims)], left_idx, right_idx, sim, dataset)
+        spr = evaluator.evaluate(model[:, list(dims)], left_idx, right_idx, sim)
         if spr >= max_spr:
             remove.add(dim_idx)
             logger.info('Constant max = {} removing dim_idx = {}. New dim = {}'
@@ -87,7 +75,7 @@ def reduce_dim(model, keep, left_idx, right_idx, sim, dataset, max_spr,
                   file=reduced_stream)
     if remove:
         step += 1
-        reduce_dim(model, keep, left_idx, right_idx, sim, dataset, max_spr,
+        reduce_dim(model, keep, left_idx, right_idx, sim, max_spr,
                    output_basename, iterx, step, shuffle, save)
     return keep
 
@@ -116,8 +104,8 @@ def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
         if shuffle:
             random.shuffle(dims)
         keep, max_spr = increase_dim(model, keep, dims, left_idx, right_idx,
-                                     sim, dataset, output_basename, iterx,
+                                     sim, output_basename, iterx,
                                      shuffle, mode, rate)
-        keep = reduce_dim(model, keep, left_idx, right_idx, sim, dataset,
+        keep = reduce_dim(model, keep, left_idx, right_idx, sim,
                           max_spr, output_basename, iterx, step=1,
                           shuffle=shuffle, save=True)
