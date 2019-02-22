@@ -1,68 +1,54 @@
 # Experimental results
 
-## XP001 Entropy with no min count
+## Generate a count-based model from a Wikipedia dump
+Window 2
+```
+entropix generate \
+  --corpus /home/kabbach/witokit/data/wiki/enwiki.20190120.txt \
+  --output /home/kabbach/entropix/models/mincount-30/raw/ \
+  --min-count 30 \
+  --win-size 2
+```
 
-Corpus size is the number of tokens in corpus
-Vocab size is the total vocabulary size
+Window 5
+```
+entropix generate \
+  --corpus /home/kabbach/witokit/data/wiki/enwiki.20190120.txt \
+  --output /home/kabbach/entropix/models/mincount-30/raw/ \
+  --min-count 30 \
+  --win-size 5
+```
 
+## Compute PPMI
+Window 2
+```
+/home/kabbach/venv3.6/bin/entropix weigh \
+  --model /home/kabbach/entropix/models/mincount-30/raw/enwiki.20190120.mincount-30.win-2.npz \
+  --output /home/kabbach/entropix/models/mincount-30/ppmi/ \
+  -w ppmi
+```
 
-## XP002 with min_count = 10
-| Language | ISO | Corpus size | Vocab size | Entropy |
-| --- | --- | --- | --- | --- |
-| Amharic | am |  |  |  |
-| Arabic | ar |  |  |  |
-| Breton | br |  |  |  |
-| Cebuano | ceb |  |  |  |
-| Czech | cs |  |  |  |
-| Danish | da |  |  |  |
-| German | de |  |  |  |
-| Greek | el |  |  |  |
-| English | en |  |  |  |
-| Esperanto | eo |  |  |  |
-| Spanish | es |  |  |  |
-| Estonian | et |  |  |  |
-| Basque | eu |  |  |  |
-| Finnish | fi |  |  |  |
-| French | fr |  |  |  |
-| Irish | ga |  |  |  |
-| Guarani | gn |  |  |  |
-| Ancient Greek | grc |  |  |  |
-| Hebrew | he |  |  |  |
-| Hindi | hi |  |  |  |
-| Hungarian | hu |  |  |  |
-| Armenian | hy |  |  |  |
-| Indonesian | id |  |  |  |
-| Italian | it |  |  |  |
-| Japanese | ja |  |  |  |
-| Javanese | jv |  |  |  |
-| Korean | ko |  |  |  |
-| Latin | la |  |  |  |
-| Burmese | my |  |  |  |
-| Dutch | nl |  |  |  |
-| Norwegian | no |  |  |  |
-| Polish | pl |  |  |  |
-| Portuguese | pt |  |  |  |
-| Quechua | qu |  |  |  |
-| Russian | ru |  |  |  |
-| Sanskrit | sa |  |  |  |
-| Swedish | sv |  |  |  |
-| Swahili | sw |  |  |  |
-| Tamil | ta |  |  |  |
-| Thai | th |  |  |  |
-| Tagalog | tl |  |  |  |
-| Turkish | tr |  |  |  |
-| Tatar | tt |  |  |  |
-| Uighur | ug |  |  |  |
-| Ukranian | uk |  |  |  |
-| Urdu | ur |  |  |  |
-| Vietnamese | vi |  |  |  |
-| Waray | war |  |  |  |
-| Wolof | wo |  |  |  |
-| Xhosa | xh |  |  |  |
-| Chinese | zh |  |  |  |
-| Zulu | zu |  |  |  |
+Window 5
+```
+/home/kabbach/venv3.6/bin/entropix weigh \
+  --model /home/kabbach/entropix/models/mincount-30/raw/enwiki.20190120.mincount-30.win-5.npz \
+  --output /home/kabbach/entropix/models/mincount-30/ppmi/ \
+  -w ppmi
+```
 
-## XP003 with min_count 50
+## Reduce via SVD
+Window 2
+```
+/home/kabbach/venv3.6/bin/entropix svd \
+  --model /home/kabbach/entropix/models/mincount-30/ppmi/enwiki.20190120.mincount-30.win-2.ppmi.npz \
+  --dim 1000
+```
 
-## XP004 on UD
-Computing counts and entropy on UD
+Window 5
+```
+/home/kabbach/venv3.6/bin/entropix svd \
+  --model /home/kabbach/entropix/models/mincount-30/ppmi/enwiki.20190120.mincount-30.win-5.ppmi.npz \
+  --dim 1000
+```
+
+## Baseline

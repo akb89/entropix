@@ -31,8 +31,10 @@ logger = logging.getLogger(__name__)
 
 
 def _evaluate(args):
-    logger.info('Evaluating model against MEN {}'.format(args.model))
-    evaluator.evaluate_distributional_space(args.model, args.vocab)
+    logger.info('Evaluating model against {}: {}'.format(args.dataset,
+                                                         args.model))
+    evaluator.evaluate_distributional_space(args.model, args.vocab,
+                                            args.dataset)
 
 
 def _compute_energy(args):
@@ -295,6 +297,9 @@ def main():
                                       'space to evaluate')
     parser_evaluate.add_argument('-v', '--vocab', required=True,
                                  help='absolute path to .map vocabulary file')
+    parser_evaluate.add_argument('-d', '--dataset', required=True,
+                                 choices=['men', 'simlex', 'simverb'],
+                                 help='which dataset to evaluate on')
     parser_generate = subparsers.add_parser(
         'generate', formatter_class=argparse.RawTextHelpFormatter,
         help='generate raw frequency count based model')
