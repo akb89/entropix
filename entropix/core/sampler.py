@@ -11,24 +11,16 @@ __all__ = ('sample_dimensions')
 logger = logging.getLogger(__name__)
 
 
-def remove_dimensions(singvectors_filepath, vocab_filepath):
-    """Remove top or bottom dimensions."""
-    logger.info('Sampling dimensions...')
-    model = np.load(singvectors_filepath)
-    left_idx, right_idx, sim = evaluator.load_vocab_and_men_data(vocab_filepath)
-    init_men_spr = evaluator.evaluate_on_men(model, left_idx, right_idx, sim)
-    for dim_idx in range(model.shape[1]-1):
-        reduced = model[:, dim_idx:]
-        men_spr = evaluator.evaluate_on_men(reduced, left_idx, right_idx, sim)
-        print(reduced.shape[1], men_spr)
-
-
-
 def evaluate(model, left_idx, right_idx, sim, dataset):
     if dataset not in ['men', 'simlex', 'simverb']:
         raise Exception('Unsupported eval dataset: {}'.format(dataset))
     if dataset == 'men':
         return evaluator.evaluate_on_men(model, left_idx, right_idx, sim)
+    if dataset == 'simlex':
+        return
+    if dataset == 'simverb':
+        return
+    raise Exception('Unsupported eval dataset: {}'.format(dataset))
 
 
 def increase_dim(model, keep, dims, left_idx, right_idx, sim, dataset,
@@ -36,6 +28,7 @@ def increase_dim(model, keep, dims, left_idx, right_idx, sim, dataset,
     logger.info('Increasing dimensions to maximize score. Iteration = {}'
                 .format(iterx))
     max_spr = evaluate(model[:, list(keep)], left_idx, right_idx, sim, dataset)
+    init_len_keep = len(keep)
     for idx, dim_idx in enumerate(dims):
         keep.add(dim_idx)
         spr = evaluate(model[:, list(keep)], left_idx, right_idx, sim, dataset)
@@ -45,7 +38,7 @@ def increase_dim(model, keep, dims, left_idx, right_idx, sim, dataset,
                         .format(max_spr, len(keep), dim_idx))
         else:
             keep.remove(dim_idx)
-        if mode == 'mix' and idx % rate == 0:
+        if mode == 'mix' and len(keep) > init_len_keep and idx % rate == 0:
             keep = reduce_dim(model, keep, left_idx, right_idx, sim, dataset,
                               max_spr, output_basename, iterx, step=1,
                               shuffle=shuffle, save=False)
