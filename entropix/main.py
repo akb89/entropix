@@ -185,11 +185,11 @@ def _sample(args):
     dirname = os.path.dirname(args.model)
     basename = os.path.basename(args.model).split('.singvectors.npy')[0]
     keep_filepath_basename = os.path.join(
-        dirname, '{}.{}.sampledims.mode-{}.rate-{}.keep'.format(
-            basename, args.dataset, args.mode, args.rate))
+        dirname, '{}.{}.sampledims.mode-{}.rate-{}.start-{}.keep'.format(
+            basename, args.dataset, args.mode, args.rate, args.start_from))
     sampler.sample_dimensions(args.model, args.vocab, args.dataset,
                               keep_filepath_basename, args.iter, args.shuffle,
-                              args.mode, args.rate)
+                              args.mode, args.rate, args.start_from)
 
 
 def restricted_energy(x):
@@ -384,5 +384,7 @@ def main():
                                help='whether to use seq or mix algorithm')
     parser_sample.add_argument('-r', '--rate', type=int, default=10,
                                help='reduce every r dim in mix mode')
+    parser_sample.add_argument('-f', '--start-from', type=int, default=0,
+                               help='index of singvectors dim to start from')
     args = parser.parse_args()
     args.func(args)

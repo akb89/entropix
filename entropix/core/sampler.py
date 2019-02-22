@@ -1,9 +1,9 @@
 """Dimensionality reduction through dimensionality selection."""
 
 import logging
-
-import numpy as np
 import random
+import numpy as np
+
 import entropix.core.evaluator as evaluator
 
 __all__ = ('sample_dimensions')
@@ -93,7 +93,8 @@ def reduce_dim(model, keep, left_idx, right_idx, sim, dataset, max_spr,
 
 
 def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
-                      output_basename, num_iter, shuffle, mode, rate):
+                      output_basename, num_iter, shuffle, mode, rate,
+                      start_from):
     model = np.load(singvectors_filepath)
     logger.info('Sampling dimensions over a total of {} dims, optimizing '
                 'on {} using {} mode...'
@@ -113,9 +114,9 @@ def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
         pass
     elif dataset == 'simverb':
         pass
-    keep = set([0, 1])  # start at 2-dims
+    keep = set([start_from, start_from+1])  # start at 2-dims
     for iterx in range(1, num_iter+1):
-        dims = [idx for idx in list(range(model.shape[1])) if idx not in keep]
+        dims = [idx for idx in list(range(model.shape[1]))[start_from:] if idx not in keep]
         if shuffle:
             random.shuffle(dims)
         keep, max_spr = increase_dim(model, keep, dims, left_idx, right_idx,
