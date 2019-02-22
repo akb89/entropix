@@ -108,7 +108,8 @@ def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
     model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
     if dataset not in ['men', 'simlex', 'simverb']:
         raise Exception('Unsupported eval dataset: {}'.format(dataset))
-    left_idx, right_idx, sim = evaluator.load_words_and_sim_(vocab_filepath)
+    left_idx, right_idx, sim = evaluator.load_words_and_sim_(vocab_filepath,
+                                                             dataset)
     keep = set([start_from, start_from+1])  # start at 2-dims
     for iterx in range(1, num_iter+1):
         dims = [idx for idx in list(range(model.shape[1]))[start_from:] if idx not in keep]
