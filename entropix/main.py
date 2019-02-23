@@ -236,6 +236,34 @@ def _remove_mean(args):
     remover.remove_mean(model, output_filepath)
 
 
+def _convert(args):
+    logger.info('Converting file {}'.format(args.input))
+    logger.info('Converting from {} to {}...'.format(args.fromm, args.to))
+    dirname = os.path.dirname(args.input)
+    if args.fromm == 'numpy':
+        basename = os.path.basename(args.input).split('.npy')[0]
+    elif args.fromm == 'text':
+        basename = os.path.basename(args.input).split('.txt')[0]
+    output_basename = os.path.join(dirname, basename)
+    if args.to == 'text':
+        model_filepath = '{}.txt'.format(output_basename)
+    elif args.to == 'numpy':
+        vocab_filepath = '{}.vocab'.format(output_basename)
+        model = None
+        with open(args.input, 'r', encoding='utf-8') as input_stream:
+            with open(vocab_filepath, 'w', encoding='utf-8') as vocab_stream:
+                for line in input_stream:
+                    items = line.strip().split(' ')
+                    embed = np.array([items[1:]], dtype=np.float64)
+                    if model is None:
+                        model = np.array([items[1:]], dtype=np.float64)
+                    else:
+                        model = np.append(model, embed, axis=0)
+                    print(items[0], file=vocab_stream)
+        np.save(output_basename, model)
+        logger.info('Done')
+
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -391,7 +419,7 @@ def main():
                                help='absolute path to .npy matrix')
     parser_sample = subparsers.add_parser(
         'sample', formatter_class=argparse.RawTextHelpFormatter,
-        help='find min num of dimensions that maximize MEN score')
+        help='find min num of dimensions that maximize dataset score')
     parser_sample.set_defaults(func=_sample)
     parser_sample.add_argument('-m', '--model', required=True,
                                help='absolute path to .singvectors.npy')
@@ -420,5 +448,15 @@ def main():
                                help='max number of dim in limit mode')
     parser_sample.add_argument('-w', '--rewind', action='store_true',
                                help='if set, will rewind in limit mode')
+    parser_convert = subparsers.add_parser(
+        'convert', formatter_class=argparse.RawTextHelpFormatter,
+        help='convert embeddings to and from text and numpy')
+    parser_convert.set_defaults(func=_convert)
+    parser_convert.add_argument('-f', '--fromm', choices=['numpy', 'text'],
+                                help='which format to convert from')
+    parser_convert.add_argument('-t', '--to', choices=['numpy', 'text'],
+                                help='which format to convert to')
+    parser_convert.add_argument('-i', '--input',
+                                help='absolute path to input data to convert')
     args = parser.parse_args()
     args.func(args)
