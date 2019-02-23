@@ -18,19 +18,22 @@ def increase_dim(model, keep, dims, left_idx, right_idx, sim,
                 .format(iterx))
     max_spr = evaluator.evaluate(model[:, list(keep)], left_idx, right_idx, sim)
     init_len_keep = len(keep)
+    added_counter = 0
     for idx, dim_idx in enumerate(dims):
         keep.add(dim_idx)
         spr = evaluator.evaluate(model[:, list(keep)], left_idx, right_idx, sim)
         if spr > max_spr:
+            added_counter += 1
             max_spr = spr
             logger.info('New max = {} with dim = {} at idx = {}'
                         .format(max_spr, len(keep), dim_idx))
+            if mode == 'mix' and added_counter % rate == 0:
+                keep = reduce_dim(model, keep, left_idx, right_idx, sim,
+                                  max_spr, output_basename, iterx, step=1,
+                                  shuffle=shuffle, save=False)
         else:
             keep.remove(dim_idx)
-        if mode == 'mix' and len(keep) > init_len_keep and idx % rate == 0:
-            keep = reduce_dim(model, keep, left_idx, right_idx, sim,
-                              max_spr, output_basename, iterx, step=1,
-                              shuffle=shuffle, save=False)
+
     if shuffle:
         keep_filepath = '{}.keep.shuffled.iter-{}.txt'.format(output_basename, iterx)
     else:
