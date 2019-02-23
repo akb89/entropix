@@ -195,16 +195,23 @@ def _sample(args):
             '{}.{}.sampledims.mode-{}.rate-{}.niter-{}.start-{}.end-{}'
             .format(basename, args.dataset, args.mode, args.rate, args.iter,
                     args.start, args.end))
-    else:
+    elif args.mode == 'seq':
         keep_filepath_basename = os.path.join(
             dirname,
             '{}.{}.sampledims.mode-{}.niter-{}.start-{}.end-{}'.format(
                 basename, args.dataset, args.mode, args.iter, args.start,
                 args.end))
+    elif args.mode == 'limit':
+        keep_filepath_basename = os.path.join(
+            dirname,
+            '{}.{}.sampledims.mode-{}.d-{}.start-{}.end-{}'.format(
+                basename, args.dataset, args.mode, args.limit, args.start,
+                args.end))
     logger.info('Output basename = {}'.format(keep_filepath_basename))
     sampler.sample_dimensions(args.model, args.vocab, args.dataset,
                               keep_filepath_basename, args.iter, args.shuffle,
-                              args.mode, args.rate, args.start, args.end)
+                              args.mode, args.rate, args.start, args.end,
+                              args.limit, args.rewind)
 
 
 def restricted_energy(x):
@@ -400,14 +407,18 @@ def main():
                                help='number of iterations')
     parser_sample.add_argument('-s', '--shuffle', action='store_true',
                                help='whether or not to shuffle at each iter')
-    parser_sample.add_argument('-a', '--mode', choices=['seq', 'mix'],
+    parser_sample.add_argument('-a', '--mode', choices=['seq', 'mix', 'limit'],
                                default='seq',
-                               help='whether to use seq or mix algorithm')
+                               help='which version of the algorithm to use')
     parser_sample.add_argument('-r', '--rate', type=int, default=10,
                                help='reduce every r dim in mix mode')
     parser_sample.add_argument('-b', '--start', type=int, default=0,
                                help='index of singvectors dim to start from')
     parser_sample.add_argument('-e', '--end', type=int, default=0,
                                help='index of singvectors dim to and at')
+    parser_sample.add_argument('-l', '--limit', type=int, default=5,
+                               help='max number of dim in limit mode')
+    parser_sample.add_argument('-w', '--rewind', action='store_true',
+                               help='if set, will rewind in limit mode')
     args = parser.parse_args()
     args.func(args)

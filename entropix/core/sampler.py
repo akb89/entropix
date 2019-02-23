@@ -11,6 +11,7 @@ __all__ = ('sample_dimensions')
 logger = logging.getLogger(__name__)
 
 
+
 def increase_dim(model, keep, dims, left_idx, right_idx, sim,
                  output_basename, iterx, shuffle, mode, rate):
     logger.info('Increasing dimensions to maximize score. Iteration = {}'
@@ -80,31 +81,15 @@ def reduce_dim(model, keep, left_idx, right_idx, sim, max_spr,
     return keep
 
 
-def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
-                      output_basename, num_iter, shuffle, mode, rate,
-                      start, end):
-    model = np.load(singvectors_filepath)
-    logger.info('Sampling dimensions over a total of {} dims, optimizing '
-                'on {} using {} mode...'
-                .format(model.shape[1], dataset, mode))
-    if mode not in ['seq', 'mix']:
-        raise Exception('Unsupported mode {}'.format(mode))
+
+def sample_seq_mix(model, left_idx, right_idx, sim, output_basename, num_iter,
+                   shuffle, mode, rate, start, end):
     if shuffle:
         logger.info('Shuffling mode ON')
     else:
         logger.info('Shuffling mode OFF')
-    model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
-    if end > model.shape[1]:
-        raise Exception('End parameter is > model.shape[1]: {} > {}'
-                        .format(end, model.shape[1]))
-    if end == 0:
-        end = model.shape[1]
     logger.info('Iterating over {} dims starting at {} and ending at {}'
                 .format(model.shape[1], start, end))
-    if dataset not in ['men', 'simlex', 'simverb']:
-        raise Exception('Unsupported eval dataset: {}'.format(dataset))
-    left_idx, right_idx, sim = evaluator.load_words_and_sim_(vocab_filepath,
-                                                             dataset)
     keep = set([start, start+1])  # start at 2-dims
     for iterx in range(1, num_iter+1):
         dims = [idx for idx in list(range(model.shape[1]))[start:end] if idx not in keep]
@@ -116,3 +101,97 @@ def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
         keep = reduce_dim(model, keep, left_idx, right_idx, sim,
                           max_spr, output_basename, iterx, step=1,
                           shuffle=shuffle, save=True)
+
+
+def sample_limit(model, left_idx, right_idx, sim, output_basename, limit,
+                 start, end, rewind):
+    """Increase dims up to dlim taking the best dim each time.
+
+    With rewind, go back each time new dim is added to check if can add a
+    better one.
+    """
+    max_spr = 0.
+    dims = set()
+    max_num_dim_best = 0
+    for k in range(limit):
+        best_dim_idx = -1
+        least_worst_dim = -1
+        least_worst_spr = 0.
+        for dim_idx in range(start, end):
+            if dim_idx in dims:
+                continue
+            dims.add(dim_idx)
+            spr = evaluator.evaluate(model[:, list(dims)], left_idx, right_idx, sim)
+            if spr > max_spr:
+                max_spr = spr
+                best_dim_idx = dim_idx
+                logger.info('Current best = {} with dims = {}'
+                            .format(max_spr, sorted(dims)))
+            elif spr > least_worst_spr:
+                least_worst_spr = spr
+                least_worst_dim = dim_idx
+            dims.remove(dim_idx)
+        if best_dim_idx == -1:
+            logger.info('Could not find a better SPR correlation with {} '
+                        'dims. Added least worst dim to continue'.format(k+1))
+            dims.add(least_worst_dim)
+        else:
+            dims.add(best_dim_idx)
+            max_num_dim_best += 1
+        if rewind and len(dims) > 1:
+            for i in sorted(dims):
+                best_dim = -1
+                if i == least_worst_dim or i == best_dim_idx:
+                    continue
+                dims.remove(i)
+                for idx in range(start, end):
+                    if idx == i or idx in dims:
+                        continue
+                    dims.add(idx)
+                    spr = evaluator.evaluate(model[:, list(dims)], left_idx, right_idx, sim)
+                    if spr > max_spr:
+                        max_spr = spr
+                        best_dim = idx
+                        logger.info('Rewinded best = {} with dims = {}'
+                                    .format(max_spr, sorted(dims)))
+                    dims.remove(idx)
+                if best_dim == -1:
+                    dims.add(i)
+                else:
+                    dims.add(best_dim)
+    logger.info('Best SPR = {} found using {} dims = {}'
+                .format(max_spr, max_num_dim_best, sorted(dims)))
+    if rewind:
+        final_filepath = '{}.final.rewind.txt'.format(output_basename)
+    else:
+        final_filepath = '{}.final.txt'.format(output_basename)
+    logger.info('Saving output to file {}'.format(final_filepath))
+    with open(final_filepath, 'w', encoding='utf-8') as final_stream:
+        print('\n'.join([str(idx) for idx in sorted(dims)]), file=final_stream)
+
+
+def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
+                      output_basename, num_iter, shuffle, mode, rate,
+                      start, end, limit, rewind):
+    model = np.load(singvectors_filepath)
+    logger.info('Sampling dimensions over a total of {} dims, optimizing '
+                'on {} using {} mode...'
+                .format(model.shape[1], dataset, mode))
+    if mode not in ['seq', 'mix', 'limit']:
+        raise Exception('Unsupported mode {}'.format(mode))
+    model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
+    if end > model.shape[1]:
+        raise Exception('End parameter is > model.shape[1]: {} > {}'
+                        .format(end, model.shape[1]))
+    if end == 0:
+        end = model.shape[1]
+    if dataset not in ['men', 'simlex', 'simverb']:
+        raise Exception('Unsupported eval dataset: {}'.format(dataset))
+    left_idx, right_idx, sim = evaluator.load_words_and_sim_(vocab_filepath,
+                                                             dataset)
+    if mode in ['seq', 'mix']:
+        sample_seq_mix(model, left_idx, right_idx, sim, output_basename,
+                       num_iter, shuffle, mode, rate, start, end)
+    if mode == 'limit':
+        sample_limit(model, left_idx, right_idx, sim, output_basename, limit,
+                     start, end, rewind)
