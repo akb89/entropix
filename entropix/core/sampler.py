@@ -31,9 +31,9 @@ def increase_dim(model, keep, dims, left_idx, right_idx, sim,
                               max_spr, output_basename, iterx, step=1,
                               shuffle=shuffle, save=False)
     if shuffle:
-        keep_filepath = '{}.iter-{}.shuffle.txt'.format(output_basename, iterx)
+        keep_filepath = '{}.keep.shuffled.iter-{}.txt'.format(output_basename, iterx)
     else:
-        keep_filepath = '{}.iter-{}.txt'.format(output_basename, iterx)
+        keep_filepath = '{}.keep.iter-{}.txt'.format(output_basename, iterx)
     logger.info('Finished dim increase. Saving list of keep idx to {}'
                 .format(keep_filepath))
     with open(keep_filepath, 'w', encoding='utf-8') as keep_stream:
@@ -60,10 +60,10 @@ def reduce_dim(model, keep, left_idx, right_idx, sim, max_spr,
             logger.info('Constant max = {} removing dim_idx = {}. New dim = {}'
                         .format(max_spr, dim_idx, len(dims)))
     if shuffle:
-        reduce_filepath = '{}.iter-{}.reduce.step-{}.shuffle.txt'.format(
+        reduce_filepath = '{}.keep.shuffled.iter-{}.reduce.step-{}.txt'.format(
             output_basename, iterx, step)
     else:
-        reduce_filepath = '{}.iter-{}.reduce.step-{}.txt'.format(
+        reduce_filepath = '{}.keep.iter-{}.reduce.step-{}.txt'.format(
             output_basename, iterx, step)
     logger.info('Finished reducing dims')
     keep = keep.difference(remove)
@@ -82,7 +82,7 @@ def reduce_dim(model, keep, left_idx, right_idx, sim, max_spr,
 
 def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
                       output_basename, num_iter, shuffle, mode, rate,
-                      start_from):
+                      start, end):
     model = np.load(singvectors_filepath)
     logger.info('Sampling dimensions over a total of {} dims, optimizing '
                 'on {} using {} mode...'
@@ -94,13 +94,20 @@ def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
     else:
         logger.info('Shuffling mode OFF')
     model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
+    if end > model.shape[1]:
+        raise Exception('End parameter is > model.shape[1]: {} > {}'
+                        .format(end, model.shape[1]))
+    if end == 0:
+        end = model.shape[1]
+    logger.info('Iterating over {} dims starting at {} and ending at {}'
+                .format(model.shape[1], start, end))
     if dataset not in ['men', 'simlex', 'simverb']:
         raise Exception('Unsupported eval dataset: {}'.format(dataset))
     left_idx, right_idx, sim = evaluator.load_words_and_sim_(vocab_filepath,
                                                              dataset)
-    keep = set([start_from, start_from+1])  # start at 2-dims
+    keep = set([start, start+1])  # start at 2-dims
     for iterx in range(1, num_iter+1):
-        dims = [idx for idx in list(range(model.shape[1]))[start_from:] if idx not in keep]
+        dims = [idx for idx in list(range(model.shape[1]))[start:end] if idx not in keep]
         if shuffle:
             random.shuffle(dims)
         keep, max_spr = increase_dim(model, keep, dims, left_idx, right_idx,

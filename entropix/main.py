@@ -184,14 +184,27 @@ def _reduce(args):
 
 
 def _sample(args):
-    dirname = os.path.dirname(args.model)
+    if args.output:
+        dirname = args.output
+    else:
+        dirname = os.path.dirname(args.model)
     basename = os.path.basename(args.model).split('.singvectors.npy')[0]
-    keep_filepath_basename = os.path.join(
-        dirname, '{}.{}.sampledims.mode-{}.rate-{}.start-{}.keep'.format(
-            basename, args.dataset, args.mode, args.rate, args.start_from))
+    if args.mode == 'mix':
+        keep_filepath_basename = os.path.join(
+            dirname,
+            '{}.{}.sampledims.mode-{}.rate-{}.niter-{}.start-{}.end-{}'
+            .format(basename, args.dataset, args.mode, args.rate, args.iter,
+                    args.start, args.end))
+    else:
+        keep_filepath_basename = os.path.join(
+            dirname,
+            '{}.{}.sampledims.mode-{}.niter-{}.start-{}.end-{}'.format(
+                basename, args.dataset, args.mode, args.iter, args.start,
+                args.end))
+    logger.info('Output basename = {}'.format(keep_filepath_basename))
     sampler.sample_dimensions(args.model, args.vocab, args.dataset,
                               keep_filepath_basename, args.iter, args.shuffle,
-                              args.mode, args.rate, args.start_from)
+                              args.mode, args.rate, args.start, args.end)
 
 
 def restricted_energy(x):
@@ -377,6 +390,9 @@ def main():
                                help='absolute path to .singvectors.npy')
     parser_sample.add_argument('-v', '--vocab', required=True,
                                help='vocabulary mapping for dsm')
+    parser_sample.add_argument('-o', '--output',
+                               help='absolute path to output directory where '
+                                    'to save sampled models')
     parser_sample.add_argument('-d', '--dataset', required=True,
                                choices=['men', 'simlex', 'simverb'],
                                help='dataset to optimize on')
@@ -389,7 +405,9 @@ def main():
                                help='whether to use seq or mix algorithm')
     parser_sample.add_argument('-r', '--rate', type=int, default=10,
                                help='reduce every r dim in mix mode')
-    parser_sample.add_argument('-f', '--start-from', type=int, default=0,
+    parser_sample.add_argument('-b', '--start', type=int, default=0,
                                help='index of singvectors dim to start from')
+    parser_sample.add_argument('-e', '--end', type=int, default=0,
+                               help='index of singvectors dim to and at')
     args = parser.parse_args()
     args.func(args)
