@@ -106,13 +106,11 @@ def evaluate(model, left_idx, right_idx, sim):
     return spr
 
 
-def evaluate_distributional_space(model_filepath, vocab_filepath, dataset):
+def evaluate_distributional_space(model, vocab_filepath, dataset):
     """Evaluate a numpy model against the MEN/Simlex/Simverb datasets."""
     logger.info('Checking embeddings quality against {} similarity ratings'
                 .format(dataset))
     left_idx, right_idx, sim = load_words_and_sim_(vocab_filepath, dataset)
-    logger.info('Loading distributional space from {}'.format(model_filepath))
-    model = np.load(model_filepath)
     men_spr = evaluate(model, left_idx, right_idx, sim)
     # logger.info('Cosine distribution stats on MEN:')
     # logger.info('   Min = {}'.format(diag.min()))

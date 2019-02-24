@@ -33,8 +33,18 @@ logger = logging.getLogger(__name__)
 def _evaluate(args):
     logger.info('Evaluating model against {}: {}'.format(args.dataset,
                                                          args.model))
-    evaluator.evaluate_distributional_space(args.model, args.vocab,
-                                            args.dataset)
+    logger.info('Loading distributional space from {}'.format(args.model))
+    model = np.load(args.model)
+    model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
+    if args.dims:
+        dims = []
+        with open(args.dims, 'r', encoding='utf-8') as dims_stream:
+            for line in dims_stream:
+                dims.append(int(line.strip()))
+        logger.info('Sampling model with {} dimensions = {}'
+                    .format(len(dims), dims))
+        model = model[:, dims]
+    evaluator.evaluate_distributional_space(model, args.vocab, args.dataset)
 
 
 def _compute_energy(args):
@@ -348,6 +358,10 @@ def main():
     parser_evaluate.add_argument('-d', '--dataset', required=True,
                                  choices=['men', 'simlex', 'simverb'],
                                  help='which dataset to evaluate on')
+    parser_evaluate.add_argument('-i', '--dims',
+                                 help='absolute path to .txt file containing'
+                                      'a shortlist of dimensions, one per line'
+                                      'to select from')
     parser_generate = subparsers.add_parser(
         'generate', formatter_class=argparse.RawTextHelpFormatter,
         help='generate raw frequency count based model')
