@@ -262,14 +262,14 @@ def _convert(args):
         model = None
         with open(args.input, 'r', encoding='utf-8') as input_stream:
             with open(vocab_filepath, 'w', encoding='utf-8') as vocab_stream:
-                for line in input_stream:
+                for idx, line in enumerate(input_stream):
                     items = line.strip().split(' ')
                     embed = np.array([items[1:]], dtype=np.float64)
                     if model is None:
                         model = np.array([items[1:]], dtype=np.float64)
                     else:
                         model = np.append(model, embed, axis=0)
-                    print(items[0], file=vocab_stream)
+                    print('{}\t{}'.format(idx, items[0]), file=vocab_stream)
         np.save(output_basename, model)
         logger.info('Done')
 
