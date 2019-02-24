@@ -35,6 +35,7 @@ def _evaluate(args):
                                                          args.model))
     logger.info('Loading distributional space from {}'.format(args.model))
     model = np.load(args.model)
+    logger.info('model size = {}'.format(model.shape))
     model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
     if args.dims:
         dims = []
@@ -274,6 +275,18 @@ def _convert(args):
         logger.info('Done')
 
 
+def _cut(args):
+    logger.info('Cutting singular vectors from {} to {}'
+                .format(args.start, args.end))
+    basename = '{}.start-{}.end-{}.singvectors'.format(
+        args.model.split('.singvectors.npy')[0], args.start, args.end)
+    logger.info('Saving output to {}'.format(basename))
+    model = np.load(args.model)
+    model = model[:, model.shape[1]-args.end:model.shape[1]-args.start]
+    logger.info('New model shape = {}'.format(model.shape))
+    np.save(basename, model)
+
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -472,5 +485,15 @@ def main():
                                 help='which format to convert to')
     parser_convert.add_argument('-i', '--input',
                                 help='absolute path to input data to convert')
+    parser_cut = subparsers.add_parser(
+        'cut', formatter_class=argparse.RawTextHelpFormatter,
+        help='cut a set of singular vectors')
+    parser_cut.set_defaults(func=_cut)
+    parser_cut.add_argument('-m', '--model', required=True,
+                            help='absolute path to .singvectors.npy')
+    parser_cut.add_argument('-s', '--start', type=int, required=True,
+                            help='index of singvectors dim to start from')
+    parser_cut.add_argument('-e', '--end', type=int, required=True,
+                            help='index of singvectors dim to and at')
     args = parser.parse_args()
     args.func(args)
