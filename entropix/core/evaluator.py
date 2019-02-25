@@ -21,6 +21,9 @@ SIMLEX_EN_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
 SIMVERB_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                 'resources', 'SimVerb-3500.txt')
 
+STS2012_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                'resources', 'STS2012.full.txt')
+
 
 # Note: this is scipy's spearman, without tie adjustment
 def _spearman(x, y):
@@ -35,8 +38,8 @@ def get_men_pairs_and_sim():
         for line in men_stream:
             line = line.rstrip('\n')
             items = line.split()
-            left.append(items[0])
-            right.append(items[1])
+            left.append([items[0]])
+            right.append([items[1]])
             sim.append(float(items[2]))
     return left, right, sim
 
@@ -49,8 +52,8 @@ def get_simlex_pairs_and_sim():
         for line in simlex_stream:
             line = line.rstrip('\n')
             items = line.split()
-            left.append(items[0])
-            right.append(items[1])
+            left.append([items[0]])
+            right.append([items[1]])
             sim.append(float(items[3]))
     return left, right, sim
 
@@ -63,14 +66,31 @@ def get_simverb_pairs_and_sim():
         for line in simverb_stream:
             line = line.rstrip('\n')
             items = line.split()
-            left.append(items[0])
-            right.append(items[1])
+            left.append([items[0]])
+            right.append([items[1]])
             sim.append(float(items[3]))
     return left, right, sim
 
 
+def get_STS2012_pairs_and_sim():
+    left = []
+    right = []
+    sim = []
+    with open(STS2012_FILEPATH, 'r', encoding='utf-8') as sts_stream:
+        for line in sts_stream:
+            line = line.strip().split('\t')
+
+            st1 = [x.lower() for x in line[0].split()]
+            st2 = [x.lower() for x in line[1].split()]
+            score = float(line[2])
+
+            left.append(st1)
+            right.append(st2)
+            sim.append(score)
+    return left, right, sim
+
 def load_words_and_sim_(vocab_filepath, dataset):
-    if dataset not in ['men', 'simlex', 'simverb']:
+    if dataset not in ['men', 'simlex', 'simverb', 'sts2012']:
         raise Exception('Unsupported dataset {}'.format(dataset))
     logger.info('Loading vocabulary...')
     idx_to_word = dutils.load_vocab_mapping(vocab_filepath)
@@ -81,15 +101,20 @@ def load_words_and_sim_(vocab_filepath, dataset):
         left, right, sim = get_simlex_pairs_and_sim()
     elif dataset == 'simverb':
         left, right, sim = get_simverb_pairs_and_sim()
+    elif dataset =='sts2012':
+        left, right, sim = get_STS2012_pairs_and_sim()
     else:
         raise Exception('Unsupported dataset {}'.format(dataset))
     left_idx = []
     right_idx = []
     f_sim = []
     for l, r, s in zip(left, right, sim):
-        if l in word_to_idx and r in word_to_idx:
-            left_idx.append(word_to_idx[l])
-            right_idx.append(word_to_idx[r])
+        l_in_word_to_idx = [x for x in l if x in word_to_idx]
+        r_in_word_to_idx = [x for x in r if x in word_to_idx]
+        if len(l_in_word_to_idx)/len(l) > 0.85 and\
+           len(r_in_word_to_idx)/len(r) > 0.85:
+            left_idx.append([word_to_idx[x] for x in l_in_word_to_idx])
+            right_idx.append([word_to_idx[x] for x in r_in_word_to_idx])
             f_sim.append(s)
     return left_idx, right_idx, f_sim
     # left_idx = [word_to_idx[word] for word in left]
@@ -98,8 +123,14 @@ def load_words_and_sim_(vocab_filepath, dataset):
 
 
 def evaluate(model, left_idx, right_idx, sim):
-    left_vectors = model[left_idx]
-    right_vectors = model[right_idx]
+    left_vectors = []
+    right_vectors = []
+    for idx_list in left_idx:
+        vec = np.sum([model[el] for el in idx_list], axis=0)
+        left_vectors.append(vec)
+    for idx_list in right_idx:
+        vec = np.sum([model[el] for el in idx_list], axis=0)
+        right_vectors.append(vec)
     cos = 1 - spatial.distance.cdist(left_vectors, right_vectors, 'cosine')
     diag = np.diagonal(cos)
     spr = _spearman(sim, diag)
