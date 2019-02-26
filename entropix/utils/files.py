@@ -24,20 +24,26 @@ def get_singvalues_filepaths(model_dirpath):
             os.listdir(model_dirpath) if filename.endswith('.singvalues.npy')]
 
 
-def _get_model_basename(sparse_model_filepath):
-    return sparse_model_filepath.split('.npz')[0]
+def _get_model_basename(model_filepath):
+    if model_filepath.endswith('.npy'):
+        return model_filepath.split('.npy')[0]
+    return model_filepath.split('.npz')[0]
 
 
-def get_singvectors_filepath(sparse_model_filepath):
+def get_singvectors_filepath(sparse_model_filepath, dim, compact):
     """Return absolute path to singular vectors .npz file."""
     model_basename = _get_model_basename(sparse_model_filepath)
-    return '{}.singvectors.npy'.format(model_basename)
+    if compact:
+        return '{}.singvectors.npy'.format(model_basename)
+    return '{}.k{}.singvectors.npy'.format(model_basename, dim)
 
 
-def get_singvalues_filepath(sparse_model_filepath):
+def get_singvalues_filepath(sparse_model_filepath, dim, compact):
     """Return absolute path to singular values .npz file."""
     model_basename = _get_model_basename(sparse_model_filepath)
-    return '{}.singvalues.npy'.format(model_basename)
+    if compact:
+        '{}.singvalues.npy'.format(model_basename)
+    return '{}.k{}.singvalues.npy'.format(model_basename, dim)
 
 
 def get_input_filepaths(dirpath):
@@ -133,11 +139,11 @@ def get_sparsematrix_filepath(output_dirpath, corpus_filepath,
     return output_filepath_matrix
 
 def _create_tmp_folder(output_dirpath):
-    tmp_path = os.path.join(output_dirpath, 'tmp')
-    if not os.path.exists(tmp_path):
+    tmp_dirpath = os.path.join(output_dirpath, 'tmp')
+    if not os.path.exists(tmp_dirpath):
         logger.info('Creating directory {}'.format(tmp_dirpath))
         os.makedirs(tmp_dirpath)
-    return tmp_path
+    return tmp_dirpath
 
 def get_tmp_cosinedist_filepath(output_dirpath, idx):
     tmp_path = _create_tmp_folder(output_dirpath)

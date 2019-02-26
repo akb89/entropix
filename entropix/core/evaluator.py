@@ -2,18 +2,24 @@
 import os
 import logging
 
-import math
-from scipy import sparse
+import numpy as np
 from scipy import stats
+import scipy.spatial as spatial
 
-from tqdm import tqdm
+import entropix.utils.data as dutils
 
-__all__ = ('evaluate_distributional_space')
+__all__ = ('evaluate_distributional_space', 'load_words_and_sim_')
 
 logger = logging.getLogger(__name__)
 
 MEN_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                             'resources', 'MEN_dataset_natural_form_full')
+
+SIMLEX_EN_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                  'resources', 'SimLex-999.txt')
+
+SIMVERB_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                'resources', 'SimVerb-3500.txt')
 
 
 # Note: this is scipy's spearman, without tie adjustment
@@ -21,55 +27,95 @@ def _spearman(x, y):
     return stats.spearmanr(x, y)[0]
 
 
-def _cosine_similarity(peer_v, query_v):
-    if peer_v.shape != query_v.shape:
-        raise ValueError('Vectors must be of same length')
-    num = peer_v.dot(query_v.transpose()).data[0]
-    den_a = peer_v.dot(peer_v.transpose()).data[0]
-    den_b = query_v.dot(query_v.transpose()).data[0]
-    return num / (math.sqrt(den_a) * math.sqrt(den_b))
-
-
-def _get_men_pairs_and_sim():
-    pairs = []
-    humans = []
+def get_men_pairs_and_sim():
+    left = []
+    right = []
+    sim = []
     with open(MEN_FILEPATH, 'r', encoding='utf-8') as men_stream:
         for line in men_stream:
             line = line.rstrip('\n')
             items = line.split()
-            pairs.append((items[0], items[1]))
-            humans.append(float(items[2]))
-    return pairs, humans
+            left.append(items[0])
+            right.append(items[1])
+            sim.append(float(items[2]))
+    return left, right, sim
 
 
-def _load_vocabulary(vocab_filepath):
-    vocab = {}
-    with open(vocab_filepath, 'r', encoding='utf-8') as vocab_stream:
-        for line in vocab_stream:
-            line = line.strip()
-            vocab[line.split('\t')[1]] = line.split('\t')[0]
-    return vocab
+def get_simlex_pairs_and_sim():
+    left = []
+    right = []
+    sim = []
+    with open(SIMLEX_EN_FILEPATH, 'r', encoding='utf-8') as simlex_stream:
+        for line in simlex_stream:
+            line = line.rstrip('\n')
+            items = line.split()
+            left.append(items[0])
+            right.append(items[1])
+            sim.append(float(items[3]))
+    return left, right, sim
 
 
-def evaluate_distributional_space(model_filepath, vocab_filepath):
-    """Evaluate a numpy model against the MEN dataset."""
-    logger.info('Checking embeddings quality against MEN similarity ratings')
+def get_simverb_pairs_and_sim():
+    left = []
+    right = []
+    sim = []
+    with open(SIMVERB_FILEPATH, 'r', encoding='utf-8') as simverb_stream:
+        for line in simverb_stream:
+            line = line.rstrip('\n')
+            items = line.split()
+            left.append(items[0])
+            right.append(items[1])
+            sim.append(float(items[3]))
+    return left, right, sim
+
+
+def load_words_and_sim_(vocab_filepath, dataset):
+    if dataset not in ['men', 'simlex', 'simverb']:
+        raise Exception('Unsupported dataset {}'.format(dataset))
     logger.info('Loading vocabulary...')
-    vocab = _load_vocabulary(vocab_filepath)
-    logger.info('Loading distributional space from {}'.format(model_filepath))
-    model = sparse.load_npz(model_filepath)
-    pairs, humans = _get_men_pairs_and_sim()
-    system_actual = []
-    human_actual = []
-    count = 0
-    for (first, second), human in tqdm(zip(pairs, humans), total=len(pairs)):
-        if first not in vocab or second not in vocab:
-            logger.error('Could not find one of more pair item in model '
-                         'vocabulary: {}, {}'.format(first, second))
-            continue
-        sim = _cosine_similarity(model[vocab[first]], model[vocab[second]])
-        system_actual.append(sim)
-        human_actual.append(human)
-        count += 1
-    spr = _spearman(human_actual, system_actual)
-    logger.info('SPEARMAN: {} calculated over {} items'.format(spr, count))
+    idx_to_word = dutils.load_vocab_mapping(vocab_filepath)
+    word_to_idx = {v: k for k, v in idx_to_word.items()}
+    if dataset == 'men':
+        left, right, sim = get_men_pairs_and_sim()
+    elif dataset == 'simlex':
+        left, right, sim = get_simlex_pairs_and_sim()
+    elif dataset == 'simverb':
+        left, right, sim = get_simverb_pairs_and_sim()
+    else:
+        raise Exception('Unsupported dataset {}'.format(dataset))
+    left_idx = []
+    right_idx = []
+    f_sim = []
+    for l, r, s in zip(left, right, sim):
+        if l in word_to_idx and r in word_to_idx:
+            left_idx.append(word_to_idx[l])
+            right_idx.append(word_to_idx[r])
+            f_sim.append(s)
+    return left_idx, right_idx, f_sim
+    # left_idx = [word_to_idx[word] for word in left]
+    # right_idx = [word_to_idx[word] for word in right]
+    # return left_idx, right_idx, sim
+
+
+def evaluate(model, left_idx, right_idx, sim):
+    left_vectors = model[left_idx]
+    right_vectors = model[right_idx]
+    cos = 1 - spatial.distance.cdist(left_vectors, right_vectors, 'cosine')
+    diag = np.diagonal(cos)
+    spr = _spearman(sim, diag)
+    return spr
+
+
+def evaluate_distributional_space(model, vocab_filepath, dataset):
+    """Evaluate a numpy model against the MEN/Simlex/Simverb datasets."""
+    logger.info('Checking embeddings quality against {} similarity ratings'
+                .format(dataset))
+    left_idx, right_idx, sim = load_words_and_sim_(vocab_filepath, dataset)
+    men_spr = evaluate(model, left_idx, right_idx, sim)
+    # logger.info('Cosine distribution stats on MEN:')
+    # logger.info('   Min = {}'.format(diag.min()))
+    # logger.info('   Max = {}'.format(diag.max()))
+    # logger.info('   Average = {}'.format(diag.mean()))
+    # logger.info('   Median = {}'.format(np.median(diag)))
+    # logger.info('   STD = {}'.format(np.std(diag)))
+    logger.info('SPEARMAN: {}'.format(men_spr))

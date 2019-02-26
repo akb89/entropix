@@ -19,10 +19,10 @@ if __name__ == '__main__':
         print('Applying SVD to {}'.format(model_filepath))
         sing_values_filepath = entropix.get_singvalues_filepath(model_filepath)
         sing_vectors_filepath = entropix.get_singvectors_filepath(model_filepath)
-        for dim in [100, 300, 500, 1000, 2000, 5000, 10000, 0]:
+        for dim in [500, 1000, 2000, 5000, 10000, 0]:
             try:
                 print('Reducing matrix via SVD and k = {}'.format(dim))
-                U, S = entropix.reduce(
+                U, S = entropix.svd(
                     model_filepath=model_filepath, dim=dim,
                     sing_values_filepath=sing_values_filepath,
                     sing_vectors_filepath=sing_vectors_filepath, compact=True)
