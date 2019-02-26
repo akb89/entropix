@@ -249,15 +249,32 @@ def _remove_mean(args):
 
 def _convert(args):
     logger.info('Converting file {}'.format(args.input))
-    logger.info('Converting from {} to {}...'.format(args.fromm, args.to))
+    logger.info('Converting from {} to {}...'.format(args.source, args.to))
     dirname = os.path.dirname(args.input)
-    if args.fromm == 'numpy':
+    if args.source == 'numpy':
         basename = os.path.basename(args.input).split('.npy')[0]
-    elif args.fromm == 'text':
+    elif args.source == 'text':
         basename = os.path.basename(args.input).split('.txt')[0]
     output_basename = os.path.join(dirname, basename)
     if args.to == 'text':
         model_filepath = '{}.txt'.format(output_basename)
+        model = np.load(args.input)
+        model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
+        if args.dims:
+            dims = []
+            with open(args.dims, 'r', encoding='utf-8') as dims_stream:
+                for line in dims_stream:
+                    dims.append(int(line.strip()))
+            logger.info('Sampling model with {} dimensions = {}'
+                        .format(len(dims), dims))
+            model = model[:, dims]
+        with open(model_filepath, 'w', encoding='utf-8') as model_stream:
+            with open(args.vocab, 'r', encoding='utf-8') as vocab_stream:
+                for line in vocab_stream:
+                    word = line.strip().split('\t')[1]
+                    idx = int(line.strip().split('\t')[0])
+                    vector = ' '.join([str(coord) for coord in model[idx]])
+                    print('{} {}'.format(word, vector), file=model_stream)
     elif args.to == 'numpy':
         vocab_filepath = '{}.vocab'.format(output_basename)
         model = None
@@ -479,12 +496,19 @@ def main():
         'convert', formatter_class=argparse.RawTextHelpFormatter,
         help='convert embeddings to and from text and numpy')
     parser_convert.set_defaults(func=_convert)
-    parser_convert.add_argument('-f', '--fromm', choices=['numpy', 'text'],
+    parser_convert.add_argument('-f', '--from', dest='source',
+                                choices=['numpy', 'text'],
                                 help='which format to convert from')
     parser_convert.add_argument('-t', '--to', choices=['numpy', 'text'],
                                 help='which format to convert to')
-    parser_convert.add_argument('-i', '--input',
+    parser_convert.add_argument('-i', '--input', required=True,
                                 help='absolute path to input data to convert')
+    parser_convert.add_argument('-v', '--vocab',
+                                help='absolute path to input vocab file')
+    parser_convert.add_argument('-d', '--dims',
+                                help='absolute path to .txt file containing'
+                                     'a shortlist of dimensions, one per line'
+                                     'to select from')
     parser_cut = subparsers.add_parser(
         'cut', formatter_class=argparse.RawTextHelpFormatter,
         help='cut a set of singular vectors')
