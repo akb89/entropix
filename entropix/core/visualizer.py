@@ -71,10 +71,15 @@ def visualize_ipr_scatter(output_dirpath, input_filepath, filter_filepath):
     fig.savefig(graph_outfile)
 
 
-def visualize_boxplot(output_dirpath, input_filepaths):
+def visualize_boxplot(output_dirpath, max_n, input_filepaths):
     graph_outfile = futils.get_png_filename(output_dirpath, input_filepaths[0])
-    dists = {}
+#    dists = {}
+    dists = []
     for filename in input_filepaths:
+        # if 'shuffle' in filename:
+        #     lab = 'shuffle'
+        # else:
+        #     lab = 'linear'
         if 'men' in filename:
             lab = 'men'
         elif 'simlex' in filename:
@@ -82,10 +87,15 @@ def visualize_boxplot(output_dirpath, input_filepaths):
         else:
             lab = 'simverb'
         d = dutils.load_intlist(filename)
-        dists[lab] = d
+        d_mask = [0]*max_n
+        for i in d:
+            d_mask[i]=1
+
+#        dists[lab] = d_mask
+        dists.append(d)
 
     df = pd.DataFrame(data=dists)
-
-    ax = sns.boxplot(data=df, orient="h", palette="Set2")
+#    ax = sns.heatmap(data=df)
+    ax = sns.violinplot(data=dists, orient="h", palette="Set2")
     fig = ax.get_figure()
     fig.savefig(graph_outfile)

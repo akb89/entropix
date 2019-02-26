@@ -297,7 +297,8 @@ def _visualize_boxplots(args):
         os.makedirs(output_dirpath)
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
-    visualizer.visualize_boxplot(output_dirpath, args.input)
+
+    visualizer.visualize_boxplot(output_dirpath, args.num_dimensions, args.input)
 
 
 def main():
@@ -533,6 +534,9 @@ def main():
     parser_visualize_boxplots.add_argument(
         '-o', '--output', help='absolute path to output directory. '
         'If not set, will default to input dir')
+    parser_visualize_boxplots.add_argument(
+        '-d', '--num-dimensions', required=True, type=int,
+        help='number of dimensions of the model')
     parser_visualize_boxplots.add_argument(
         '-i', '--input', nargs='+', help='list of files')
     args = parser.parse_args()
