@@ -386,7 +386,7 @@ def main():
     parser_evaluate.add_argument('-v', '--vocab', required=True,
                                  help='absolute path to .map vocabulary file')
     parser_evaluate.add_argument('-d', '--dataset', required=True,
-                                 choices=['men', 'simlex', 'simverb'],
+                                 choices=['men', 'simlex', 'simverb', 'sts2012'],
                                  help='which dataset to evaluate on')
     parser_evaluate.add_argument('-i', '--dims',
                                  help='absolute path to .txt file containing'
