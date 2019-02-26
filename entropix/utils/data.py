@@ -71,3 +71,13 @@ def load_2columns(input_filepath):
             x.append(float(linesplit[0]))
             y.append(float(linesplit[1]))
     return x, y
+
+
+def load_intlist(input_filepath):
+    ret = []
+    with open(input_filepath, encoding='utf-8') as input_stream:
+        for line in input_stream:
+            n = int(line.strip())
+            ret.append(n)
+
+    return ret

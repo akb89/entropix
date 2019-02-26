@@ -284,8 +284,20 @@ def _visualize_ipr_scatter(args):
     filter_filepath = None
     if args.filter:
         filter_filepath = args.filter
-
     visualizer.visualize_ipr_scatter(output_dirpath, args.input, filter_filepath)
+
+
+def _visualize_boxplots(args):
+    if not args.output:
+        output_dirpath = os.path.dirname(args.input[0])
+    else:
+        output_dirpath = args.output
+    if not os.path.exists(output_dirpath):
+        logger.info('Creating directory {}'.format(output_dirpath))
+        os.makedirs(output_dirpath)
+    else:
+        logger.info('Saving to directory {}'.format(output_dirpath))
+    visualizer.visualize_boxplot(output_dirpath, args.input)
 
 
 def main():
@@ -463,17 +475,17 @@ def main():
     parser_extract_participants.add_argument('-m', '--model', required=True,
                                              help='absolute path to singular '
                                              'vectors file')
-    parser_extract_participants.add_argument('-v', '--vocab', required=True,
-                                             help='absolute path to .vocab file')
-    parser_extract_participants.add_argument('-o', '--output',
-                                             help='absolute path to output directory. '
-                                             'If not set, will default to matrix dir')
-    parser_extract_participants.add_argument('-n', '--num-top-elements', default='20',
-                                             type=int, help='number of elements to output.'
-                                             'Default is 20')
-    parser_extract_participants.add_argument('-c', '--confusion-matrix',
-                                             action='store_true',
-                                             help='If set, outputs confusion matrix')
+    parser_extract_participants.add_argument(
+        '-v', '--vocab', required=True, help='absolute path to .vocab file')
+    parser_extract_participants.add_argument(
+        '-o', '--output', help='absolute path to output directory. If not set '
+        'will default to matrix dir')
+    parser_extract_participants.add_argument(
+        '-n', '--num-top-elements', default='20', type=int,
+        help='number of elements to output. Default is 20')
+    parser_extract_participants.add_argument(
+        '-c', '--confusion-matrix', action='store_true',
+        help='If set, outputs confusion matrix')
     parser_visualizer = subparsers.add_parser(
         'visualize', formatter_class=argparse.RawTextHelpFormatter,
         help='produce graphic visualization of results')
@@ -484,35 +496,44 @@ def main():
     parser_visualize_heatmap.set_defaults(func=_visualize_heatmap)
     parser_visualize_heatmap.add_argument('-i', '--input', required=True,
                                           help='absolute path to input file')
-    parser_visualize_heatmap.add_argument('-o', '--output',
-                                          help='absolute path to output directory. '
-                                          'If not set, will default to input dir')
-    parser_visualize_heatmap.add_argument('-f', '--filter', help='absolute path '
-                                          'to file storing the required subset '
-                                          'of the matrix')
+    parser_visualize_heatmap.add_argument(
+        '-o', '--output', help='absolute path to output directory. '
+        'If not set, will default to input dir')
+    parser_visualize_heatmap.add_argument(
+        '-f', '--filter', help='absolute path to file storing the required '
+        'subset of the matrix')
     parser_visualize_singvalues = visualizer_sub.add_parser(
         'singular-values', formatter_class=argparse.RawTextHelpFormatter,
         help='visualize singular values distribution')
     parser_visualize_singvalues.set_defaults(func=_visualize_singvalues)
-    parser_visualize_singvalues.add_argument('-i', '--input', required=True,
-                                             help='absolute path to .singvalues.npy '
-                                             'file.')
-    parser_visualize_singvalues.add_argument('-o', '--output',
-                                             help='absolute path to output directory. '
-                                             'If not set, will default to input dir')
-    parser_visualize_singvalues.add_argument('-f', '--filter', help='absolute path '
-                                             'to file storing the required subset')
+    parser_visualize_singvalues.add_argument(
+        '-i', '--input', required=True,
+        help='absolute path to .singvalues.npy file.')
+    parser_visualize_singvalues.add_argument(
+        '-o', '--output', help='absolute path to output directory. '
+        'If not set, will default to input dir')
+    parser_visualize_singvalues.add_argument(
+        '-f', '--filter', help='absolute filepath to required subset')
     parser_visualize_ipr = visualizer_sub.add_parser(
         'ipr-scatter', formatter_class=argparse.RawTextHelpFormatter,
         help='visualize singular values distribution')
     parser_visualize_ipr.set_defaults(func=_visualize_ipr_scatter)
-    parser_visualize_ipr.add_argument('-i', '--input', required=True,
-                                       help='absolute path to .singvectors.ipr '
-                                       'file.')
-    parser_visualize_ipr.add_argument('-o', '--output',
-                                      help='absolute path to output directory. '
-                                      'If not set, will default to input dir')
-    parser_visualize_ipr.add_argument('-f', '--filter', help='absolute path '
-                                      'to file storing the required subset')
+    parser_visualize_ipr.add_argument(
+        '-i', '--input', required=True,
+        help='absolute path to .singvectors.ipr file.')
+    parser_visualize_ipr.add_argument(
+        '-o', '--output', help='absolute path to output directory. '
+        'If not set, will default to input dir')
+    parser_visualize_ipr.add_argument(
+        '-f', '--filter', help='absolute filepath to required subset')
+    parser_visualize_boxplots = visualizer_sub.add_parser(
+        'dim-boxplot', formatter_class=argparse.RawTextHelpFormatter,
+        help='visualize boxplot from list of dimension files')
+    parser_visualize_boxplots.set_defaults(func=_visualize_boxplots)
+    parser_visualize_boxplots.add_argument(
+        '-o', '--output', help='absolute path to output directory. '
+        'If not set, will default to input dir')
+    parser_visualize_boxplots.add_argument(
+        '-i', '--input', nargs='+', help='list of files')
     args = parser.parse_args()
     args.func(args)

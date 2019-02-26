@@ -8,6 +8,7 @@ import math
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 import entropix.utils.files as futils
 import entropix.utils.data as dutils
@@ -66,5 +67,25 @@ def visualize_ipr_scatter(output_dirpath, input_filepath, filter_filepath):
         y = [y[i] for i in sorted(filter)]
 
     ax = sns.scatterplot(x=x, y=y)
+    fig = ax.get_figure()
+    fig.savefig(graph_outfile)
+
+
+def visualize_boxplot(output_dirpath, input_filepaths):
+    graph_outfile = futils.get_png_filename(output_dirpath, input_filepaths[0])
+    dists = {}
+    for filename in input_filepaths:
+        if 'men' in filename:
+            lab = 'men'
+        elif 'simlex' in filename:
+            lab ='simlex'
+        else:
+            lab = 'simverb'
+        d = dutils.load_intlist(filename)
+        dists[lab] = d
+
+    df = pd.DataFrame(data=dists)
+
+    ax = sns.boxplot(data=df, orient="h", palette="Set2")
     fig = ax.get_figure()
     fig.savefig(graph_outfile)
