@@ -81,3 +81,16 @@ def load_intlist(input_filepath):
             ret.append(n)
 
     return ret
+
+
+def load_wordlist(input_filepath):
+    ret = {}
+    with open(input_filepath, encoding='utf-8') as input_stream:
+        for line in input_stream:
+            linesplit = line.strip().split('\t')
+            idx = int(linesplit[0])
+            wordlist = linesplit[1].split(', ')
+
+            ret[idx] = wordlist
+
+    return ret

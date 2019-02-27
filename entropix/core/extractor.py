@@ -51,8 +51,9 @@ def extract_top_participants(output_dirpath, sing_vectors_filepath,
     with open(output_filepath_abs, 'w', encoding='utf-8') as output_stream_abs,\
       open(output_filepath_pos, 'w', encoding='utf-8') as output_stream_pos,\
       open(output_filepath_neg, 'w', encoding='utf-8') as output_stream_neg:
+        #for i, column in enumerate(np.flip(sing_vectors.T, 1)):
         for i, column in enumerate(sing_vectors.T):
-
+            i = len(sing_vectors.T)-i-1
             column = list(zip(range(len(column)), column))
 
             abs_column = [(x, abs(y)) for x, y in column]
@@ -60,23 +61,18 @@ def extract_top_participants(output_dirpath, sing_vectors_filepath,
             sorted_col = sorted(column, key=lambda x: x[1],
                                 reverse=True)
 
-            #NB:taking half of the positive and half of the negative values
-            sorted_poscol = sorted_col[:num_top_elements//2]
-            sorted_negcol = list(reversed(sorted_col[-num_top_elements//2:]))
+            sorted_poscol = sorted_col[:num_top_elements]
+            sorted_negcol = list(reversed(sorted_col[-num_top_elements:]))
 
             sorted_abscol = sorted(abs_column, key=lambda x: x[1],
                                    reverse=True)[:num_top_elements]
 
-            #ret_abs.append([x for x, y in sorted_abscol])
+            ret_abs.append([x for x, y in sorted_abscol])
             ret_pos.append([x for x, y in sorted_poscol])
             ret_neg.append([x for x, y in sorted_negcol])
-            ret_abs.append([x for x, y in sorted_poscol+sorted_negcol])
-#            words_abs = [vocab_mapping[j] for j, k in sorted_abscol]
-            words_abs = [vocab_mapping[j] for j, k in sorted_poscol+sorted_negcol]
+            words_abs = [vocab_mapping[j] for j, k in sorted_abscol]
             words_pos = [vocab_mapping[j] for j, k in sorted_poscol]
             words_neg = [vocab_mapping[j] for j, k in sorted_negcol]
-#            print('{}\t{}'.format(i, ', '.join(words_abs)),
-#                  file=output_stream_abs)
             print('{}\t{}'.format(i, ', '.join(words_abs)),
                   file=output_stream_abs)
             print('{}\t{}'.format(i, ', '.join(words_pos)),
@@ -85,7 +81,215 @@ def extract_top_participants(output_dirpath, sing_vectors_filepath,
                   file=output_stream_neg)
 
     if save_cm:
-        _compute_intersection(ret_abs, output_filepath_abscm)
+        _compute_intersection(list(reversed(ret_abs)), output_filepath_abscm)
+#        _compute_intersection(ret_pos, output_filepath_poscm)
+#        _compute_intersection(ret_neg, output_filepath_negcm)
+
+    return ret_abs, ret_pos, ret_neg
+
+
+def extract_top_participants_diff(output_dirpath, sing_vectors_filepath,
+                                  vocab_filepath, num_top_elements, save_cm):
+
+    vocab_mapping = dutils.load_vocab_mapping(vocab_filepath)
+    sing_vectors = np.load(sing_vectors_filepath)
+
+    output_filepath_abs = futils.get_topelements_filepath(output_dirpath,
+                                                          sing_vectors_filepath,
+                                                          num_top_elements, 'abs')
+    output_filepath_pos = futils.get_topelements_filepath(output_dirpath,
+                                                          sing_vectors_filepath,
+                                                          num_top_elements, 'pos')
+    output_filepath_neg = futils.get_topelements_filepath(output_dirpath,
+                                                          sing_vectors_filepath,
+                                                          num_top_elements, 'neg')
+    output_filepath_abscm = futils.get_topelements_filepath(output_dirpath,
+                                                            sing_vectors_filepath,
+                                                            num_top_elements, 'abs.CM')
+    output_filepath_poscm = futils.get_topelements_filepath(output_dirpath,
+                                                            sing_vectors_filepath,
+                                                            num_top_elements, 'pos.CM')
+    output_filepath_negcm = futils.get_topelements_filepath(output_dirpath,
+                                                            sing_vectors_filepath,
+                                                            num_top_elements, 'neg.CM')
+    ret_abs, ret_pos, ret_neg = [], [], []
+    with open(output_filepath_abs, 'w', encoding='utf-8') as output_stream_abs,\
+      open(output_filepath_pos, 'w', encoding='utf-8') as output_stream_pos,\
+      open(output_filepath_neg, 'w', encoding='utf-8') as output_stream_neg:
+        #for i, column in enumerate(np.flip(sing_vectors.T, 1)):
+        for column_num, column in enumerate(sing_vectors.T):
+            column_num = len(sing_vectors.T)-column_num-1
+            column = list(zip(range(len(column)), column))
+
+            abs_column = [(x, abs(y)) for x, y in column]
+
+            sorted_col = sorted(column, key=lambda x: x[1],
+                                reverse=True)
+
+            sorted_poscol = sorted_col
+            sorted_negcol = list(reversed(sorted_col))
+
+            sorted_abscol = sorted(abs_column, key=lambda x: x[1],
+                                   reverse=True)
+
+            #ABSCOL
+            diffs = []
+            index, value = sorted_abscol[0]
+            for new_index, new_value in sorted_abscol[1:]:
+                diffs.append(value-new_value)
+                index, value = new_index, new_value
+
+            i=0
+            while i<num_top_elements and diffs[i]<=10*diffs[i+1]:
+                i+=1
+            ret_abs.append([x for x, y in sorted_abscol[:i+1]])
+            words_abs = [vocab_mapping[j] for j, k in sorted_abscol[:i+1]]
+
+            #POSCOL
+            diffs = []
+            index, value = sorted_poscol[0]
+            for new_index, new_value in sorted_poscol[1:]:
+                diffs.append(value-new_value)
+                index, value = new_index, new_value
+
+            i=0
+            while i<num_top_elements and diffs[i]<=10*diffs[i+1]:
+                i+=1
+            ret_pos.append([x for x, y in sorted_poscol[:i+1]])
+            words_pos = [vocab_mapping[j] for j, k in sorted_poscol[:i+1]]
+
+            #NEGCOL
+            diffs = []
+            index, value = sorted_negcol[0]
+            for new_index, new_value in sorted_negcol[1:]:
+                diffs.append(abs(value-new_value))
+                index, value = new_index, new_value
+
+            i=0
+            while i<num_top_elements and diffs[i]<=10*diffs[i+1]:
+                i+=1
+            ret_neg.append([x for x, y in sorted_negcol[:i+1]])
+            words_neg = [vocab_mapping[j] for j, k in sorted_negcol[:i+1]]
+
+#            ret_abs.append([x for x, y in sorted_abscol])
+#            ret_pos.append([x for x, y in sorted_poscol])
+#            ret_neg.append([x for x, y in sorted_negcol])
+#            words_abs = [vocab_mapping[j] for j, k in sorted_abscol]
+#            words_pos = [vocab_mapping[j] for j, k in sorted_poscol]
+#            words_neg = [vocab_mapping[j] for j, k in sorted_negcol]
+            print('{}\t{}'.format(column_num, ', '.join(words_abs)),
+                  file=output_stream_abs)
+            print('{}\t{}'.format(column_num, ', '.join(words_pos)),
+                  file=output_stream_pos)
+            print('{}\t{}'.format(column_num, ', '.join(words_neg)),
+                  file=output_stream_neg)
+
+    if save_cm:
+        _compute_intersection(list(reversed(ret_abs)), output_filepath_abscm)
+#        _compute_intersection(ret_pos, output_filepath_poscm)
+#        _compute_intersection(ret_neg, output_filepath_negcm)
+
+    return ret_abs, ret_pos, ret_neg
+
+
+def extract_top_participants_std(output_dirpath, sing_vectors_filepath,
+                                  vocab_filepath, num_top_elements, save_cm):
+
+    vocab_mapping = dutils.load_vocab_mapping(vocab_filepath)
+    sing_vectors = np.load(sing_vectors_filepath)
+
+    output_filepath_abs = futils.get_topelements_filepath(output_dirpath,
+                                                          sing_vectors_filepath,
+                                                          num_top_elements, 'abs')
+    output_filepath_pos = futils.get_topelements_filepath(output_dirpath,
+                                                          sing_vectors_filepath,
+                                                          num_top_elements, 'pos')
+    output_filepath_neg = futils.get_topelements_filepath(output_dirpath,
+                                                          sing_vectors_filepath,
+                                                          num_top_elements, 'neg')
+    output_filepath_abscm = futils.get_topelements_filepath(output_dirpath,
+                                                            sing_vectors_filepath,
+                                                            num_top_elements, 'abs.CM')
+    output_filepath_poscm = futils.get_topelements_filepath(output_dirpath,
+                                                            sing_vectors_filepath,
+                                                            num_top_elements, 'pos.CM')
+    output_filepath_negcm = futils.get_topelements_filepath(output_dirpath,
+                                                            sing_vectors_filepath,
+                                                            num_top_elements, 'neg.CM')
+    ret_abs, ret_pos, ret_neg = [], [], []
+    with open(output_filepath_abs, 'w', encoding='utf-8') as output_stream_abs,\
+      open(output_filepath_pos, 'w', encoding='utf-8') as output_stream_pos,\
+      open(output_filepath_neg, 'w', encoding='utf-8') as output_stream_neg:
+        #for i, column in enumerate(np.flip(sing_vectors.T, 1)):
+        for column_num, column in enumerate(sing_vectors.T):
+            column_num = len(sing_vectors.T)-column_num-1
+            column = list(zip(range(len(column)), column))
+
+            abs_column = [(x, abs(y)) for x, y in column]
+
+            sorted_col = sorted(column, key=lambda x: x[1],
+                                reverse=True)
+
+            sorted_poscol = sorted_col
+            sorted_negcol = list(reversed(sorted_col))
+
+            sorted_abscol = sorted(abs_column, key=lambda x: x[1],
+                                   reverse=True)
+
+            #ABSCOL
+            diffs = []
+            index, value = sorted_abscol[0]
+            for new_index, new_value in sorted_abscol[1:]:
+                diffs.append(value-new_value)
+                index, value = new_index, new_value
+
+            i=0
+            while i<num_top_elements and diffs[i]<=10*diffs[i+1]:
+                i+=1
+            ret_abs.append([x for x, y in sorted_abscol[:i+1]])
+            words_abs = [vocab_mapping[j] for j, k in sorted_abscol[:i+1]]
+
+            #POSCOL
+            diffs = []
+            index, value = sorted_poscol[0]
+            for new_index, new_value in sorted_poscol[1:]:
+                diffs.append(value-new_value)
+                index, value = new_index, new_value
+
+            i=0
+            while i<num_top_elements and diffs[i]<=10*diffs[i+1]:
+                i+=1
+            ret_pos.append([x for x, y in sorted_poscol[:i+1]])
+            words_pos = [vocab_mapping[j] for j, k in sorted_poscol[:i+1]]
+
+            #NEGCOL
+            diffs = []
+            index, value = sorted_negcol[0]
+            for new_index, new_value in sorted_negcol[1:]:
+                diffs.append(abs(value-new_value))
+                index, value = new_index, new_value
+
+            i=0
+            while i<num_top_elements and diffs[i]<=10*diffs[i+1]:
+                i+=1
+            ret_neg.append([x for x, y in sorted_negcol[:i+1]])
+            words_neg = [vocab_mapping[j] for j, k in sorted_negcol[:i+1]]
+
+#            ret_abs.append([x for x, y in sorted_abscol])
+#            ret_pos.append([x for x, y in sorted_poscol])
+#            ret_neg.append([x for x, y in sorted_negcol])
+#            words_abs = [vocab_mapping[j] for j, k in sorted_abscol]
+#            words_pos = [vocab_mapping[j] for j, k in sorted_poscol]
+#            words_neg = [vocab_mapping[j] for j, k in sorted_negcol]
+            print('{}\t{}'.format(column_num, ', '.join(words_abs)),
+                  file=output_stream_abs)
+            print('{}\t{}'.format(column_num, ', '.join(words_pos)),
+                  file=output_stream_pos)
+            print('{}\t{}'.format(column_num, ', '.join(words_neg)),
+                  file=output_stream_neg)
+
+    if save_cm:
+        _compute_intersection(list(reversed(ret_abs)), output_filepath_abscm)
 #        _compute_intersection(ret_pos, output_filepath_poscm)
 #        _compute_intersection(ret_neg, output_filepath_negcm)
 
