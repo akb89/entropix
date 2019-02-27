@@ -22,10 +22,18 @@ if __name__=='__main__':
     print('Running entropix XP#400')
 
     MODEL_DIRPATH = '/home/ludovica/entropix_models/'
+    DIMS_DIRPATH = '/home/ludovica/entropix_selecteddims/'
     VOCAB_FILEPATH =  '/home/ludovica/Downloads/enwiki.20190120.mincount-300.win-5.vocab'
 
     assert os.path.exists(MODEL_DIRPATH)
 
     for model_filepath in os.listdir(MODEL_DIRPATH):
-        print(model_filepath)
-        print(_evaluate('sts2012', os.path.join(MODEL_DIRPATH, model_filepath), VOCAB_FILEPATH))
+        for dims_filepath in os.listdir(DIMS_DIRPATH):
+            print(model_filepath, dims_filepath)
+            try:
+                ret = _evaluate(
+                    'sts2012', os.path.join(MODEL_DIRPATH, model_filepath),
+                     VOCAB_FILEPATH, os.path.join(DIMS_DIRPATH, dims_filepath))
+                print(ret)
+            except:
+                print('impossible to evaluate')
