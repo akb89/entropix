@@ -158,3 +158,4 @@ def evaluate_distributional_space(model, vocab_filepath, dataset):
     # logger.info('   Median = {}'.format(np.median(diag)))
     # logger.info('   STD = {}'.format(np.std(diag)))
     logger.info('SPEARMAN: {}'.format(spr))
+    return spr
