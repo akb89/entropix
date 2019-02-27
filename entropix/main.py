@@ -485,7 +485,7 @@ def main():
                                help='absolute path to output directory where '
                                     'to save sampled models')
     parser_sample.add_argument('-d', '--dataset', required=True,
-                               choices=['men', 'simlex', 'simverb'],
+                               choices=['men', 'simlex', 'simverb', 'sts2012'],
                                help='dataset to optimize on')
     parser_sample.add_argument('-i', '--iter', type=int, default=1,
                                help='number of iterations')

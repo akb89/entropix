@@ -38,8 +38,8 @@ def get_men_pairs_and_sim():
         for line in men_stream:
             line = line.rstrip('\n')
             items = line.split()
-            left.append([items[0]])
-            right.append([items[1]])
+            left.append(items[0])
+            right.append(items[1])
             sim.append(float(items[2]))
     return left, right, sim
 
@@ -52,8 +52,8 @@ def get_simlex_pairs_and_sim():
         for line in simlex_stream:
             line = line.rstrip('\n')
             items = line.split()
-            left.append([items[0]])
-            right.append([items[1]])
+            left.append(items[0])
+            right.append(items[1])
             sim.append(float(items[3]))
     return left, right, sim
 
@@ -66,8 +66,8 @@ def get_simverb_pairs_and_sim():
         for line in simverb_stream:
             line = line.rstrip('\n')
             items = line.split()
-            left.append([items[0]])
-            right.append([items[1]])
+            left.append(items[0])
+            right.append(items[1])
             sim.append(float(items[3]))
     return left, right, sim
 
@@ -86,6 +86,7 @@ def get_STS2012_pairs_and_sim():
             right.append(st2)
             sim.append(score)
     return left, right, sim
+
 
 def load_words_and_sim_(vocab_filepath, dataset):
     if dataset not in ['men', 'simlex', 'simverb', 'sts2012']:
@@ -106,29 +107,38 @@ def load_words_and_sim_(vocab_filepath, dataset):
     left_idx = []
     right_idx = []
     f_sim = []
-    for l, r, s in zip(left, right, sim):
-        l_in_word_to_idx = [x for x in l if x in word_to_idx]
-        r_in_word_to_idx = [x for x in r if x in word_to_idx]
-        if len(l_in_word_to_idx)/len(l) > 0.85 and\
-           len(r_in_word_to_idx)/len(r) > 0.85:
-            left_idx.append([word_to_idx[x] for x in l_in_word_to_idx])
-            right_idx.append([word_to_idx[x] for x in r_in_word_to_idx])
-            f_sim.append(s)
-    return left_idx, right_idx, f_sim
-    # left_idx = [word_to_idx[word] for word in left]
-    # right_idx = [word_to_idx[word] for word in right]
-    # return left_idx, right_idx, sim
+    if dataset in ['men', 'simlex', 'simverb']:
+        for l, r, s in zip(left, right, sim):
+            if l in word_to_idx and r in word_to_idx:
+                left_idx.append(word_to_idx[l])
+                right_idx.append(word_to_idx[r])
+                f_sim.append(s)
+        return left_idx, right_idx, f_sim
+    if dataset == 'sts2012':
+        for l, r, s in zip(left, right, sim):
+            l_in_word_to_idx = [x for x in l if x in word_to_idx]
+            r_in_word_to_idx = [x for x in r if x in word_to_idx]
+            if len(l_in_word_to_idx)/len(l) > 0.85 and\
+               len(r_in_word_to_idx)/len(r) > 0.85:
+                left_idx.append([word_to_idx[x] for x in l_in_word_to_idx])
+                right_idx.append([word_to_idx[x] for x in r_in_word_to_idx])
+                f_sim.append(s)
+        return left_idx, right_idx, f_sim
 
 
-def evaluate(model, left_idx, right_idx, sim):
-    left_vectors = []
-    right_vectors = []
-    for idx_list in left_idx:
-        vec = np.sum([model[el] for el in idx_list], axis=0)
-        left_vectors.append(vec)
-    for idx_list in right_idx:
-        vec = np.sum([model[el] for el in idx_list], axis=0)
-        right_vectors.append(vec)
+def evaluate(model, left_idx, right_idx, sim, dataset):
+    if dataset in ['men', 'simlex', 'simverb']:
+        left_vectors = model[left_idx]
+        right_vectors = model[right_idx]
+    elif dataset == 'sts2012':
+        left_vectors = []
+        right_vectors = []
+        for idx_list in left_idx:
+            vec = np.sum([model[el] for el in idx_list], axis=0)
+            left_vectors.append(vec)
+        for idx_list in right_idx:
+            vec = np.sum([model[el] for el in idx_list], axis=0)
+            right_vectors.append(vec)
     cos = 1 - spatial.distance.cdist(left_vectors, right_vectors, 'cosine')
     diag = np.diagonal(cos)
     spr = _spearman(sim, diag)
@@ -140,11 +150,11 @@ def evaluate_distributional_space(model, vocab_filepath, dataset):
     logger.info('Checking embeddings quality against {} similarity ratings'
                 .format(dataset))
     left_idx, right_idx, sim = load_words_and_sim_(vocab_filepath, dataset)
-    men_spr = evaluate(model, left_idx, right_idx, sim)
+    spr = evaluate(model, left_idx, right_idx, sim, dataset)
     # logger.info('Cosine distribution stats on MEN:')
     # logger.info('   Min = {}'.format(diag.min()))
     # logger.info('   Max = {}'.format(diag.max()))
     # logger.info('   Average = {}'.format(diag.mean()))
     # logger.info('   Median = {}'.format(np.median(diag)))
     # logger.info('   STD = {}'.format(np.std(diag)))
-    logger.info('SPEARMAN: {}'.format(men_spr))
+    logger.info('SPEARMAN: {}'.format(spr))
