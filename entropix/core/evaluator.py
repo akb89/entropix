@@ -79,11 +79,9 @@ def get_STS2012_pairs_and_sim():
     with open(STS2012_FILEPATH, 'r', encoding='utf-8') as sts_stream:
         for line in sts_stream:
             line = line.strip().split('\t')
-
             st1 = [x.lower() for x in line[0].split()]
             st2 = [x.lower() for x in line[1].split()]
             score = float(line[2])
-
             left.append(st1)
             right.append(st2)
             sim.append(score)
@@ -101,7 +99,7 @@ def load_words_and_sim_(vocab_filepath, dataset):
         left, right, sim = get_simlex_pairs_and_sim()
     elif dataset == 'simverb':
         left, right, sim = get_simverb_pairs_and_sim()
-    elif dataset =='sts2012':
+    elif dataset == 'sts2012':
         left, right, sim = get_STS2012_pairs_and_sim()
     else:
         raise Exception('Unsupported dataset {}'.format(dataset))

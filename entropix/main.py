@@ -304,6 +304,18 @@ def _cut(args):
     np.save(basename, model)
 
 
+def _select(args):
+    logger.info('Saving model with dims from {}'.format(args.dims))
+    dims = []
+    with open(args.dims, 'r', encoding='utf-8') as dim_stream:
+        for line in dim_stream:
+            line = line.strip()
+            dims.append(int(line))
+    model = np.load(args.model)
+    model = model[:, dims]
+    np.save(args.dims, model)
+
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -519,5 +531,13 @@ def main():
                             help='index of singvectors dim to start from')
     parser_cut.add_argument('-e', '--end', type=int, required=True,
                             help='index of singvectors dim to and at')
+    parser_select = subparsers.add_parser(
+        'select', formatter_class=argparse.RawTextHelpFormatter,
+        help='save a model from a list of dims')
+    parser_select.set_defaults(func=_select)
+    parser_select.add_argument('-m', '--model', required=True,
+                               help='absolute path to .singvectors.npy')
+    parser_select.add_argument('-d', '--dims', required=True,
+                               help='absolute path to list of dimensions')
     args = parser.parse_args()
     args.func(args)
