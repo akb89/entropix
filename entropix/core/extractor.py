@@ -5,7 +5,8 @@ Extract words with largest absolute values in singular vectors.
 import logging
 import collections
 import numpy as np
-
+from numpy import linalg
+from scipy.spatial.distance import cosine
 import entropix.utils.files as futils
 import entropix.utils.data as dutils
 
@@ -51,13 +52,39 @@ def extract_top_participants(output_dirpath, sing_vectors_filepath,
     with open(output_filepath_abs, 'w', encoding='utf-8') as output_stream_abs,\
       open(output_filepath_pos, 'w', encoding='utf-8') as output_stream_pos,\
       open(output_filepath_neg, 'w', encoding='utf-8') as output_stream_neg:
-        #for i, column in enumerate(np.flip(sing_vectors.T, 1)):
+#        print("here")
+#        print(sing_vectors.shape)
+#        input()
+        norms = np.array([linalg.norm(sing_vectors[i]) for i in range(sing_vectors.shape[0])])
+
+        sing_vectors_weighted = sing_vectors/norms[:, np.newaxis]
+
+        sing_vectors = np.multiply(sing_vectors, sing_vectors_weighted)
+
+
         for i, column in enumerate(sing_vectors.T):
+#            zeros_vec = np.zeros((1000,))
+#            print(zeros_map.shape)
+#            input()
+
             i = len(sing_vectors.T)-i-1
+#            zeros_vec[i] = 1
             column = list(zip(range(len(column)), column))
 
             abs_column = [(x, abs(y)) for x, y in column]
 
+#            sorted_col = sorted(column, key=lambda x: x[1],
+#                                reverse=True)
+
+#            paired_col = [(column[k][0], column[k][1]*(sing_vectors[k]/norms[k])) for k in range(len(column))]
+#            print(paired_col)
+#            input()
+
+#            print(column[:20])
+#            print(paired_col[:20])
+#            input()
+
+#            column = paired_col
             sorted_col = sorted(column, key=lambda x: x[1],
                                 reverse=True)
 
@@ -117,7 +144,12 @@ def extract_top_participants_diff(output_dirpath, sing_vectors_filepath,
       open(output_filepath_pos, 'w', encoding='utf-8') as output_stream_pos,\
       open(output_filepath_neg, 'w', encoding='utf-8') as output_stream_neg:
         #for i, column in enumerate(np.flip(sing_vectors.T, 1)):
+        print("here")
+        print(sing_vectors.shape)
+        input()
+        zeros_map = np.zeros(sing_vectors.shape).T
         for column_num, column in enumerate(sing_vectors.T):
+            zeros_map[column_num, column_num] = 1
             column_num = len(sing_vectors.T)-column_num-1
             column = list(zip(range(len(column)), column))
 
