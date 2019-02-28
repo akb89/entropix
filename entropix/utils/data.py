@@ -51,6 +51,7 @@ def load_2d_array(input_filepath, index_set, symm=False):
             idx1, idx2, value = line.strip().split()
             idx1, idx2 = int(idx1), int(idx2)
             value = math.log2(float(value)+1)
+#            value = float(value)
 
             if not index_set or (idx1 in index_set and idx2 in index_set):
                 indexes.add(idx1)
