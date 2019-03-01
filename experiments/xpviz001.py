@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     print('Issue1')
 
-    for sing_vectors_filepath in glob.glob(MODELS_DIRPATH+"*"):
+    for sing_vectors_filepath in glob.glob(MODELS_DIRPATH+"*.k5000.*"):
         print(sing_vectors_filepath)
         sing_vectors_filepath = os.path.basename(sing_vectors_filepath)
         sing_vectors_filepath = os.path.join(MODELS_DIRPATH, sing_vectors_filepath)
