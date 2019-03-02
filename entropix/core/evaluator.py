@@ -24,6 +24,9 @@ SIMVERB_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
 STS2012_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                 'resources', 'STS2012.full.txt')
 
+WS353_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                              'resources', 'WS353.combined.txt')
+
 
 # Note: this is scipy's spearman, without tie adjustment
 def _spearman(x, y):
@@ -88,8 +91,22 @@ def get_STS2012_pairs_and_sim():
     return left, right, sim
 
 
+def get_WS353_pairs_and_sim():
+    left = []
+    right = []
+    sim = []
+    with open(WS353_FILEPATH, 'r', encoding='utf-8') as ws_stream:
+        for line in ws_stream:
+            line = line.rstrip('\n')
+            items = line.split()
+            left.append(items[0])
+            right.append(items[1])
+            sim.append(float(items[2]))
+    return left, right, sim
+
+
 def load_words_and_sim_(vocab_filepath, dataset):
-    if dataset not in ['men', 'simlex', 'simverb', 'sts2012']:
+    if dataset not in ['men', 'simlex', 'simverb', 'sts2012', 'ws353']:
         raise Exception('Unsupported dataset {}'.format(dataset))
     logger.info('Loading vocabulary...')
     idx_to_word = dutils.load_vocab_mapping(vocab_filepath)
@@ -102,12 +119,14 @@ def load_words_and_sim_(vocab_filepath, dataset):
         left, right, sim = get_simverb_pairs_and_sim()
     elif dataset == 'sts2012':
         left, right, sim = get_STS2012_pairs_and_sim()
+    elif dataset == 'ws353':
+        left, right, sim = get_WS353_pairs_and_sim()
     else:
         raise Exception('Unsupported dataset {}'.format(dataset))
     left_idx = []
     right_idx = []
     f_sim = []
-    if dataset in ['men', 'simlex', 'simverb']:
+    if dataset in ['men', 'simlex', 'simverb', 'ws353']:
         for l, r, s in zip(left, right, sim):
             if l in word_to_idx and r in word_to_idx:
                 left_idx.append(word_to_idx[l])
@@ -127,7 +146,7 @@ def load_words_and_sim_(vocab_filepath, dataset):
 
 
 def evaluate(model, left_idx, right_idx, sim, dataset):
-    if dataset in ['men', 'simlex', 'simverb']:
+    if dataset in ['men', 'simlex', 'simverb', 'ws353']:
         left_vectors = model[left_idx]
         right_vectors = model[right_idx]
     elif dataset == 'sts2012':

@@ -275,6 +275,7 @@ def _convert(args):
                     idx = int(line.strip().split('\t')[0])
                     vector = ' '.join([str(coord) for coord in model[idx]])
                     print('{} {}'.format(word, vector), file=model_stream)
+        logger.info('Saving to {}'.format(model_filepath))
     elif args.to == 'numpy':
         vocab_filepath = '{}.vocab'.format(output_basename)
         model = None
@@ -288,6 +289,7 @@ def _convert(args):
                     else:
                         model = np.append(model, embed, axis=0)
                     print('{}\t{}'.format(idx, items[0]), file=vocab_stream)
+        logger.info('Saving to {}.npy'.format(output_basename))
         np.save(output_basename, model)
         logger.info('Done')
 
@@ -312,6 +314,7 @@ def _select(args):
             line = line.strip()
             dims.append(int(line))
     model = np.load(args.model)
+    model = model[:, ::-1]
     model = model[:, dims]
     np.save(args.dims, model)
 
@@ -398,7 +401,8 @@ def main():
     parser_evaluate.add_argument('-v', '--vocab', required=True,
                                  help='absolute path to .map vocabulary file')
     parser_evaluate.add_argument('-d', '--dataset', required=True,
-                                 choices=['men', 'simlex', 'simverb', 'sts2012'],
+                                 choices=['men', 'simlex', 'simverb', 'sts2012',
+                                          'ws353'],
                                  help='which dataset to evaluate on')
     parser_evaluate.add_argument('-i', '--dims',
                                  help='absolute path to .txt file containing'
