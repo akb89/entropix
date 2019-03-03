@@ -12,6 +12,8 @@ import numpy as np
 import scipy
 from scipy import sparse
 
+import random
+
 import entropix.utils.config as cutils
 import entropix.utils.files as futils
 import entropix.core.counter as counter
@@ -319,6 +321,16 @@ def _select(args):
     np.save(args.dims, model)
 
 
+def _randomize(args):
+    logger.info('Generating {} random dims from {} k values'.format(args.d,
+                                                                    args.k))
+    output_filepath = os.path.join(args.output, 'random.k{}.d{}.txt'.format(args.k, args.d))
+    logger.info('Saving output to {}'.format(output_filepath))
+    dims = random.sample(range(0, args.k-1), args.d)
+    with open(output_filepath, 'w', encoding='utf-8') as output_stream:
+        print('\n'.join([str(dim) for dim in sorted(dims)]), file=output_stream)
+
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -402,7 +414,7 @@ def main():
                                  help='absolute path to .map vocabulary file')
     parser_evaluate.add_argument('-d', '--dataset', required=True,
                                  choices=['men', 'simlex', 'simverb', 'sts2012',
-                                          'ws353'],
+                                          'ws353', 'sts2014'],
                                  help='which dataset to evaluate on')
     parser_evaluate.add_argument('-i', '--dims',
                                  help='absolute path to .txt file containing'
@@ -543,5 +555,15 @@ def main():
                                help='absolute path to .singvectors.npy')
     parser_select.add_argument('-d', '--dims', required=True,
                                help='absolute path to list of dimensions')
+    parser_randomize = subparsers.add_parser(
+        'randomize', formatter_class=argparse.RawTextHelpFormatter,
+        help='generate a random list of dims')
+    parser_randomize.set_defaults(func=_randomize)
+    parser_randomize.add_argument('-k', required=True, type=int,
+                                  help='number of k values')
+    parser_randomize.add_argument('-d', required=True, type=int,
+                                  help='number of dims')
+    parser_randomize.add_argument('-o', '--output', required=True,
+                                  help='absolute path to output dir')
     args = parser.parse_args()
     args.func(args)
