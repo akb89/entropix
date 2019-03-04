@@ -55,11 +55,11 @@ def extract_top_participants(output_dirpath, sing_vectors_filepath,
 #        print("here")
 #        print(sing_vectors.shape)
 #        input()
-        norms = np.array([linalg.norm(sing_vectors[i]) for i in range(sing_vectors.shape[0])])
+#        norms = np.array([linalg.norm(sing_vectors[i]) for i in range(sing_vectors.shape[0])])
 
-        sing_vectors_weighted = sing_vectors/norms[:, np.newaxis]
+#        sing_vectors_weighted = sing_vectors/norms[:, np.newaxis]
 
-        sing_vectors = np.multiply(sing_vectors, sing_vectors_weighted)
+#        sing_vectors = np.multiply(sing_vectors, sing_vectors_weighted)
 
 
         for i, column in enumerate(sing_vectors.T):

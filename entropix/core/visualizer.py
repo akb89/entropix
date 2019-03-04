@@ -6,6 +6,7 @@ import logging
 import collections
 import math
 import os
+import itertools
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import cosine
@@ -33,6 +34,7 @@ def visualize_heatmap(output_dirpath, input_filpath, filter_filepath):
 
     mask = np.zeros_like(matrix)
     mask[np.tril_indices_from(mask)] = 1
+    plt.figure(figsize=(50,50))
     with sns.axes_style("white"):
         ax = sns.heatmap(matrix, mask=mask, square=True, cmap="Greens")
 
@@ -80,27 +82,26 @@ def visualize_boxplot_per_dataset(output_dirpath, max_n, input_filepaths, fname=
         graph_outfile = os.path.join(output_dirpath, fname)
 #    dists = {}
     dists = []
-    for filename in input_filepaths:
-        if 'men' in filename:
-            lab = 'men'
-        elif 'simlex' in filename:
-            lab = 'simlex'
-        elif 'sts2012' in filename:
-            lab = 'sts-12'
-        else:
-            lab = 'simverb'
+    labels = []
+    for lab, filename in input_filepaths.items():
+
         d = dutils.load_intlist(filename)
         d_mask = [0]*max_n
         for i in d:
             d_mask[i]=1
 
-#        dists[lab] = d
+#        dists[lab] = d_mask
         dists.append(d)
+        labels.append(lab)
 
 #    df = pd.DataFrame(data=dists)
+#    print(df)
+#    input()
 #    ax = sns.heatmap(data=df)
 #    ax = sns.boxplot(data=dists, orient="h", palette="Set2")
-    ax = sns.swarmplot(data=dists, orient="h", palette="Set2")
+    plt.figure(figsize=(10,6))
+    ax = sns.boxplot(data=dists, orient="h", palette="Set2")
+    ax.set_yticklabels(labels)
     fig = ax.get_figure()
     fig.savefig(graph_outfile)
 
@@ -125,7 +126,7 @@ def visualize_boxplot_per_shuffle(output_dirpath, max_n, input_filepaths):
 
 #    ax = sns.heatmap(data=df)
 #    ax = sns.boxplot(data=dists, orient="h", palette="Set2")
-    ax = sns.swarmplot(data=dists, orient="h", palette="Set2")
+    ax = sns.boxplot(data=dists, orient="h", palette="Set2")
     fig = ax.get_figure()
     fig.savefig(graph_outfile)
 
@@ -278,10 +279,49 @@ def visualize_clustermap_lexoverlap(output_dirpath, models_filepaths,
             fig.savefig(graph_outfile)
             fig.clf()
 
-def visualizer.visualize_word_space(output_dirpath, selected_words, model_filepath,
-                                    vocab_filepath, best_models_filepaths,
-                                    fname=None):
+def visualize_word_space(output_dirpath, selected_words, model_filepath,
+                         vocab_filepath, best_models_filepaths,
+                         fname=None):
     pass
     # TODO:
     #load vocab, load model, select rows and columns for each list of dimensions
     # plot heatmap
+
+
+def visualize_barcode(output_dirpath, input_filepaths, max_n, fname):
+    graph_outfile = os.path.join(output_dirpath, fname)
+
+    dists = {}
+    for lab, filename in input_filepaths.items():
+        d = dutils.load_intlist(filename)
+        d_mask = [0]*max_n
+        for i in d:
+            d_mask[i]=1
+
+        dists[lab] = d_mask
+#        dists.append(d)
+
+    df = pd.DataFrame(data=dists)
+    plt.figure(figsize=(40,5))
+    ax = sns.heatmap(data=df.T, cmap='gist_gray_r', cbar=False, xticklabels=False)
+
+    ax.set_yticklabels(ax.get_yticklabels(), rotation='horizontal', fontsize=40)
+#    ax = sns.boxplot(data=dists, orient="h", palette="Set2")
+    fig = ax.get_figure()
+    fig.savefig(graph_outfile)
+    fig.clf()
+
+def visualize_bottomup_barchart(output_dirpath, input_filepath, fname):
+    graph_outfile = os.path.join(output_dirpath, fname)
+    data = pd.read_csv(input_filepath, sep='\t', header=0)
+    plt.figure(figsize=(10,10))
+    ax = sns.barplot(x="model", y="score", hue="dataset", data=data)
+    hatches = itertools.cycle(['//', '||', '..', '-', ])
+    for i, bar in enumerate(ax.patches):
+        if i % 2 == 0:
+            hatch = next(hatches)
+        bar.set_hatch(hatch)
+    ax.legend(loc='best', fancybox=True, shadow=True)
+    fig = ax.get_figure()
+    fig.savefig(graph_outfile)
+    fig.clf()
