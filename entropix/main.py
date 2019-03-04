@@ -414,7 +414,8 @@ def main():
                                  help='absolute path to .map vocabulary file')
     parser_evaluate.add_argument('-d', '--dataset', required=True,
                                  choices=['men', 'simlex', 'simverb', 'sts2012',
-                                          'ws353', 'sts2014'],
+                                          'ws353', 'sts2014-onwn',
+                                          'sts2014-head'],
                                  help='which dataset to evaluate on')
     parser_evaluate.add_argument('-i', '--dims',
                                  help='absolute path to .txt file containing'

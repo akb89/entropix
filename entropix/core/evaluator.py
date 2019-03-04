@@ -24,8 +24,13 @@ SIMVERB_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
 STS2012_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                 'resources', 'STS2012.full.tokenized.lower.txt')
 
-STS2014_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                'resources', 'STS2014.OnWN.tokenized.lower.txt')
+STS2014_ON_WN_FILEPATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    'resources', 'STS2014.OnWN.tokenized.lower.txt')
+
+STS2014_HEADLINES_FILEPATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    'resources', 'STS2014.headlines.tokenized.lower.txt')
 
 WS353_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                               'resources', 'WS353.combined.txt')
@@ -94,11 +99,27 @@ def get_STS2012_pairs_and_sim():
     return left, right, sim
 
 
-def get_STS2014_pairs_and_sim():
+def get_STS2014_ONWN_pairs_and_sim():
     left = []
     right = []
     sim = []
-    with open(STS2014_FILEPATH, 'r', encoding='utf-8') as sts_stream:
+    with open(STS2014_ON_WN_FILEPATH, 'r', encoding='utf-8') as sts_stream:
+        for line in sts_stream:
+            line = line.strip().split('\t')
+            st1 = [x.lower() for x in line[0].split()]
+            st2 = [x.lower() for x in line[1].split()]
+            score = float(line[2])
+            left.append(st1)
+            right.append(st2)
+            sim.append(score)
+    return left, right, sim
+
+
+def get_STS2014_HEAD_pairs_and_sim():
+    left = []
+    right = []
+    sim = []
+    with open(STS2014_HEADLINES_FILEPATH, 'r', encoding='utf-8') as sts_stream:
         for line in sts_stream:
             line = line.strip().split('\t')
             st1 = [x.lower() for x in line[0].split()]
@@ -125,7 +146,8 @@ def get_WS353_pairs_and_sim():
 
 
 def load_words_and_sim_(vocab_filepath, dataset):
-    if dataset not in ['men', 'simlex', 'simverb', 'sts2012', 'ws353', 'sts2014']:
+    if dataset not in ['men', 'simlex', 'simverb', 'sts2012', 'ws353',
+                       'sts2014-onwn', 'sts2014-head']:
         raise Exception('Unsupported dataset {}'.format(dataset))
     logger.info('Loading vocabulary...')
     idx_to_word = dutils.load_vocab_mapping(vocab_filepath)
@@ -138,8 +160,10 @@ def load_words_and_sim_(vocab_filepath, dataset):
         left, right, sim = get_simverb_pairs_and_sim()
     elif dataset == 'sts2012':
         left, right, sim = get_STS2012_pairs_and_sim()
-    elif dataset == 'sts2014':
-        left, right, sim = get_STS2014_pairs_and_sim()
+    elif dataset == 'sts2014-onwn':
+        left, right, sim = get_STS2014_ONWN_pairs_and_sim()
+    elif dataset == 'sts2014-head':
+        left, right, sim = get_STS2014_HEAD_pairs_and_sim()
     elif dataset == 'ws353':
         left, right, sim = get_WS353_pairs_and_sim()
     else:
@@ -154,7 +178,7 @@ def load_words_and_sim_(vocab_filepath, dataset):
                 right_idx.append(word_to_idx[r])
                 f_sim.append(s)
         return left_idx, right_idx, f_sim
-    if dataset == 'sts2012' or dataset == 'sts2014':
+    if dataset in ['sts2012', 'sts2014-onwn', 'sts2014-head']:
         for l, r, s in zip(left, right, sim):
             l_in_word_to_idx = [x for x in l if x in word_to_idx]
             r_in_word_to_idx = [x for x in r if x in word_to_idx]
@@ -170,7 +194,7 @@ def evaluate(model, left_idx, right_idx, sim, dataset):
     if dataset in ['men', 'simlex', 'simverb', 'ws353']:
         left_vectors = model[left_idx]
         right_vectors = model[right_idx]
-    elif dataset == 'sts2012' or dataset == 'sts2014':
+    elif dataset in ['sts2012', 'sts2014-onwn', 'sts2014-head']:
         left_vectors = []
         right_vectors = []
         for idx_list in left_idx:
