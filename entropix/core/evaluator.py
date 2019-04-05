@@ -27,7 +27,6 @@ STS2012_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
 WS353_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                               'resources', 'WS353.combined.txt')
 
-
 # Note: this is scipy's spearman, without tie adjustment
 def _spearman(x, y):
     return stats.spearmanr(x, y)[0]

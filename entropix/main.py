@@ -225,6 +225,22 @@ def _sample(args):
                               args.limit, args.rewind)
 
 
+def _sample_kfold(args):
+    if args.output:
+        dirname = args.output
+    else:
+        dirname = os.path.dirname(args.singvectors)
+    basename = os.path.basename(args.singvectors).split('.singvectors.npy')[0]
+
+    keep_filepath_basename = os.path.join(
+        dirname,
+        '{}.{}.sampledims.kfold'
+        .format(basename, args.dataset))
+    logger.info('Output basename = {}'.format(keep_filepath_basename))
+    sampler.sample_kfold(args.singvectors, args.singvalues, args.vocab,
+                         args.dataset, keep_filepath_basename)
+
+
 def restricted_energy(x):
     x = float(x)
     if x < 0.0 or x > 100.0:
@@ -508,6 +524,22 @@ def main():
                                help='max number of dim in limit mode')
     parser_sample.add_argument('-w', '--rewind', action='store_true',
                                help='if set, will rewind in limit mode')
+    parser_kfold = subparsers.add_parser(
+        'kfold', formatter_class=argparse.RawTextHelpFormatter,
+        help='find min num of dimensions that maximize dataset score through kfold')
+    parser_kfold.set_defaults(func=_sample_kfold)
+    parser_kfold.add_argument('-s', '--singvectors', required=True,
+                               help='absolute path to .singvectors.npy')
+    parser_kfold.add_argument('-u', '--singvalues', required=True,
+                               help='absolute path to .singvalues.npy')
+    parser_kfold.add_argument('-v', '--vocab', required=True,
+                               help='vocabulary mapping for dsm')
+    parser_kfold.add_argument('-o', '--output',
+                               help='absolute path to output directory where '
+                                    'to save sampled models')
+    parser_kfold.add_argument('-d', '--dataset', required=True,
+                               choices=['men', 'simlex', 'simverb', 'sts2012'],
+                               help='dataset to optimize on')
     parser_convert = subparsers.add_parser(
         'convert', formatter_class=argparse.RawTextHelpFormatter,
         help='convert embeddings to and from text and numpy')
