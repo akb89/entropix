@@ -49,7 +49,7 @@ def increase_dim(model, dataset, keep, dims, left_idx, right_idx, sim,
 
 def increase_dim_kfold(model, dataset, keep, dims, left_idx, right_idx, sim,
                        left_idx_test, right_idx_test, sim_test,
-                       output_basename, iterx):
+                       output_basename, iterx, fold_num):
     logger.info('Increasing dimensions to maximize score. Iteration = {}'
                 .format(iterx))
     max_spr = evaluator.evaluate(model[:, list(keep)], left_idx, right_idx, sim, dataset)
@@ -67,8 +67,7 @@ def increase_dim_kfold(model, dataset, keep, dims, left_idx, right_idx, sim,
         else:
             keep.remove(dim_idx)
 
-
-    keep_filepath = '{}.keep.shuffled.iter-{}.txt'.format(output_basename, iterx)
+    keep_filepath = '{}.keep.shuffled.fold-{}.txt'.format(output_basename, fold_num)
 
     logger.info('Finished dim increase. Saving list of keep idx to {}'
                 .format(keep_filepath))
@@ -118,7 +117,7 @@ def reduce_dim(model, dataset, keep, left_idx, right_idx, sim, max_spr,
 
 def reduce_dim_kfold(model, dataset, keep, left_idx, right_idx, sim,
                     left_idx_test, right_idx_test, sim_test, max_spr,
-                     output_basename, iterx):
+                     output_basename, fold_num):
     logger.info('Reducing dimensions while maintaining highest score. ')
     remove = set()
 
@@ -134,7 +133,7 @@ def reduce_dim_kfold(model, dataset, keep, left_idx, right_idx, sim,
             remove.add(dim_idx)
             logger.info('Constant max = {} removing dim_idx = {}. New dim = {} -- SPR on test {}'
                         .format(max_spr, dim_idx, len(dims), spr_test))
-    reduce_filepath = '{}.keep.shuffled.iter-{}.reduce.txt'.format(output_basename, iterx)
+    reduce_filepath = '{}.keep.shuffled.fold-{}.reduce.txt'.format(output_basename, fold_num)
     logger.info('Finished reducing dims')
     keep = keep.difference(remove)
 
@@ -173,7 +172,7 @@ def sample_seq_mix(model, dataset, left_idx, right_idx, sim, output_basename,
 
 def sample_seq_kfold(model, dataset, left_idx_opt, right_idx_opt, sim_opt,
                      left_idx_test, right_idx_test, sim_test,
-                     output_basename):
+                     output_basename, fold_num):
     logger.info('Shuffling mode ON')
     start = 0
     num_iter = 1
@@ -182,14 +181,16 @@ def sample_seq_kfold(model, dataset, left_idx_opt, right_idx_opt, sim_opt,
     for iterx in range(1, num_iter+1):
         dims = [idx for idx in list(range(model.shape[1])) if idx not in keep]
         random.shuffle(dims)
+        logger.info('Staring increase phase...')
         keep, max_spr = increase_dim_kfold(model, dataset, keep, dims, left_idx_opt,
                                            right_idx_opt, sim_opt, left_idx_test,
                                            right_idx_test, sim_test, output_basename,
-                                           iterx)
+                                           iterx, fold_num)
 #        spr = evaluator.evaluate(model[:, list(keep)], left_idx_test, right_idx_test, sim_test, dataset)
+        logger.info('Starting reduce phase...')
         keep = reduce_dim_kfold(model, dataset, keep, left_idx_opt, right_idx_opt, sim_opt,
                                 left_idx_test, right_idx_test, sim_test,
-                                max_spr, output_basename, iterx)
+                                max_spr, output_basename, fold_num)
 
 def sample_limit(model, dataset, left_idx, right_idx, sim, output_basename, limit,
                  start, end, rewind):
@@ -303,32 +304,43 @@ def sample_kfold(singvectors_filepath, singvalues_filepath, vocab_filepath,
                 'on {} ...'
                 .format(model.shape[1], dataset))
 
-    if dataset == 'men':
-        dataset_left, dataset_right, dataset_sim = evaluator.load_words_and_sim_(vocab_filepath, dataset)
+    dataset_left, dataset_right, dataset_sim = evaluator.load_words_and_sim_(vocab_filepath, dataset)
 
     dataset_zip = list(zip(dataset_left, dataset_right, dataset_sim))
     random.shuffle(dataset_zip)
 
-    dataset_opt, dataset_test = dataset_zip[:math.floor(len(dataset_zip)*0.8)],\
-                                dataset_zip[math.floor(len(dataset_zip)*0.8):]
+
+    len_test = math.ceil(len(dataset_zip)*0.2)
+    i = 0
+    j = len_test
+    fold_num = 1
+
+    while j<=len(dataset_zip):
+        logger.info ('Fold {}...'.format(fold_num))
+        dataset_opt = dataset_zip[:i]+dataset_zip[j:]
+        dataset_test = dataset_zip[i:j]
+
+        i = j
+        j = j+len_test
+
+        dataset_opt, dataset_test = dataset_zip[:math.floor(len(dataset_zip)*0.8)],\
+                                    dataset_zip[math.floor(len(dataset_zip)*0.8):]
+
+        left_idx_opt, right_idx_opt, sim_opt = zip(*dataset_opt)
+        left_idx_test, right_idx_test, sim_test = zip(*dataset_test)
+
+        left_idx_opt = list(left_idx_opt)
+        right_idx_opt = list(right_idx_opt)
+        sim_opt = list(sim_opt)
+        left_idx_test = list(left_idx_test)
+        right_idx_test = list(right_idx_test)
+        sim_test = list(sim_test)
 
 
-    left_idx_opt, right_idx_opt, sim_opt = zip(*dataset_opt)
-    left_idx_test, right_idx_test, sim_test = zip(*dataset_test)
-    # left_idx, right_idx, sim = evaluator.load_words_and_sim_(vocab_filepath,
-    #
-
-    left_idx_opt = list(left_idx_opt)
-    right_idx_opt = list(right_idx_opt)
-    sim_opt = list(sim_opt)
-    left_idx_test = list(left_idx_test)
-    right_idx_test = list(right_idx_test)
-    sim_test = list(sim_test)
-
-
-    sample_seq_kfold(model, dataset, left_idx_opt, right_idx_opt, sim_opt,
-                    left_idx_test, right_idx_test, sim_test,
-                     output_basename)
+        sample_seq_kfold(model, dataset, left_idx_opt, right_idx_opt, sim_opt,
+                         left_idx_test, right_idx_test, sim_test,
+                         output_basename, fold_num)
+        fold_num += 1
     # if mode == 'limit':
     #     sample_limit(model, dataset, left_idx, right_idx, sim, output_basename,
     #                  limit, start, end, rewind)
