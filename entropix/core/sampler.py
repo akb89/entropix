@@ -178,6 +178,7 @@ def sample_seq_kfold(model, dataset, left_idx_opt, right_idx_opt, sim_opt,
     num_iter = 1
     logger.info('Iterating over {} dims'.format(model.shape[1]))
     keep = set([start, start+1])  # start at 2-dims
+    keep_test = set([start, start+1])
     for iterx in range(1, num_iter+1):
         dims = [idx for idx in list(range(model.shape[1])) if idx not in keep]
         random.shuffle(dims)
@@ -191,6 +192,15 @@ def sample_seq_kfold(model, dataset, left_idx_opt, right_idx_opt, sim_opt,
         keep = reduce_dim_kfold(model, dataset, keep, left_idx_opt, right_idx_opt, sim_opt,
                                 left_idx_test, right_idx_test, sim_test,
                                 max_spr, output_basename, fold_num)
+
+
+        logger.info('Optimizing TEST set...')
+        keep_test, max_spr_test = increase_dim(model, dataset, keep_test, dims,
+                                               left_idx_test, right_idx_test, sim_test,
+                                               output_basename+'test', iterx, True, 'seq', 1)
+        keep_test = reduce_dim(model, dataset, keep_test, left_idx_test, right_idx_test, sim_test,
+                               max_spr_test, output_basename+'test', iterx, 1, True, True)
+
 
 def sample_limit(model, dataset, left_idx, right_idx, sim, output_basename, limit,
                  start, end, rewind):
@@ -298,7 +308,7 @@ def sample_kfold(singvectors_filepath, singvalues_filepath, vocab_filepath,
     singvectors = np.load(singvectors_filepath)
     #print(singvectors.shape)
 
-    model = reducer.reduce(singvalues, singvectors, 0, 1, 100)
+    model = reducer.reduce(singvalues, singvectors, 0, 0, 100)
 
     logger.info('Sampling dimensions over a total of {} dims, optimizing '
                 'on {} ...'
@@ -309,8 +319,13 @@ def sample_kfold(singvectors_filepath, singvalues_filepath, vocab_filepath,
     dataset_zip = list(zip(dataset_left, dataset_right, dataset_sim))
     random.shuffle(dataset_zip)
 
+    logger.info('Shuffled dataset:')
+    for i, item in enumerate(dataset_zip):
+        x, y, z = item
+        logger.info('{} - {} {} {}'.format(i, x, y, z))
 
-    len_test = math.ceil(len(dataset_zip)*0.2)
+
+    len_test = math.round(len(dataset_zip)*0.2)
     i = 0
     j = len_test
     fold_num = 1
@@ -320,11 +335,13 @@ def sample_kfold(singvectors_filepath, singvalues_filepath, vocab_filepath,
         dataset_opt = dataset_zip[:i]+dataset_zip[j:]
         dataset_test = dataset_zip[i:j]
 
+        logger.info('Test items from {} to {}'.format(i, j))
+
         i = j
         j = j+len_test
 
-        dataset_opt, dataset_test = dataset_zip[:math.floor(len(dataset_zip)*0.8)],\
-                                    dataset_zip[math.floor(len(dataset_zip)*0.8):]
+#        dataset_opt, dataset_test = dataset_zip[:math.floor(len(dataset_zip)*0.8)],\
+#                                    dataset_zip[math.floor(len(dataset_zip)*0.8):]
 
         left_idx_opt, right_idx_opt, sim_opt = zip(*dataset_opt)
         left_idx_test, right_idx_test, sim_test = zip(*dataset_test)
