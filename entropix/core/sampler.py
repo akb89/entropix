@@ -325,7 +325,7 @@ def sample_kfold(singvectors_filepath, singvalues_filepath, vocab_filepath,
         logger.info('{} - {} {} {}'.format(i, x, y, z))
 
 
-    len_test = math.round(len(dataset_zip)*0.2)
+    len_test = math.floor(len(dataset_zip)*0.2)
     i = 0
     j = len_test
     fold_num = 1
