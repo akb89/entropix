@@ -27,6 +27,12 @@ def _get_sorted_singv(singvalues, singvectors):
     return singvalues[::-1], singvectors[:, ::-1]
 
 
+def _get_sorted_singvalues(singvalues):
+    if singvalues[0] <= singvalues[1]:
+        return singvalues
+    return singvalues[::-1]
+
+
 def _get_top_sorted_singv(singvalues, singvectors, top):
     """Return all but the top-n singvalues/vectors."""
     if not (0 <= top < len(singvalues)):

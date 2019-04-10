@@ -31,3 +31,12 @@ def load_words_set(wordlist_filepath):
         for line in input_stream:
             words.add(line.strip().lower())
     return words
+
+
+def load_dimensions_list(dimensions_filepath):
+    ret = []
+    with open(dimensions_filepath, encoding='utf-8') as input_stream:
+        for line in input_stream:
+            linestrip = line.strip()
+            ret.append(int(linestrip))
+    return ret

@@ -16,6 +16,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from tqdm import tqdm
 
+import entropix.core.reducer as reducer
 import entropix.utils.files as futils
 import entropix.utils.data as dutils
 
@@ -24,6 +25,18 @@ logger = logging.getLogger(__name__)
 
 __all__ = ('compute_entropy', 'compute_pairwise_cosine_sim',
            'compute_singvectors_distribution')
+
+
+def compute_energy(singvalues_filepath, dims_filepath):
+
+    dims = dutils.load_dimensions_list(dims_filepath)
+    singvalues = np.load(singvalues_filepath)
+    singvalues = reducer._get_sorted_singvalues(singvalues)
+    total_energy = np.sum(singvalues**2)
+    curr_energy = 0
+    for d in dims:
+        curr_energy+=singvalues[d]**2
+    return curr_energy/total_energy
 
 
 def compute_entropy(counts):
