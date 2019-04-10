@@ -48,6 +48,11 @@ def _evaluate(args):
     evaluator.evaluate_distributional_space(model, args.vocab, args.dataset)
 
 
+def _compute_dimenergy(args):
+    energy = calculator.compute_energy(args.model, args.dimensions)
+    logger.info('Energy = {}'.format(energy))
+
+
 def _compute_energy(args):
     if args.model.endswith('.npz'):
         logger.info('Computing energy of matrix {}'.format(args.model))
@@ -357,6 +362,16 @@ def main():
         'compute', formatter_class=argparse.RawTextHelpFormatter,
         help='compute entropy or pairwise cosine similarity metrics')
     compute_sub = parser_compute.add_subparsers()
+    parser_compute_dimenergy = compute_sub.add_parser(
+        'dim-energy', formatter_class=argparse.RawTextHelpFormatter,
+        help='compute energy of list of dimensions')
+    parser_compute_dimenergy.set_defaults(func=_compute_dimenergy)
+    parser_compute_dimenergy.add_argument(
+        '-m', '--model', required=True,
+        help='absolute path the .singvalues.npy')
+    parser_compute_dimenergy.add_argument(
+        '-d', '--dimensions', required=True,
+        help='absolute path to file with list of dimensions')
     parser_compute_energy = compute_sub.add_parser(
         'energy', formatter_class=argparse.RawTextHelpFormatter,
         help='compute energy of .npz or .npy model')
