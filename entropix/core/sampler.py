@@ -58,8 +58,8 @@ def increase_dim_kfold(model, dataset, keep, dims, left_idx, right_idx, sim,
     for idx, dim_idx in enumerate(dims):
         keep.add(dim_idx)
         spr = evaluator.evaluate(model[:, list(keep)], left_idx, right_idx, sim, dataset)
-        spr_test = evaluator.evaluate(model[:, list(keep)], left_idx_test, right_idx_test, sim_test, dataset)
         if spr > max_spr:
+            spr_test = evaluator.evaluate(model[:, list(keep)], left_idx_test, right_idx_test, sim_test, dataset)
             added_counter += 1
             max_spr = spr
             logger.info('New max = {} with dim = {} at idx = {} -- SPR on test {}'
@@ -128,8 +128,8 @@ def reduce_dim_kfold(model, dataset, keep, left_idx, right_idx, sim,
         dims = keep.difference(remove)
         dims.remove(dim_idx)
         spr = evaluator.evaluate(model[:, list(dims)], left_idx, right_idx, sim, dataset)
-        spr_test = evaluator.evaluate(model[:, list(dims)], left_idx_test, right_idx_test, sim_test, dataset)
         if spr >= max_spr:
+            spr_test = evaluator.evaluate(model[:, list(dims)], left_idx_test, right_idx_test, sim_test, dataset)
             remove.add(dim_idx)
             logger.info('Constant max = {} removing dim_idx = {}. New dim = {} -- SPR on test {}'
                         .format(max_spr, dim_idx, len(dims), spr_test))
