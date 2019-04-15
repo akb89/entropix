@@ -62,15 +62,15 @@ def increase_dim_kfold(model, dataset, keep, dims, left_idx, right_idx, sim,
             spr_test = evaluator.evaluate(model[:, list(keep)], left_idx_test, right_idx_test, sim_test, dataset)
             added_counter += 1
             max_spr = spr
-            logger.info('New max = {} with dim = {} at idx = {} -- SPR on test {}'
-                        .format(max_spr, len(keep), dim_idx, spr_test))
+            logger.info('Fold {} New max = {} with dim = {} at idx = {} -- SPR on test {}'
+                        .format(fold_num, max_spr, len(keep), dim_idx, spr_test))
         else:
             keep.remove(dim_idx)
 
     keep_filepath = '{}.keep.shuffled.fold-{}.txt'.format(output_basename, fold_num)
 
-    logger.info('Finished dim increase. Saving list of keep idx to {}'
-                .format(keep_filepath))
+    logger.info('Fold {} Finished dim increase. Saving list of keep idx to {}'
+                .format(fold_num, keep_filepath))
     with open(keep_filepath, 'w', encoding='utf-8') as keep_stream:
         print('\n'.join([str(idx) for idx in sorted(keep)]), file=keep_stream)
     return keep, max_spr
@@ -131,14 +131,14 @@ def reduce_dim_kfold(model, dataset, keep, left_idx, right_idx, sim,
         if spr >= max_spr:
             spr_test = evaluator.evaluate(model[:, list(dims)], left_idx_test, right_idx_test, sim_test, dataset)
             remove.add(dim_idx)
-            logger.info('Constant max = {} removing dim_idx = {}. New dim = {} -- SPR on test {}'
-                        .format(max_spr, dim_idx, len(dims), spr_test))
+            logger.info('Fold {} Constant max = {} removing dim_idx = {}. New dim = {} -- SPR on test {}'
+                        .format(fold_num, ax_spr, dim_idx, len(dims), spr_test))
     reduce_filepath = '{}.keep.shuffled.fold-{}.reduce.txt'.format(output_basename, fold_num)
     logger.info('Finished reducing dims')
     keep = keep.difference(remove)
 
-    logger.info('Saving list of reduced keep idx to {}'
-                .format(reduce_filepath))
+    logger.info('Fold {} Saving list of reduced keep idx to {}'
+                .format(fold_num, reduce_filepath))
     with open(reduce_filepath, 'w', encoding='utf-8') as reduced_stream:
         print('\n'.join([str(idx) for idx in sorted(keep)]),
               file=reduced_stream)
@@ -176,25 +176,25 @@ def sample_seq_kfold(model, dataset, left_idx_opt, right_idx_opt, sim_opt,
     logger.info('Shuffling mode ON')
     start = 0
     num_iter = 1
-    logger.info('Iterating over {} dims'.format(model.shape[1]))
+    logger.info('Fold {} Iterating over {} dims'.format(fold_num, model.shape[1]))
     keep = set([start, start+1])  # start at 2-dims
     keep_test = set([start, start+1])
     for iterx in range(1, num_iter+1):
         dims = [idx for idx in list(range(model.shape[1])) if idx not in keep]
         random.shuffle(dims)
-        logger.info('Staring increase phase...')
+        logger.info('Fold {} Staring increase phase...'.format(fold_num))
         keep, max_spr = increase_dim_kfold(model, dataset, keep, dims, left_idx_opt,
                                            right_idx_opt, sim_opt, left_idx_test,
                                            right_idx_test, sim_test, output_basename,
                                            iterx, fold_num)
 #        spr = evaluator.evaluate(model[:, list(keep)], left_idx_test, right_idx_test, sim_test, dataset)
-        logger.info('Starting reduce phase...')
+        logger.info('Fold {} Starting reduce phase...'.format(fold_num))
         keep = reduce_dim_kfold(model, dataset, keep, left_idx_opt, right_idx_opt, sim_opt,
                                 left_idx_test, right_idx_test, sim_test,
                                 max_spr, output_basename, fold_num)
 
 
-        logger.info('Optimizing TEST set...')
+        logger.info('Fold {} Optimizing TEST set...'.format(fold_num))
         keep_test, max_spr_test = increase_dim(model, dataset, keep_test, dims,
                                                left_idx_test, right_idx_test, sim_test,
                                                output_basename+'test', iterx, True, 'seq', 1)
@@ -298,6 +298,29 @@ def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
 
 
 
+def process_kfold(args):
+
+    model, output_basename, dataset, dataset_zip, fold_num, i, j = args
+    logger.info ('Fold {}...'.format(fold_num))
+    dataset_opt = dataset_zip[:i]+dataset_zip[j:]
+    dataset_test = dataset_zip[i:j]
+
+    logger.info('Fold {} Test items from {} to {}'.format(fold_num, i, j))
+
+    left_idx_opt, right_idx_opt, sim_opt = zip(*dataset_opt)
+    left_idx_test, right_idx_test, sim_test = zip(*dataset_test)
+
+    left_idx_opt = list(left_idx_opt)
+    right_idx_opt = list(right_idx_opt)
+    sim_opt = list(sim_opt)
+    left_idx_test = list(left_idx_test)
+    right_idx_test = list(right_idx_test)
+    sim_test = list(sim_test)
+
+    sample_seq_kfold(model, dataset, left_idx_opt, right_idx_opt, sim_opt,
+                     left_idx_test, right_idx_test, sim_test,
+                     output_basename, fold_num)
+
 
 def sample_kfold(singvectors_filepath, singvalues_filepath, vocab_filepath,
                 dataset, output_basename):
@@ -330,34 +353,26 @@ def sample_kfold(singvectors_filepath, singvalues_filepath, vocab_filepath,
     j = len_test
     fold_num = 1
 
-    while j<=len(dataset_zip):
-        logger.info ('Fold {}...'.format(fold_num))
-        dataset_opt = dataset_zip[:i]+dataset_zip[j:]
-        dataset_test = dataset_zip[i:j]
+    test_indexes = []
 
-        logger.info('Test items from {} to {}'.format(i, j))
+    while j<=len(dataset_zip):
+        test_indexes.append((model, output_basename, dataset, dataset_zip, fold_num, i, j))
 
         i = j
         j = j+len_test
+        fold_num += 1
+
+
+    p = Pool(len(test_indexes))
+    print(p.map(process_kfold, test_indexes))
+
+#        i = j
+#        j = j+len_test
 
 #        dataset_opt, dataset_test = dataset_zip[:math.floor(len(dataset_zip)*0.8)],\
 #                                    dataset_zip[math.floor(len(dataset_zip)*0.8):]
 
-        left_idx_opt, right_idx_opt, sim_opt = zip(*dataset_opt)
-        left_idx_test, right_idx_test, sim_test = zip(*dataset_test)
-
-        left_idx_opt = list(left_idx_opt)
-        right_idx_opt = list(right_idx_opt)
-        sim_opt = list(sim_opt)
-        left_idx_test = list(left_idx_test)
-        right_idx_test = list(right_idx_test)
-        sim_test = list(sim_test)
-
-
-        sample_seq_kfold(model, dataset, left_idx_opt, right_idx_opt, sim_opt,
-                         left_idx_test, right_idx_test, sim_test,
-                         output_basename, fold_num)
-        fold_num += 1
+#        fold_num += 1
     # if mode == 'limit':
     #     sample_limit(model, dataset, left_idx, right_idx, sim, output_basename,
     #                  limit, start, end, rewind)
