@@ -32,6 +32,8 @@ def compute_energy(singvalues_filepath, dims_filepath):
     dims = dutils.load_dimensions_list(dims_filepath)
     singvalues = np.load(singvalues_filepath)
     singvalues = reducer._get_sorted_singvalues(singvalues)
+    print(singvalues)
+    input()
     total_energy = np.sum(singvalues**2)
     curr_energy = 0
     for d in dims:
