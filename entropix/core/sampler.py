@@ -134,7 +134,7 @@ def reduce_dim_kfold(model, dataset, keep, left_idx, right_idx, sim,
             spr_test = evaluator.evaluate(model[:, list(dims)], left_idx_test, right_idx_test, sim_test, dataset)
             remove.add(dim_idx)
             logger.info('Fold {} Constant max = {} removing dim_idx = {}. New dim = {} -- SPR on test {}'
-                        .format(fold_num, ax_spr, dim_idx, len(dims), spr_test))
+                        .format(fold_num, max_spr, dim_idx, len(dims), spr_test))
     reduce_filepath = '{}.keep.shuffled.fold-{}.reduce.txt'.format(output_basename, fold_num)
     logger.info('Finished reducing dims')
     keep = keep.difference(remove)
@@ -375,7 +375,7 @@ def sample_kfold(singvectors_filepath, singvalues_filepath, vocab_filepath,
 #    print(test_indexes)
 #    input()
     p = Pool(len(test_indexes))
-    print(p.map(functools.partial(process_kfold, dataset = dataset, singvalues_filepath=singvalues_filepath, singvectors_filepath =singvectors_filepath, dataset_zip = dataset_zip, output_basename = output_basename), test_indexes))
+    print(p.map(functools.partial(process_kfold, dataset = dataset, singvalues_filepath=singvalues_filepath, singvectors_filepath=singvectors_filepath, dataset_zip = dataset_zip, output_basename = output_basename), test_indexes))
 
 #        i = j
 #        j = j+len_test
