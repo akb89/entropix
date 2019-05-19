@@ -36,9 +36,15 @@ def _evaluate(args):
     logger.info('Evaluating model against {}: {}'.format(args.dataset,
                                                          args.model))
     logger.info('Loading distributional space from {}'.format(args.model))
-    model = np.load(args.model)
+    if args.model.endswith('.npz'):
+        model = sparse.load_npz(args.model)
+    elif args.model.endswith('.npy'):
+        model = np.load(args.model)
+        model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
+    else:
+        raise Exception('Unsupported model extension. Should be .npz or '
+                        '.npy {}'.format(args.model))
     logger.info('model size = {}'.format(model.shape))
-    model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
     if args.dims:
         dims = []
         with open(args.dims, 'r', encoding='utf-8') as dims_stream:
@@ -407,7 +413,7 @@ def main():
         help='evaluate a given distributional space against the MEN dataset')
     parser_evaluate.set_defaults(func=_evaluate)
     parser_evaluate.add_argument('-m', '--model', required=True,
-                                 help='absolute path to .npz matrix '
+                                 help='absolute path to .np matrix '
                                       'corresponding to the distributional '
                                       'space to evaluate')
     parser_evaluate.add_argument('-v', '--vocab', required=True,
