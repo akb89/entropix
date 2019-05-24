@@ -11,7 +11,6 @@ __all__ = ('sample_dimensions')
 logger = logging.getLogger(__name__)
 
 
-
 def increase_dim(model, dataset, keep, dims, left_idx, right_idx, sim,
                  output_basename, iterx, shuffle, mode, rate):
     logger.info('Increasing dimensions to maximize score. Iteration = {}'
@@ -82,7 +81,6 @@ def reduce_dim(model, dataset, keep, left_idx, right_idx, sim, max_spr,
         reduce_dim(model, dataset, keep, left_idx, right_idx, sim, max_spr,
                    output_basename, iterx, step, shuffle, save)
     return keep
-
 
 
 def sample_seq_mix(model, dataset, left_idx, right_idx, sim, output_basename,

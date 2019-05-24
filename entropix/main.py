@@ -157,6 +157,8 @@ def _compute_pairwise_cosines(args):
 
 
 def _weigh(args):
+    logger.info('Weighing matrix {}'.format(args.model))
+    logger.info('Weighing with func {}'.format(args.weighing_func))
     if not args.output:
         output_dirpath = os.path.dirname(args.model)
     else:
@@ -467,7 +469,7 @@ def main():
                                     'to -u directory is -o is true')
     parser_svd = subparsers.add_parser(
         'svd', formatter_class=argparse.RawTextHelpFormatter,
-        help='apply svd to input matrix')
+        help='apply SVD to input matrix')
     parser_svd.set_defaults(func=_svd)
     parser_svd.add_argument('-m', '--model', required=True,
                             help='absolute path to .npz matrix '
