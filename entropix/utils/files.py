@@ -93,7 +93,7 @@ def get_singvectors_distribution_filepath(dirpath, model_filepath):
                                      .format(model_basename)))
 
 
-def get_counts_filepath(corpus_filepath, output_dirpath):
+def get_counts_filepath(corpus_filepath, min_count, output_dirpath):
     """
     Return the .counts filepath associated to the corpus filepath passed as
     a parameter, in the output directory passed as a parameter.
@@ -105,12 +105,13 @@ def get_counts_filepath(corpus_filepath, output_dirpath):
 
     if corpus_filepath.endswith('.txt'):
         output_filepath = os.path.join(
-            dirname, '{}.counts'.format(
-                os.path.basename(corpus_filepath).split('.txt')[0]))
+            dirname, '{}.mincount-{}.counts'.format(
+                os.path.basename(corpus_filepath).split('.txt')[0]), min_count)
     else:
         output_filepath = os.path.join(
             dirname,
-            '{}.counts'.format(os.path.basename(corpus_filepath)))
+            '{}.mincount-{}.counts'
+            .format(os.path.basename(corpus_filepath)), min_count)
 
     return output_filepath
 
