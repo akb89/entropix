@@ -1,14 +1,16 @@
 """Evaluate a given Numpy distributional model against the MEN dataset."""
 import os
 import logging
-
+import random
+import math
 import numpy as np
 from scipy import stats
 import scipy.spatial as spatial
 
 import entropix.utils.data as dutils
 
-__all__ = ('evaluate_distributional_space', 'load_words_and_sim_')
+__all__ = ('evaluate_distributional_space', 'load_words_and_sim',
+           'load_kfold_train_test_dict')
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +27,9 @@ STS2012_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                 'resources', 'STS2012.full.txt')
 
 WS353_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                              'resources', 'WS353.combined.txt')
+                                              'resources',
+                                              'WS353.combined.txt')
+
 
 # Note: this is scipy's spearman, without tie adjustment
 def _spearman(x, y):
@@ -104,7 +108,7 @@ def get_WS353_pairs_and_sim():
     return left, right, sim
 
 
-def load_words_and_sim_(vocab_filepath, dataset):
+def load_words_and_sim(vocab_filepath, dataset, shuffle):
     if dataset not in ['men', 'simlex', 'simverb', 'sts2012', 'ws353']:
         raise Exception('Unsupported dataset {}'.format(dataset))
     logger.info('Loading vocabulary...')
@@ -131,7 +135,7 @@ def load_words_and_sim_(vocab_filepath, dataset):
                 left_idx.append(word_to_idx[l])
                 right_idx.append(word_to_idx[r])
                 f_sim.append(s)
-        return left_idx, right_idx, f_sim
+    # TODO: remove hardcoded values?
     if dataset == 'sts2012':
         for l, r, s in zip(left, right, sim):
             l_in_word_to_idx = [x for x in l if x in word_to_idx]
@@ -141,6 +145,11 @@ def load_words_and_sim_(vocab_filepath, dataset):
                 left_idx.append([word_to_idx[x] for x in l_in_word_to_idx])
                 right_idx.append([word_to_idx[x] for x in r_in_word_to_idx])
                 f_sim.append(s)
+    if shuffle:
+        shuffled_zip = list(zip(left_idx, right_idx, f_sim))
+        random.shuffle(shuffled_zip)
+        return shuffled_zip
+    else:
         return left_idx, right_idx, f_sim
 
 
@@ -177,3 +186,45 @@ def evaluate_distributional_space(model, vocab_filepath, dataset):
     # logger.info('   STD = {}'.format(np.std(diag)))
     logger.info('SPEARMAN: {}'.format(spr))
     return spr
+
+
+def _load_kfold_train_test_dict(left_idx, right_idx, sim, kfold_size):
+    kfold_dict = {}
+    len_test_set = max(math.floor(len(sim)*kfold_size), 1)
+    fold = 1
+    max_num_fold = math.ceil(len(sim) / len_test_set)
+    while fold <= max_num_fold:
+        test_start_idx = (fold-1)*len_test_set
+        test_end_len = test_start_idx + len_test_set
+        test_end_idx = test_end_len if test_end_len <= len(sim) else len(sim)
+        test_set_idx_set = set(range(test_start_idx, test_end_idx))
+        train_set_idx_set = set(range(0, len(sim))) - test_set_idx_set
+        train_set_idx_list = sorted(list(train_set_idx_set))
+        kfold_dict[fold] = {
+            'train': {
+                'left_idx': [left_idx[idx] for idx in train_set_idx_list],
+                'right_idx': [right_idx[idx] for idx in train_set_idx_list],
+                'sim': [sim[idx] for idx in train_set_idx_list]
+            },
+            'test': {
+                'left_idx': left_idx[test_start_idx:test_end_idx],
+                'right_idx': right_idx[test_start_idx:test_end_idx],
+                'sim': sim[test_start_idx:test_end_idx]
+            }
+        }
+        fold += 1
+    return kfold_dict
+
+
+def load_kfold_train_test_dict(vocab_filepath, dataset, kfold_size):
+    """Return a kfold train/test dict.
+
+    The dict has the form dict[kfold_num] = {train_dict, test_dict} where
+    train_dict = {left_idx, right_idx, sim}
+    the train/test division follows kfold_size expressed as a precentage
+    of the total dataset dedicated to testing.
+    kfold_size should be a float > 0 and <= 0.5
+    """
+    left_idx, right_idx, sim = evaluator.load_words_and_sim(
+        vocab_filepath, dataset, shuffle=True)
+    return _load_kfold_train_test_dict(left_idx, right_idx, sim, kfold_size)

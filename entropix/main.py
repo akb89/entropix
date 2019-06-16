@@ -200,6 +200,8 @@ def _reduce(args):
 
 
 def _sample(args):
+    if args.kfolding and args.mode != 'seq':
+        raise Exception('kfolding is currently only supported in seq mode')
     if args.output:
         dirname = args.output
     else:
@@ -214,9 +216,9 @@ def _sample(args):
     elif args.mode == 'seq':
         keep_filepath_basename = os.path.join(
             dirname,
-            '{}.{}.sampledims.mode-{}.niter-{}.start-{}.end-{}'.format(
-                basename, args.dataset, args.mode, args.iter, args.start,
-                args.end))
+            '{}.{}.sampledims.mode-{}.niter-{}.start-{}.end-{}'
+            .format(basename, args.dataset, args.mode, args.iter,
+                    args.start, args.end))
     elif args.mode == 'limit':
         keep_filepath_basename = os.path.join(
             dirname,
@@ -227,23 +229,16 @@ def _sample(args):
     sampler.sample_dimensions(args.model, args.vocab, args.dataset,
                               keep_filepath_basename, args.iter, args.shuffle,
                               args.mode, args.rate, args.start, args.end,
-                              args.limit, args.rewind)
+                              args.limit, args.rewind, args.kfolding,
+                              args.kfold_size, args.num_threads)
 
 
-def _sample_kfold(args):
-    if args.output:
-        dirname = args.output
-    else:
-        dirname = os.path.dirname(args.singvectors)
-    basename = os.path.basename(args.singvectors).split('.singvectors.npy')[0]
-
-    keep_filepath_basename = os.path.join(
-        dirname,
-        '{}.{}.sampledims.kfold'
-        .format(basename, args.dataset))
-    logger.info('Output basename = {}'.format(keep_filepath_basename))
-    sampler.sample_kfold(args.singvectors, args.singvalues, args.vocab,
-                         args.dataset, keep_filepath_basename)
+def restricted_kfold_size(x):
+    x = float(x)
+    if x < 0.0 or x > 1.0:
+        raise argparse.ArgumentTypeError('{} kfold-size not in range [0, 1]'
+                                         .format(x))
+    return x
 
 
 def restricted_energy(x):
@@ -252,6 +247,7 @@ def restricted_energy(x):
         raise argparse.ArgumentTypeError('{} energy not in range [0, 100]'
                                          .format(x))
     return x
+
 
 def restricted_alpha(x):
     x = float(x)
@@ -539,22 +535,14 @@ def main():
                                help='max number of dim in limit mode')
     parser_sample.add_argument('-w', '--rewind', action='store_true',
                                help='if set, will rewind in limit mode')
-    parser_kfold = subparsers.add_parser(
-        'kfold', formatter_class=argparse.RawTextHelpFormatter,
-        help='find min num of dimensions that maximize dataset score through kfold')
-    parser_kfold.set_defaults(func=_sample_kfold)
-    parser_kfold.add_argument('-s', '--singvectors', required=True,
-                               help='absolute path to .singvectors.npy')
-    parser_kfold.add_argument('-u', '--singvalues', required=True,
-                               help='absolute path to .singvalues.npy')
-    parser_kfold.add_argument('-v', '--vocab', required=True,
-                               help='vocabulary mapping for dsm')
-    parser_kfold.add_argument('-o', '--output',
-                               help='absolute path to output directory where '
-                                    'to save sampled models')
-    parser_kfold.add_argument('-d', '--dataset', required=True,
-                               choices=['men', 'simlex', 'simverb', 'sts2012'],
-                               help='dataset to optimize on')
+    parser_sample.add_argument('-k', '--kfolding', action='store_true',
+                               help='if set, will sample with kfold')
+    parser_sample.add_argument('-x', '--kfold-size',
+                               type=restricted_kfold_size, default=.2,
+                               help='if set, will sample with kfold')
+    parser_sample.add_argument('-n', '--num-threads', type=int, default=1,
+                               help='number of threads to use for parallel '
+                                    'processing of kfold validation')
     parser_convert = subparsers.add_parser(
         'convert', formatter_class=argparse.RawTextHelpFormatter,
         help='convert embeddings to and from text and numpy')
