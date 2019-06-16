@@ -148,7 +148,7 @@ def load_words_and_sim(vocab_filepath, dataset, shuffle):
     if shuffle:
         shuffled_zip = list(zip(left_idx, right_idx, f_sim))
         random.shuffle(shuffled_zip)
-        return shuffled_zip
+        return shuffled_zip[0], shuffled_zip[1], shuffled_zip[2]
     else:
         return left_idx, right_idx, f_sim
 
@@ -225,6 +225,6 @@ def load_kfold_train_test_dict(vocab_filepath, dataset, kfold_size):
     of the total dataset dedicated to testing.
     kfold_size should be a float > 0 and <= 0.5
     """
-    left_idx, right_idx, sim = evaluator.load_words_and_sim(
-        vocab_filepath, dataset, shuffle=True)
+    left_idx, right_idx, sim = load_words_and_sim(vocab_filepath, dataset,
+                                                  shuffle=True)
     return _load_kfold_train_test_dict(left_idx, right_idx, sim, kfold_size)

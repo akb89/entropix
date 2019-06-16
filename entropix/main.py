@@ -229,8 +229,8 @@ def _sample(args):
     sampler.sample_dimensions(args.model, args.vocab, args.dataset,
                               keep_filepath_basename, args.iter, args.shuffle,
                               args.mode, args.rate, args.start, args.end,
-                              args.limit, args.rewind, args.kfolding,
-                              args.kfold_size, args.num_threads)
+                              args.reduce, args.limit, args.rewind,
+                              args.kfolding, args.kfold_size, args.num_threads)
 
 
 def restricted_kfold_size(x):
@@ -525,12 +525,14 @@ def main():
     parser_sample.add_argument('-a', '--mode', choices=['seq', 'mix', 'limit'],
                                default='seq',
                                help='which version of the algorithm to use')
-    parser_sample.add_argument('-r', '--rate', type=int, default=10,
+    parser_sample.add_argument('-t', '--rate', type=int, default=10,
                                help='reduce every r dim in mix mode')
     parser_sample.add_argument('-b', '--start', type=int, default=0,
                                help='index of singvectors dim to start from')
     parser_sample.add_argument('-e', '--end', type=int, default=0,
                                help='index of singvectors dim to and at')
+    parser_sample.add_argument('-r', '--reduce', action='store_true',
+                               help='if set, will apply reduce_dim in seq mode')
     parser_sample.add_argument('-l', '--limit', type=int, default=5,
                                help='max number of dim in limit mode')
     parser_sample.add_argument('-w', '--rewind', action='store_true',

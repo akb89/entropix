@@ -227,8 +227,8 @@ def _display_scores(train_test_folds_spr_dict):
 
 def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
                       output_basename, num_iter, shuffle, mode, rate,
-                      start, end, limit, rewind, kfolding, kfold_size,
-                      num_threads):
+                      start, end, reduce, limit, rewind, kfolding, kfold_size,
+                      max_num_threads):
     model = np.load(singvectors_filepath)
     logger.info('Sampling dimensions over a total of {} dims, optimizing '
                 'on {} using {} mode...'
@@ -261,7 +261,7 @@ def sample_dimensions(singvectors_filepath, vocab_filepath, dataset,
                 _sample_seq_mix = functools.partial(
                     sample_seq_mix_with_kfold, model, dataset,
                     kfold_train_test_dict, output_basename, num_iter,
-                    shuffle, mode, rate, start, end, reduce, fold)
+                    shuffle, mode, rate, start, end, reduce)
                 train_test_folds_spr_dict = {}
                 for fold, keep, max_spr in pool.imap_unordered(
                  _sample_seq_mix, range(1, num_folds+1)):
