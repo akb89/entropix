@@ -281,6 +281,6 @@ class Sampler():
                 self._output_basename = '{}.kfold-1#1'.format(
                     self._output_basename)
                 self.sample_seq_mix(left_idx, right_idx, sim, fold=1)
-        if mode == 'limit':
+        if self._mode == 'limit':
             sample_limit(model, dataset, left_idx, right_idx, sim,
                          output_basename, limit, start, end, rewind)
