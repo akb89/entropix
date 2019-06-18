@@ -116,7 +116,7 @@ class Sampler():
     def __init__(self, singvectors_filepath, vocab_filepath, dataset,
                  output_basename, num_iter, shuffle, mode, rate, start, end,
                  reduce, limit, rewind, kfolding, kfold_size, max_num_threads):
-        self._model = np.load(singvectors_filepath)
+        #self._model = np.load(singvectors_filepath)
         self._vocab_filepath = vocab_filepath
         self._dataset = dataset
         self._output_basename = output_basename
@@ -146,7 +146,7 @@ class Sampler():
         for dim_idx in dim_indexes:
             dims = keep.difference(remove)
             dims.remove(dim_idx)
-            spr = evaluator.evaluate(self._model[:, list(dims)], left_idx,
+            spr = evaluator.evaluate(model[:, list(dims)], left_idx,
                                      right_idx, sim, self._dataset)
             if spr >= max_spr:
                 remove.add(dim_idx)
@@ -175,13 +175,13 @@ class Sampler():
     def increase_dim(self, keep, dims, left_idx, right_idx, sim, iterx):
         logger.info('Increasing dimensions to maximize score. Iteration = {}'
                     .format(iterx))
-        max_spr = evaluator.evaluate(self._model[:, list(keep)], left_idx,
+        max_spr = evaluator.evaluate(model[:, list(keep)], left_idx,
                                      right_idx, sim, self._dataset)
         init_len_keep = len(keep)
         added_counter = 0
         for idx, dim_idx in enumerate(dims):
             keep.add(dim_idx)
-            spr = evaluator.evaluate(self._model[:, list(keep)], left_idx,
+            spr = evaluator.evaluate(model[:, list(keep)], left_idx,
                                      right_idx, sim, self._dataset)
             if spr > max_spr:
                 added_counter += 1
@@ -199,16 +199,16 @@ class Sampler():
         logger.info('Shuffling mode {}'
                     .format('ON' if self._shuffle else 'OFF'))
         logger.info('Iterating over {} dims starting at {} and ending at {}'
-                    .format(self._model.shape[1], self._start, self._end))
+                    .format(model.shape[1], self._start, self._end))
         if self._shuffle:
             keep = set(np.random.choice(
-                list(range(self._model.shape[1]))[self._start:self._end],
+                list(range(model.shape[1]))[self._start:self._end],
                 size=2, replace=False))
         else:
             keep = set([self._start, self._start+1])  # start at 2-dims
         for iterx in range(1, self._num_iter+1):
             dims = [idx for idx in
-                    list(range(self._model.shape[1]))[self._start:self._end]
+                    list(range(model.shape[1]))[self._start:self._end]
                     if idx not in keep]
             if self._shuffle:
                 random.shuffle(dims)
@@ -240,14 +240,14 @@ class Sampler():
     def sample_dimensions(self):
         logger.info('Sampling dimensions over a total of {} dims, optimizing '
                     'on {} using {} mode...'
-                    .format(self._model.shape[1], self._dataset, self._mode))
+                    .format(model.shape[1], self._dataset, self._mode))
         if self._mode not in ['seq', 'mix', 'limit']:
             raise Exception('Unsupported mode {}'.format(self._mode))
-        if self._end > self._model.shape[1]:
+        if self._end > model.shape[1]:
             raise Exception('End parameter is > model.shape[1]: {} > {}'
-                            .format(self._end, self._model.shape[1]))
+                            .format(self._end, model.shape[1]))
         if self._end == 0:
-            self._end = self._model.shape[1]
+            self._end = model.shape[1]
         if self._dataset not in ['men', 'simlex', 'simverb', 'sts2012']:
             raise Exception('Unsupported eval dataset: {}'
                             .format(self._dataset))
