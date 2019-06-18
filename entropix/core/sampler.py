@@ -217,10 +217,8 @@ class Sampler():
             else:
                 keep_filepath = '{}.keep.iter-{}.txt'.format(
                     self._output_basename, iterx)
-            keep, max_spr = self.increase_dim(self._model, dataset, keep, dims,
-                                         left_idx, right_idx, sim,
-                                         output_basename, iterx, shuffle,
-                                         mode, rate)
+            keep, max_spr = self.increase_dim(keep, dims, left_idx, right_idx,
+                                              sim, iterx)
             logger.info('Finished dim increase. Saving list of keep idx to {}'
                         .format(keep_filepath))
             with open(keep_filepath, 'w', encoding='utf-8') as keep_stream:
