@@ -148,7 +148,8 @@ def load_words_and_sim(vocab_filepath, dataset, shuffle):
     if shuffle:
         shuffled_zip = list(zip(left_idx, right_idx, f_sim))
         random.shuffle(shuffled_zip)
-        return shuffled_zip[0], shuffled_zip[1], shuffled_zip[2]
+        unzipped_shuffle = list(zip(*shuffled_zip))
+        return list(unzipped_shuffle[0]), list(unzipped_shuffle[1]), list(unzipped_shuffle[2])
     else:
         return left_idx, right_idx, f_sim
 
@@ -192,7 +193,7 @@ def _load_kfold_train_test_dict(left_idx, right_idx, sim, kfold_size):
     kfold_dict = {}
     len_test_set = max(math.floor(len(sim)*kfold_size), 1)
     fold = 1
-    max_num_fold = math.ceil(len(sim) / len_test_set)
+    max_num_fold = math.floor(len(sim) / len_test_set)
     while fold <= max_num_fold:
         test_start_idx = (fold-1)*len_test_set
         test_end_len = test_start_idx + len_test_set
@@ -227,4 +228,6 @@ def load_kfold_train_test_dict(vocab_filepath, dataset, kfold_size):
     """
     left_idx, right_idx, sim = load_words_and_sim(vocab_filepath, dataset,
                                                   shuffle=True)
+    print(dataset)
+    print(len(sim))
     return _load_kfold_train_test_dict(left_idx, right_idx, sim, kfold_size)

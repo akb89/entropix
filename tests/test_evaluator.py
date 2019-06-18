@@ -25,12 +25,19 @@ def test_load_kfold_train_test_dict():
     assert len(kfold_dict[1]['test']['sim']) == 1
     kfold_dict = evaluator._load_kfold_train_test_dict(
         left_idx, right_idx, sim, kfold_size=.3)
-    assert len(kfold_dict.keys()) == 4
+    assert len(kfold_dict.keys()) == 3
     assert len(kfold_dict[1]['test']['sim']) == 3
-    assert len(kfold_dict[4]['test']['sim']) == 1
+    assert len(kfold_dict[3]['test']['sim']) == 3
     kfold_dict = evaluator._load_kfold_train_test_dict(
         left_idx, right_idx, sim, kfold_size=.4)
-    assert len(kfold_dict.keys()) == 3
+    assert len(kfold_dict.keys()) == 2
     assert len(kfold_dict[1]['test']['sim']) == 4
-    assert len(kfold_dict[3]['test']['sim']) == 2
-    assert kfold_dict[3]['test']['right_idx'] == [1, 0]
+    assert len(kfold_dict[2]['test']['sim']) == 4
+    assert kfold_dict[2]['test']['right_idx'] == [5, 4, 3, 2]
+
+    left_idx = list(range(1, 999))
+    right_idx = list(range(1, 999))
+    sim = list(range(1, 999))
+    kfold_dict = evaluator._load_kfold_train_test_dict(
+        left_idx, right_idx, sim, kfold_size=.2)
+    assert len(kfold_dict.keys()) == 5

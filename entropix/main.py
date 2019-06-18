@@ -5,6 +5,7 @@ This is the entry point of the application.
 import os
 
 import argparse
+import datetime
 import logging
 import logging.config
 
@@ -20,8 +21,9 @@ import entropix.core.evaluator as evaluator
 import entropix.core.generator as generator
 import entropix.core.reducer as reducer
 import entropix.core.remover as remover
-import entropix.core.sampler as sampler
 import entropix.core.weigher as weigher
+
+from entropix.core.sampler import Sampler
 
 logging.config.dictConfig(
     cutils.load(
@@ -225,12 +227,16 @@ def _sample(args):
             '{}.{}.sampledims.mode-{}.d-{}.start-{}.end-{}'.format(
                 basename, args.dataset, args.mode, args.limit, args.start,
                 args.end))
+    if args.shuffle:
+        keep_filepath_basename = '{}.shuffled.{}'.format(
+            keep_filepath_basename, datetime.datetime.now().timestamp())
     logger.info('Output basename = {}'.format(keep_filepath_basename))
-    sampler.sample_dimensions(args.model, args.vocab, args.dataset,
-                              keep_filepath_basename, args.iter, args.shuffle,
-                              args.mode, args.rate, args.start, args.end,
-                              args.reduce, args.limit, args.rewind,
-                              args.kfolding, args.kfold_size, args.num_threads)
+    sampler = Sampler(args.model, args.vocab, args.dataset,
+                      keep_filepath_basename, args.iter, args.shuffle,
+                      args.mode, args.rate, args.start, args.end,
+                      args.reduce, args.limit, args.rewind,
+                      args.kfolding, args.kfold_size, args.num_threads)
+    sampler.sample_dimensions()
 
 
 def restricted_kfold_size(x):
