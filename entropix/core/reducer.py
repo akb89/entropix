@@ -100,7 +100,7 @@ def _apply_sparse_svd(M, dim, sing_values_filepath,
     logger.info('Energy of original matrix = {}'.format(M.power(2).sum()))
     logger.info('Energy of reduced matrix = {}'.format(np.sum(S ** 2)))
     logger.info('Saving singular values to {}'.format(sing_values_filepath))
-    S = S[:, ::-1]  # put singular values in decreasing order of values
+    S = S[::-1]  # put singular values in decreasing order of values
     np.save(sing_values_filepath, S)
     logger.info('Saving singular vectors to {}'.format(sing_vectors_filepath))
     U = U[:, ::-1]  # put singular vectors in decreasing order of sing. values
