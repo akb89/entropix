@@ -117,6 +117,8 @@ class Sampler():
                  output_basename, num_iter, shuffle, mode, rate, start, end,
                  reduce, limit, rewind, kfolding, kfold_size, max_num_threads):
         #self._model = np.load(singvectors_filepath)
+        global model
+        model = np.load(singvectors_filepath)
         self._vocab_filepath = vocab_filepath
         self._dataset = dataset
         self._output_basename = output_basename

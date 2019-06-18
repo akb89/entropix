@@ -236,8 +236,6 @@ def _sample(args):
                       args.mode, args.rate, args.start, args.end,
                       args.reduce, args.limit, args.rewind,
                       args.kfolding, args.kfold_size, args.num_threads)
-    global model
-    model = np.load(args.model)
     sampler.sample_dimensions()
 
 
