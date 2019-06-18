@@ -188,7 +188,7 @@ class Sampler():
                 max_spr = spr
                 logger.info('New max = {} with dim = {} at idx = {}'
                             .format(max_spr, len(keep), dim_idx))
-                if mode == 'mix' and added_counter % self._rate == 0:
+                if self._mode == 'mix' and added_counter % self._rate == 0:
                     keep = self.reduce_dim(keep, left_idx, right_idx, sim,
                                            max_spr, iterx, step=1, save=False)
             else:
