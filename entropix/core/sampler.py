@@ -136,7 +136,7 @@ class Sampler():
         self._max_num_threads = max_num_threads
 
     def reduce_dim(self, keep, left_idx, right_idx, sim, max_spr, iterx, step,
-                   save):
+                   save, fold):
         logger.info('Reducing dimensions while maintaining highest score. '
                     'Step = {}'.format(step))
         remove = set()
@@ -152,8 +152,9 @@ class Sampler():
                                      right_idx, sim, self._dataset)
             if spr >= max_spr:
                 remove.add(dim_idx)
-                logger.info('Constant max = {} removing dim_idx = {}. '
-                            'New dim = {}'.format(max_spr, dim_idx, len(dims)))
+                logger.info('Constant max = {} for fold {} removing '
+                            'dim_idx = {}. New ndim = {}'
+                            .format(max_spr, fold, dim_idx, len(dims)))
         if self._shuffle:
             reduce_filepath = '{}.keep.shuffled.iter-{}.reduce.step-{}.txt'.format(
                 self._output_basename, iterx, step)
@@ -171,10 +172,10 @@ class Sampler():
         if remove:
             step += 1
             self.reduce_dim(keep, left_idx, right_idx, sim, max_spr, iterx,
-                            step, save)
+                            step, save, fold)
         return keep
 
-    def increase_dim(self, keep, dims, left_idx, right_idx, sim, iterx):
+    def increase_dim(self, keep, dims, left_idx, right_idx, sim, iterx, fold):
         logger.info('Increasing dimensions to maximize score. Iteration = {}'
                     .format(iterx))
         max_spr = evaluator.evaluate(model[:, list(keep)], left_idx,
@@ -188,11 +189,12 @@ class Sampler():
             if spr > max_spr:
                 added_counter += 1
                 max_spr = spr
-                logger.info('New max = {} with dim = {} at idx = {}'
-                            .format(max_spr, len(keep), dim_idx))
+                logger.info('New max = {} on fold {} with ndim = {} at idx = {}'
+                            .format(max_spr, fold, len(keep), dim_idx))
                 if self._mode == 'mix' and added_counter % self._rate == 0:
                     keep = self.reduce_dim(keep, left_idx, right_idx, sim,
-                                           max_spr, iterx, step=1, save=False)
+                                           max_spr, iterx, step=1, save=False,
+                                           fold)
             else:
                 keep.remove(dim_idx)
         return keep, max_spr
@@ -220,7 +222,7 @@ class Sampler():
                 keep_filepath = '{}.keep.iter-{}.txt'.format(
                     self._output_basename, iterx)
             keep, max_spr = self.increase_dim(keep, dims, left_idx, right_idx,
-                                              sim, iterx)
+                                              sim, iterx, fold)
             logger.info('Finished dim increase. Saving list of keep idx to {}'
                         .format(keep_filepath))
             with open(keep_filepath, 'w', encoding='utf-8') as keep_stream:
@@ -228,7 +230,7 @@ class Sampler():
                       file=keep_stream)
             if self._reduce:
                 keep = self.reduce_dim(keep, left_idx, right_idx, sim, max_spr,
-                                       iterx, step=1, save=True)
+                                       iterx, step=1, save=True, fold)
             return fold, keep, max_spr
 
     def sample_seq_mix_with_kfold(self, kfold_train_test_dict, fold):
