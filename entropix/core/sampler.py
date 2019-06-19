@@ -86,8 +86,8 @@ def sample_limit(model, dataset, left_idx, right_idx, sim, output_basename,
         print('\n'.join([str(idx) for idx in sorted(dims)]), file=final_stream)
 
 
-def _compute_scores(train_test_folds_spr_dict, kfold_train_test_dict, keep,
-                    max_spr, fold):
+def _compute_scores(dataset, train_test_folds_spr_dict, kfold_train_test_dict,
+                    keep, max_spr, fold):
     test_left_idx = kfold_train_test_dict[fold]['test']['left_idx']
     test_right_idx = kfold_train_test_dict[fold]['test']['right_idx']
     test_sim = kfold_train_test_dict[fold]['test']['sim']
@@ -282,7 +282,8 @@ class Sampler():
                     for fold, keep, max_spr in pool.imap_unordered(
                      _sample_seq_mix, range(1, num_folds+1)):
                         # get scores on each kfold test set
-                        _compute_scores(train_test_folds_spr_dict,
+                        _compute_scores(self._dataset,
+                                        train_test_folds_spr_dict,
                                         kfold_train_test_dict, keep, max_spr,
                                         fold)
                     _display_scores(train_test_folds_spr_dict)
