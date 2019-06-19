@@ -237,7 +237,7 @@ class Sampler():
 
     def sample_seq_mix_with_kfold(self, kfold_train_test_dict, fold):
         self._output_basename = '{}.kfold-{}#{}'.format(
-            self._output_basename, fold, kfold_train_test_dict.keys())
+            self._output_basename, fold, len(kfold_train_test_dict.keys()))
         left_idx = kfold_train_test_dict[fold]['train']['left_idx']
         right_idx = kfold_train_test_dict[fold]['train']['right_idx']
         sim = kfold_train_test_dict[fold]['train']['sim']
