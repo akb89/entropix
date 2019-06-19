@@ -7,6 +7,8 @@ import functools
 import numpy as np
 import multiprocessing
 
+from collections import defaultdict
+
 import entropix.core.evaluator as evaluator
 import entropix.core.reducer as reducer
 
@@ -276,7 +278,7 @@ class Sampler():
                 with multiprocessing.Pool(num_threads) as pool:
                     _sample_seq_mix = functools.partial(
                         self.sample_seq_mix_with_kfold, kfold_train_test_dict)
-                    train_test_folds_spr_dict = {}
+                    train_test_folds_spr_dict = defaultdict(defaultdict)
                     for fold, keep, max_spr in pool.imap_unordered(
                      _sample_seq_mix, range(1, num_folds+1)):
                         # get scores on each kfold test set
