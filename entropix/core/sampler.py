@@ -191,8 +191,9 @@ class Sampler():
             if spr > max_spr:
                 added_counter += 1
                 max_spr = spr
-                logger.info('New max = {} on fold {} with ndim = {} at idx = {}'
-                            .format(max_spr, fold, len(keep), dim_idx))
+                logger.info('New max = {} on fold {} with ndim = {} at '
+                            'idx = {} and dim_idx = {}'.format(
+                                max_spr, fold, len(keep), idx, dim_idx))
                 if self._mode == 'mix' and added_counter % self._rate == 0:
                     keep = self.reduce_dim(keep, left_idx, right_idx, sim,
                                            max_spr, iterx, step=1, save=False,
