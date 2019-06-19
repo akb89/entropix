@@ -194,7 +194,7 @@ class Sampler():
                 if self._mode == 'mix' and added_counter % self._rate == 0:
                     keep = self.reduce_dim(keep, left_idx, right_idx, sim,
                                            max_spr, iterx, step=1, save=False,
-                                           fold)
+                                           fold=fold)
             else:
                 keep.remove(dim_idx)
         return keep, max_spr
@@ -230,7 +230,7 @@ class Sampler():
                       file=keep_stream)
             if self._reduce:
                 keep = self.reduce_dim(keep, left_idx, right_idx, sim, max_spr,
-                                       iterx, step=1, save=True, fold)
+                                       iterx, step=1, save=True, fold=fold)
             return fold, keep, max_spr
 
     def sample_seq_mix_with_kfold(self, kfold_train_test_dict, fold):
@@ -265,9 +265,11 @@ class Sampler():
             if self._kfolding:
                 # sample dimensons multi-threaded on all kfolds
                 num_folds = len(kfold_train_test_dict.keys())
-                logger.info('Applying kfolding on k={} folds where each test fold '
-                            'accounts for {}% of the data'
-                            .format(num_folds, self._kfold_size*100))
+                logger.info('Applying kfolding on k={} folds where each test '
+                            'fold is of size {} and accounts for {}% of '
+                            'the data'.format(
+                                num_folds, len(kfold_dict[1]['test']['sim']),
+                                self._kfold_size*100))
                 num_threads = num_folds if num_folds <= self._max_num_threads \
                     else self._max_num_threads
                 with multiprocessing.Pool(num_threads) as pool:
