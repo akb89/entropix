@@ -206,6 +206,7 @@ def _sample(args):
         raise Exception('kfolding is currently only supported in seq mode')
     if args.output:
         dirname = args.output
+        os.makedirs(dirname, exist_ok=True)
     else:
         dirname = os.path.dirname(args.model)
     basename = os.path.basename(args.model).split('.singvectors.npy')[0]
@@ -534,7 +535,7 @@ def main():
     parser_sample.add_argument('-a', '--mode', choices=['seq', 'mix', 'limit'],
                                default='seq',
                                help='which version of the algorithm to use')
-    parser_sample.add_argument('-t', '--rate', type=int, default=10,
+    parser_sample.add_argument('-t', '--rate', type=int, default=100,
                                help='reduce every r dim in mix mode')
     parser_sample.add_argument('-b', '--start', type=int, default=0,
                                help='index of singvectors dim to start from')
