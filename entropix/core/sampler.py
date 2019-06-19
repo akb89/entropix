@@ -268,7 +268,8 @@ class Sampler():
                 logger.info('Applying kfolding on k={} folds where each test '
                             'fold is of size {} and accounts for {}% of '
                             'the data'.format(
-                                num_folds, len(kfold_dict[1]['test']['sim']),
+                                num_folds,
+                                len(kfold_train_test_dict[1]['test']['sim']),
                                 self._kfold_size*100))
                 num_threads = num_folds if num_folds <= self._max_num_threads \
                     else self._max_num_threads

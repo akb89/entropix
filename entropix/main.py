@@ -230,6 +230,9 @@ def _sample(args):
     if args.shuffle:
         keep_filepath_basename = '{}.shuffled.{}'.format(
             keep_filepath_basename, datetime.datetime.now().timestamp())
+    if args.kfolding:
+        keep_filepath_basename = '{}.{}'.format(
+            keep_filepath_basename, datetime.datetime.now().timestamp())
     logger.info('Output basename = {}'.format(keep_filepath_basename))
     sampler = Sampler(args.model, args.vocab, args.dataset,
                       keep_filepath_basename, args.iter, args.shuffle,
