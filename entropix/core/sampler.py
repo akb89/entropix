@@ -84,21 +84,22 @@ def sample_limit(model, dataset, left_idx, right_idx, sim, output_basename,
         print('\n'.join([str(idx) for idx in sorted(dims)]), file=final_stream)
 
 
-def _compute_scores(dataset, train_test_folds_spr_dict, kfold_train_test_dict,
-                    keep, max_spr, fold):
-    test_left_idx = kfold_train_test_dict[fold]['test']['left_idx']
-    test_right_idx = kfold_train_test_dict[fold]['test']['right_idx']
-    test_sim = kfold_train_test_dict[fold]['test']['sim']
-    train_test_folds_spr_dict[fold]['train_spr'] = max_spr
+def _compute_scores(dataset, train_test_folds_spr_dict, splits, keep,
+                    max_train_spr, max_dev_spr, fold, dev_type):
+    train_test_folds_spr_dict[fold]['train_spr'] = max_train_spr
+    if dev_type == 'regular':
+        train_test_folds_spr_dict[fold]['dev_spr'] = max_dev_spr
     train_test_folds_spr_dict[fold]['test_spr'] = evaluator.evaluate(
-        model[:, list(keep)], test_left_idx, test_right_idx, test_sim, dataset)
+        model[:, list(keep)], splits[fold]['test']['left_idx'],
+        splits[fold]['test']['right_idx'], splits[fold]['test']['sim'],
+        dataset)
 
 
 def _display_scores(train_test_folds_spr_dict):
     num_folds = len(train_test_folds_spr_dict.keys())
     avg_train_spr = 0
     avg_test_spr = 0
-    for fold, values, in train_test_folds_spr_dict.items():
+    for fold, values, in sorted(train_test_folds_spr_dict.items()):
         train_spr = values['train_spr']
         test_spr = values['test_spr']
         avg_train_spr += train_spr
@@ -253,7 +254,7 @@ class Sampler():
                                            save=False, fold=fold)
             else:
                 keep.remove(dim_idx)
-        return keep, max_train_spr
+        return keep, max_train_spr, max_dev_spr
 
     def sample_seq_mix(self, splits, fold):
         logger.info('Shuffling mode {}'
@@ -277,8 +278,8 @@ class Sampler():
             else:
                 keep_filepath = '{}.keep.iter-{}.txt'.format(
                     self._output_basename, iterx)
-            keep, max_train_spr = self.increase_dim(keep, dims, splits, iterx,
-                                                    fold)
+            keep, max_train_spr, max_dev_spr = self.increase_dim(
+                keep, dims, splits, iterx, fold)
             logger.info('Finished dim increase. Saving list of keep idx to {}'
                         .format(keep_filepath))
             with open(keep_filepath, 'w', encoding='utf-8') as keep_stream:
@@ -286,8 +287,9 @@ class Sampler():
                       file=keep_stream)
             if self._reduce:
                 keep = self.reduce_dim(keep, splits, max_train_spr,
-                                       iterx, step=1, save=True, fold=fold)
-            return fold, keep, max_train_spr
+                                       max_dev_spr, iterx, step=1, save=True,
+                                       fold=fold)
+            return fold, keep, max_train_spr, max_dev_spr
 
     def sample_seq_mix_with_kfold(self, splits, fold):
         self._output_basename = '{}.kfold-{}#{}'.format(
@@ -309,7 +311,7 @@ class Sampler():
             raise Exception('Unsupported eval dataset: {}'
                             .format(self._dataset))
         if self._kfolding:
-            kfold_train_test_dict = evaluator.load_kfold_splits_dict(
+            splits = evaluator.load_kfold_splits_dict(
                 self._vocab_filepath, self._dataset, self._kfold_size,
                 self._dev_type)
         else:
@@ -318,31 +320,32 @@ class Sampler():
         if self._mode in ['seq', 'mix']:
             if self._kfolding:
                 # sample dimensons multi-threaded on all kfolds
-                num_folds = len(kfold_train_test_dict.keys())
+                num_folds = len(splits.keys())
                 logger.info('Applying kfolding on k={} folds where each test '
                             'fold is of size {} and accounts for {}% of '
                             'the data'.format(
                                 num_folds,
-                                len(kfold_train_test_dict[1]['test']['sim']),
+                                len(splits[1]['test']['sim']),
                                 self._kfold_size*100))
                 num_threads = num_folds if num_folds <= self._max_num_threads \
                     else self._max_num_threads
                 with multiprocessing.Pool(num_threads) as pool:
                     _sample_seq_mix = functools.partial(
-                        self.sample_seq_mix_with_kfold, kfold_train_test_dict)
+                        self.sample_seq_mix_with_kfold, splits)
                     train_test_folds_spr_dict = defaultdict(defaultdict)
-                    for fold, keep, max_spr in pool.imap_unordered(
+                    for fold, keep, max_train_spr, max_dev_spr in pool.imap_unordered(
                      _sample_seq_mix, range(1, num_folds+1)):
                         # get scores on each kfold test set
                         _compute_scores(self._dataset,
                                         train_test_folds_spr_dict,
-                                        kfold_train_test_dict, keep, max_spr,
-                                        fold)
+                                        splits, keep,
+                                        max_train_spr, max_dev_spr,
+                                        fold, self._dev_type)
                     _display_scores(train_test_folds_spr_dict)
             else:
                 self._output_basename = '{}.kfold-1#1'.format(
                     self._output_basename)
-                self.sample_seq_mix(left_idx, right_idx, sim, fold=1)
+                self.sample_seq_mix(splits, fold=1)
         if self._mode == 'limit':
             sample_limit(model, dataset, left_idx, right_idx, sim,
                          output_basename, limit, start, end, rewind)
