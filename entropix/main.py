@@ -230,24 +230,25 @@ def _sample(args):
                 basename, args.dataset, args.mode, args.limit, args.start,
                 args.end))
     if args.shuffle:
-        keep_filepath_basename = '{}.shuffled.{}'.format(
+        keep_filepath_basename = '{}.shuffled.timestamp-{}'.format(
             keep_filepath_basename, datetime.datetime.now().timestamp())
     if args.kfolding:
-        keep_filepath_basename = '{}.{}'.format(
+        keep_filepath_basename = '{}.timestamp-{}'.format(
             keep_filepath_basename, datetime.datetime.now().timestamp())
     logger.info('Output basename = {}'.format(keep_filepath_basename))
     sampler = Sampler(args.model, args.vocab, args.dataset,
                       keep_filepath_basename, args.iter, args.shuffle,
                       args.mode, args.rate, args.start, args.end,
                       args.reduce, args.limit, args.rewind,
-                      args.kfolding, args.kfold_size, args.num_threads)
+                      args.kfolding, args.kfold_size, args.num_threads,
+                      args.dev_type, args.debug)
     sampler.sample_dimensions()
 
 
 def restricted_kfold_size(x):
     x = float(x)
-    if x < 0.0 or x > 1.0:
-        raise argparse.ArgumentTypeError('{} kfold-size not in range [0, 1]'
+    if x < 0.0 or x > 0.5:
+        raise argparse.ArgumentTypeError('{} kfold-size not in range [0, 0.5]'
                                          .format(x))
     return x
 
@@ -552,10 +553,17 @@ def main():
                                help='if set, will sample with kfold')
     parser_sample.add_argument('-x', '--kfold-size',
                                type=restricted_kfold_size, default=.2,
-                               help='if set, will sample with kfold')
+                               help='determine size of kfold. Should be in '
+                                    '[0, 0.5], that is, less than 50% of '
+                                    'total dataset size')
+    parser_sample.add_argument('-y', '--dev-type', default='nodev',
+                               choices=['nodev', 'regular', 'balanced'],
+                               help='which type of dev split to use')
     parser_sample.add_argument('-n', '--num-threads', type=int, default=1,
                                help='number of threads to use for parallel '
                                     'processing of kfold validation')
+    parser_sample.add_argument('--debug', action='store_true',
+                               help='activate debugger')
     parser_convert = subparsers.add_parser(
         'convert', formatter_class=argparse.RawTextHelpFormatter,
         help='convert embeddings to and from text and numpy')

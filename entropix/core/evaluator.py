@@ -4,13 +4,14 @@ import logging
 import random
 import math
 import numpy as np
-from scipy import stats
 import scipy.spatial as spatial
+from scipy import stats
+from collections import defaultdict
 
 import entropix.utils.data as dutils
 
 __all__ = ('evaluate_distributional_space', 'load_words_and_sim',
-           'load_kfold_train_test_dict')
+           'load_kfold_splits_dict')
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +177,8 @@ def evaluate_distributional_space(model, vocab_filepath, dataset):
     """Evaluate a numpy model against the MEN/Simlex/Simverb datasets."""
     logger.info('Checking embeddings quality against {} similarity ratings'
                 .format(dataset))
-    left_idx, right_idx, sim = load_words_and_sim_(vocab_filepath, dataset)
+    left_idx, right_idx, sim = load_words_and_sim(vocab_filepath, dataset,
+                                                  shuffle=False)
     spr = evaluate(model, left_idx, right_idx, sim, dataset)
     # logger.info('Cosine distribution stats on MEN:')
     # logger.info('   Min = {}'.format(diag.min()))
@@ -188,8 +190,14 @@ def evaluate_distributional_space(model, vocab_filepath, dataset):
     return spr
 
 
-def _load_kfold_train_test_dict(left_idx, right_idx, sim, kfold_size):
-    kfold_dict = {}
+def _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size, dev_type):
+    # add a dev_type variable "balanced" or "regular".
+    # if regular, create a dev same size as test
+    # if balanced, split the train into multiple test-size splits
+    # and train on all splits at once
+    if dev_type not in ['nodev', 'regular', 'balanced']:
+        raise Exception
+    kfold_dict = defaultdict(defaultdict)
     len_test_set = max(math.floor(len(sim)*kfold_size), 1)
     fold = 1
     max_num_fold = math.floor(len(sim) / len_test_set)
@@ -197,26 +205,45 @@ def _load_kfold_train_test_dict(left_idx, right_idx, sim, kfold_size):
         test_start_idx = (fold-1)*len_test_set
         test_end_len = test_start_idx + len_test_set
         test_end_idx = test_end_len if test_end_len <= len(sim) else len(sim)
-        test_set_idx_set = set(range(test_start_idx, test_end_idx))
-        train_set_idx_set = set(range(0, len(sim))) - test_set_idx_set
-        train_set_idx_list = sorted(list(train_set_idx_set))
-        kfold_dict[fold] = {
-            'train': {
-                'left_idx': [left_idx[idx] for idx in train_set_idx_list],
-                'right_idx': [right_idx[idx] for idx in train_set_idx_list],
-                'sim': [sim[idx] for idx in train_set_idx_list]
-            },
-            'test': {
-                'left_idx': left_idx[test_start_idx:test_end_idx],
-                'right_idx': right_idx[test_start_idx:test_end_idx],
-                'sim': sim[test_start_idx:test_end_idx]
-            }
+        test_split_idx_set = set(range(test_start_idx, test_end_idx))
+        kfold_dict[fold]['test'] = {
+            'left_idx': left_idx[test_start_idx:test_end_idx],
+            'right_idx': right_idx[test_start_idx:test_end_idx],
+            'sim': sim[test_start_idx:test_end_idx]
         }
+        train_split_idx_set = set(range(0, len(sim))) - test_split_idx_set
+        if dev_type == 'nodev':
+            train_split_idx_list = sorted(list(train_split_idx_set))
+            kfold_dict[fold]['train'] = {
+                'left_idx': [left_idx[idx] for idx in train_split_idx_list],
+                'right_idx': [right_idx[idx] for idx in train_split_idx_list],
+                'sim': [sim[idx] for idx in train_split_idx_list]
+            }
+        elif dev_type == 'regular':
+            # randomly sample n items for dev in train set with n of same size
+            # as test fold
+            dev_split_idx_set = set(random.sample(train_split_idx_set,
+                                                  len(test_split_idx_set)))
+            train_split_idx_set = train_split_idx_set - dev_split_idx_set
+            dev_split_idx_list = sorted(list(dev_split_idx_set))
+            train_split_idx_list = sorted(list(train_split_idx_set))
+            kfold_dict[fold]['dev'] = {
+                'left_idx': [left_idx[idx] for idx in dev_split_idx_list],
+                'right_idx': [right_idx[idx] for idx in dev_split_idx_list],
+                'sim': [sim[idx] for idx in dev_split_idx_list]
+            }
+            kfold_dict[fold]['train'] = {
+                'left_idx': [left_idx[idx] for idx in train_split_idx_list],
+                'right_idx': [right_idx[idx] for idx in train_split_idx_list],
+                'sim': [sim[idx] for idx in train_split_idx_list]
+            }
+        elif dev_type == 'balanced':
+            pass
         fold += 1
     return kfold_dict
 
 
-def load_kfold_train_test_dict(vocab_filepath, dataset, kfold_size):
+def load_kfold_splits_dict(vocab_filepath, dataset, kfold_size, dev_type):
     """Return a kfold train/test dict.
 
     The dict has the form dict[kfold_num] = {train_dict, test_dict} where
@@ -227,4 +254,5 @@ def load_kfold_train_test_dict(vocab_filepath, dataset, kfold_size):
     """
     left_idx, right_idx, sim = load_words_and_sim(vocab_filepath, dataset,
                                                   shuffle=True)
-    return _load_kfold_train_test_dict(left_idx, right_idx, sim, kfold_size)
+    return _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size,
+                                   dev_type)

@@ -2,21 +2,19 @@
 
 import logging
 import random
-import math
 import functools
-import numpy as np
 import multiprocessing
-
 from collections import defaultdict
 
+import numpy as np
 import entropix.core.evaluator as evaluator
-import entropix.core.reducer as reducer
 
 __all__ = ('Sampler')
 
 logger = logging.getLogger(__name__)
 
 
+# TODO: refactor this
 def sample_limit(model, dataset, left_idx, right_idx, sim, output_basename,
                  limit, start, end, rewind):
     """Increase dims up to dlim taking the best dim each time.
@@ -117,7 +115,8 @@ class Sampler():
 
     def __init__(self, singvectors_filepath, vocab_filepath, dataset,
                  output_basename, num_iter, shuffle, mode, rate, start, end,
-                 reduce, limit, rewind, kfolding, kfold_size, max_num_threads):
+                 reduce, limit, rewind, kfolding, kfold_size, max_num_threads,
+                 dev_type, debug):
         #self._model = np.load(singvectors_filepath)
         global model
         model = np.load(singvectors_filepath)
@@ -136,8 +135,10 @@ class Sampler():
         self._kfolding = kfolding
         self._kfold_size = kfold_size
         self._max_num_threads = max_num_threads
+        self._dev_type = dev_type
+        self._debug = debug
 
-    def reduce_dim(self, keep, left_idx, right_idx, sim, max_spr, iterx, step,
+    def reduce_dim(self, keep, splits, max_train_spr, max_dev_spr, iterx, step,
                    save, fold):
         logger.info('Reducing dimensions while maintaining highest score. '
                     'Step = {}'.format(step))
@@ -150,13 +151,34 @@ class Sampler():
         for dim_idx in dim_indexes:
             dims = keep.difference(remove)
             dims.remove(dim_idx)
-            spr = evaluator.evaluate(model[:, list(dims)], left_idx,
-                                     right_idx, sim, self._dataset)
-            if spr >= max_spr:
+            train_spr = evaluator.evaluate(
+                model[:, list(dims)], splits[fold]['train']['left_idx'],
+                splits[fold]['train']['right_idx'],
+                splits[fold]['train']['sim'], self._dataset)
+            if train_spr >= max_train_spr:
+                if self._dev_type == 'regular':
+                    dev_spr = evaluator.evaluate(
+                        model[:, list(dims)], splits[fold]['dev']['left_idx'],
+                        splits[fold]['dev']['right_idx'],
+                        splits[fold]['dev']['sim'], self._dataset)
+                    if dev_spr < max_dev_spr:
+                        continue
                 remove.add(dim_idx)
-                logger.info('Constant max = {} for fold {} removing '
+                logger.info('Constant max train spr = {} for fold {} removing '
                             'dim_idx = {}. New ndim = {}'
-                            .format(max_spr, fold, dim_idx, len(dims)))
+                            .format(max_train_spr, fold, dim_idx, len(dims)))
+                if self._debug:
+                    if self._dev_type == 'regular':
+                        logger.debug('dev spr = {} for fold {}'.format(
+                            max_dev_spr, fold))
+                    if splits[fold]['test']:
+                        test_spr = evaluator.evaluate(
+                            model[:, list(keep)],
+                            splits[fold]['test']['left_idx'],
+                            splits[fold]['test']['right_idx'],
+                            splits[fold]['test']['sim'], self._dataset)
+                        logger.debug('test spr = {} for fold {}'.format(
+                            test_spr, fold))
         if self._shuffle:
             reduce_filepath = '{}.keep.shuffled.iter-{}.reduce.step-{}.txt'.format(
                 self._output_basename, iterx, step)
@@ -173,36 +195,67 @@ class Sampler():
                       file=reduced_stream)
         if remove:
             step += 1
-            self.reduce_dim(keep, left_idx, right_idx, sim, max_spr, iterx,
+            self.reduce_dim(keep, splits, max_train_spr, max_dev_spr, iterx,
                             step, save, fold)
         return keep
 
-    def increase_dim(self, keep, dims, left_idx, right_idx, sim, iterx, fold):
+    def increase_dim(self, keep, dims, splits, iterx, fold):
         logger.info('Increasing dimensions to maximize score. Iteration = {}'
                     .format(iterx))
-        max_spr = evaluator.evaluate(model[:, list(keep)], left_idx,
-                                     right_idx, sim, self._dataset)
-        init_len_keep = len(keep)
+        max_train_spr = evaluator.evaluate(
+            model[:, list(keep)], splits[fold]['train']['left_idx'],
+            splits[fold]['train']['right_idx'], splits[fold]['train']['sim'],
+            self._dataset)
         added_counter = 0
+        if self._dev_type == 'nodev':
+            max_dev_spr = 0
+        elif self._dev_type == 'regular':
+            max_dev_spr = evaluator.evaluate(
+                model[:, list(keep)], splits[fold]['dev']['left_idx'],
+                splits[fold]['dev']['right_idx'], splits[fold]['dev']['sim'],
+                self._dataset)
         for idx, dim_idx in enumerate(dims):
             keep.add(dim_idx)
-            spr = evaluator.evaluate(model[:, list(keep)], left_idx,
-                                     right_idx, sim, self._dataset)
-            if spr > max_spr:
+            train_spr = evaluator.evaluate(
+                model[:, list(keep)], splits[fold]['train']['left_idx'],
+                splits[fold]['train']['right_idx'],
+                splits[fold]['train']['sim'], self._dataset)
+            if train_spr > max_train_spr:
+                if self._dev_type == 'regular':
+                    dev_spr = evaluator.evaluate(
+                        model[:, list(keep)], splits[fold]['dev']['left_idx'],
+                        splits[fold]['dev']['right_idx'],
+                        splits[fold]['dev']['sim'], self._dataset)
+                    if dev_spr <= max_dev_spr:
+                        keep.remove(dim_idx)
+                        continue
+                    max_dev_spr = dev_spr
                 added_counter += 1
-                max_spr = spr
-                logger.info('New max = {} on fold {} with ndim = {} at '
-                            'idx = {} and dim_idx = {}'.format(
-                                max_spr, fold, len(keep), idx, dim_idx))
+                max_train_spr = train_spr
+                logger.info('New max train spr = {} on fold {} with ndim = {} '
+                            'at idx = {} and dim_idx = {}'.format(
+                                max_train_spr, fold, len(keep), idx, dim_idx))
+                if self._debug:
+                    if self._dev_type == 'regular':
+                        logger.debug('dev spr = {} for fold {}'.format(
+                            max_dev_spr, fold))
+                    if splits[fold]['test']:
+                        test_spr = evaluator.evaluate(
+                            model[:, list(keep)],
+                            splits[fold]['test']['left_idx'],
+                            splits[fold]['test']['right_idx'],
+                            splits[fold]['test']['sim'], self._dataset)
+                        logger.debug('test spr = {} for fold {}'.format(
+                            test_spr, fold))
                 if self._mode == 'mix' and added_counter % self._rate == 0:
-                    keep = self.reduce_dim(keep, left_idx, right_idx, sim,
-                                           max_spr, iterx, step=1, save=False,
-                                           fold=fold)
+                    keep = self.reduce_dim(keep, splits, max_train_spr,
+                                           max_dev_spr, iterx, step=1,
+                                           save=False, fold=fold)
             else:
                 keep.remove(dim_idx)
-        return keep, max_spr
+        return keep, max_train_spr
 
-    def sample_seq_mix(self, left_idx, right_idx, sim, fold):
+    def sample_seq_mix(self, splits, fold):
         logger.info('Shuffling mode {}'
                     .format('ON' if self._shuffle else 'OFF'))
         logger.info('Iterating over {} dims starting at {} and ending at {}'
@@ -224,25 +277,22 @@ class Sampler():
             else:
                 keep_filepath = '{}.keep.iter-{}.txt'.format(
                     self._output_basename, iterx)
-            keep, max_spr = self.increase_dim(keep, dims, left_idx, right_idx,
-                                              sim, iterx, fold)
+            keep, max_train_spr = self.increase_dim(keep, dims, splits, iterx,
+                                                    fold)
             logger.info('Finished dim increase. Saving list of keep idx to {}'
                         .format(keep_filepath))
             with open(keep_filepath, 'w', encoding='utf-8') as keep_stream:
                 print('\n'.join([str(idx) for idx in sorted(keep)]),
                       file=keep_stream)
             if self._reduce:
-                keep = self.reduce_dim(keep, left_idx, right_idx, sim, max_spr,
+                keep = self.reduce_dim(keep, splits, max_train_spr,
                                        iterx, step=1, save=True, fold=fold)
-            return fold, keep, max_spr
+            return fold, keep, max_train_spr
 
-    def sample_seq_mix_with_kfold(self, kfold_train_test_dict, fold):
+    def sample_seq_mix_with_kfold(self, splits, fold):
         self._output_basename = '{}.kfold-{}#{}'.format(
-            self._output_basename, fold, len(kfold_train_test_dict.keys()))
-        left_idx = kfold_train_test_dict[fold]['train']['left_idx']
-        right_idx = kfold_train_test_dict[fold]['train']['right_idx']
-        sim = kfold_train_test_dict[fold]['train']['sim']
-        return self.sample_seq_mix(left_idx, right_idx, sim, fold)
+            self._output_basename, fold, len(splits.keys()))
+        return self.sample_seq_mix(splits, fold)
 
     def sample_dimensions(self):
         logger.info('Sampling dimensions over a total of {} dims, optimizing '
@@ -259,8 +309,9 @@ class Sampler():
             raise Exception('Unsupported eval dataset: {}'
                             .format(self._dataset))
         if self._kfolding:
-            kfold_train_test_dict = evaluator.load_kfold_train_test_dict(
-                self._vocab_filepath, self._dataset, self._kfold_size)
+            kfold_train_test_dict = evaluator.load_kfold_splits_dict(
+                self._vocab_filepath, self._dataset, self._kfold_size,
+                self._dev_type)
         else:
             left_idx, right_idx, sim = evaluator.load_words_and_sim(
                 self._vocab_filepath, self._dataset, shuffle=False)
