@@ -27,8 +27,7 @@ STS2012_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                 'resources', 'STS2012.full.txt')
 
 WS353_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                              'resources',
-                                              'WS353.combined.txt')
+                              'resources', 'WS353.combined.txt')
 
 
 # Note: this is scipy's spearman, without tie adjustment
@@ -228,6 +227,4 @@ def load_kfold_train_test_dict(vocab_filepath, dataset, kfold_size):
     """
     left_idx, right_idx, sim = load_words_and_sim(vocab_filepath, dataset,
                                                   shuffle=True)
-    print(dataset)
-    print(len(sim))
     return _load_kfold_train_test_dict(left_idx, right_idx, sim, kfold_size)
