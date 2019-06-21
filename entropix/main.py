@@ -241,7 +241,7 @@ def _sample(args):
                       args.mode, args.rate, args.start, args.end,
                       args.reduce, args.limit, args.rewind,
                       args.kfolding, args.kfold_size, args.num_threads,
-                      args.dev_type, args.debug)
+                      args.dev_type, args.debug, args.metric)
     sampler.sample_dimensions()
 
 
@@ -559,6 +559,8 @@ def main():
     parser_sample.add_argument('-y', '--dev-type', default='nodev',
                                choices=['nodev', 'regular', 'balanced'],
                                help='which type of dev split to use')
+    parser_sample.add_argument('-c', '--metric', choices=['spr', 'rmse'],
+                               help='which eval metric to use')
     parser_sample.add_argument('-n', '--num-threads', type=int, default=1,
                                help='number of threads to use for parallel '
                                     'processing of kfold validation')

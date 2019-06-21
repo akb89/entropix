@@ -11,7 +11,8 @@ from scipy import stats
 import entropix.utils.data as dutils
 
 __all__ = ('evaluate_distributional_space', 'load_words_and_sim',
-           'load_kfold_splits_dict')
+           'load_kfold_splits_dict', 'get_eval_metric', 'is_improving',
+           'is_degrading')
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ def _spearman(x, y):
     return stats.spearmanr(x, y)[0]
 
 
-def rmse(x, y):
+def _rmse(x, y):
     """Return root mean squared error"""
     return np.sqrt(((x - y) ** 2).mean())
 
@@ -113,6 +114,67 @@ def get_WS353_pairs_and_sim():
     return left, right, sim
 
 
+def is_degrading(metric_value, best_metric_value, metric):
+    if metric not in ['spr', 'rmse']:
+        raise Exception('Unsupported metric: {}'.format(metric))
+    if metric == 'spr':
+        return metric_value < best_metric_value
+    return metric_value > best_metric_value
+
+
+def is_improving(metric_value, best_metric_value, metric):
+    if metric not in ['spr', 'rmse']:
+        raise Exception('Unsupported metric: {}'.format(metric))
+    if metric == 'spr':
+        return metric_value > best_metric_value
+    return metric_value < best_metric_value  # for rmse we want to lower the loss
+
+
+def _get_model_sim(model, left_idx, right_idx, dataset):
+    if dataset in ['men', 'simlex', 'simverb', 'ws353']:
+        left_vectors = model[left_idx]
+        right_vectors = model[right_idx]
+    elif dataset == 'sts2012':
+        left_vectors = []
+        right_vectors = []
+        for idx_list in left_idx:
+            vec = np.sum([model[el] for el in idx_list], axis=0)
+            left_vectors.append(vec)
+        for idx_list in right_idx:
+            vec = np.sum([model[el] for el in idx_list], axis=0)
+            right_vectors.append(vec)
+    cos = 1 - spatial.distance.cdist(left_vectors, right_vectors, 'cosine')
+    return np.diagonal(cos)
+
+
+def _get_rmse(model, left_idx, right_idx, sim, dataset):
+    if dataset not in ['men', 'simlex', 'simverb', 'ws353']:
+        raise Exception('Unsupported dataset: {}'.format(dataset))
+    # Normalize sim values between [0, 1]
+    if dataset == 'men':
+        sim = [x/50 for x in sim]  # men has sim in [0, 50]
+    else:
+        sim = [x/10 for x in sim]  # all other datasets have sim in [0, 10]
+    model_sim = _get_model_sim(model, left_idx, right_idx, dataset)
+    return _rmse(sim, model_sim)
+
+
+def _get_spr_correlation(model, left_idx, right_idx, sim, dataset):
+    model_sim = _get_model_sim(model, left_idx, right_idx, dataset)
+    return _spearman(sim, model_sim)
+
+
+def get_eval_metric(model, splits, dataset, metric):
+    if metric not in ['spr', 'rmse']:
+        raise Exception('Unsupported metric: {}'.format(metric))
+    if metric == 'spr':
+        return _get_spr_correlation(
+            model, splits['left_idx'], splits['right_idx'], splits['sim'],
+            dataset)
+    return _get_rmse(model, splits['left_idx'], splits['right_idx'],
+                     splits['sim'], dataset)
+
+
 def load_words_and_sim(vocab_filepath, dataset, shuffle):
     if dataset not in ['men', 'simlex', 'simverb', 'sts2012', 'ws353']:
         raise Exception('Unsupported dataset {}'.format(dataset))
@@ -157,25 +219,6 @@ def load_words_and_sim(vocab_filepath, dataset, shuffle):
         return list(unzipped_shuffle[0]), list(unzipped_shuffle[1]), list(unzipped_shuffle[2])
     else:
         return left_idx, right_idx, f_sim
-
-
-def evaluate(model, left_idx, right_idx, sim, dataset):
-    if dataset in ['men', 'simlex', 'simverb', 'ws353']:
-        left_vectors = model[left_idx]
-        right_vectors = model[right_idx]
-    elif dataset == 'sts2012':
-        left_vectors = []
-        right_vectors = []
-        for idx_list in left_idx:
-            vec = np.sum([model[el] for el in idx_list], axis=0)
-            left_vectors.append(vec)
-        for idx_list in right_idx:
-            vec = np.sum([model[el] for el in idx_list], axis=0)
-            right_vectors.append(vec)
-    cos = 1 - spatial.distance.cdist(left_vectors, right_vectors, 'cosine')
-    diag = np.diagonal(cos)
-    spr = _spearman(sim, diag)
-    return spr
 
 
 def evaluate_distributional_space(model, vocab_filepath, dataset):
