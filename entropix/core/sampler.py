@@ -84,34 +84,6 @@ def sample_limit(model, dataset, left_idx, right_idx, sim, output_basename,
         print('\n'.join([str(idx) for idx in sorted(dims)]), file=final_stream)
 
 
-def _compute_scores(dataset, train_test_folds_spr_dict, splits, keep,
-                    max_train_spr, max_dev_spr, fold, dev_type):
-    train_test_folds_spr_dict[fold]['train_spr'] = max_train_spr
-    if dev_type == 'regular':
-        train_test_folds_spr_dict[fold]['dev_spr'] = max_dev_spr
-    train_test_folds_spr_dict[fold]['test_spr'] = evaluator.evaluate(
-        model[:, list(keep)], splits[fold]['test']['left_idx'],
-        splits[fold]['test']['right_idx'], splits[fold]['test']['sim'],
-        dataset)
-
-
-def _display_scores(train_test_folds_spr_dict):
-    num_folds = len(train_test_folds_spr_dict.keys())
-    avg_train_spr = 0
-    avg_test_spr = 0
-    for fold, values, in sorted(train_test_folds_spr_dict.items()):
-        train_spr = values['train_spr']
-        test_spr = values['test_spr']
-        avg_train_spr += train_spr
-        avg_test_spr += test_spr
-        logger.info('Fold {}#{} train spr = {}'.format(fold, num_folds,
-                                                       train_spr))
-        logger.info('Fold {}#{} test spr = {}'.format(fold, num_folds,
-                                                      test_spr))
-    logger.info('Average train spr = {}'.format(avg_train_spr/num_folds))
-    logger.info('Average test spr = {}'.format(avg_test_spr/num_folds))
-
-
 class Sampler():
 
     def __init__(self, singvectors_filepath, vocab_filepath, dataset,
@@ -138,6 +110,70 @@ class Sampler():
         self._max_num_threads = max_num_threads
         self._dev_type = dev_type
         self._debug = debug
+        self._results = defaultdict(defaultdict)
+
+    def display_scores(self):
+        num_folds = len(self._results.keys())
+        avg_train_spr = avg_train_rmse = avg_test_spr = avg_test_rmse = 0
+        for fold, values, in sorted(self._results.items()):
+            avg_train_spr += values['train']['spr']
+            avg_train_rmse += values['train']['rmse']
+            avg_test_spr += values['test']['spr']
+            avg_test_rmse += values['test']['rmse']
+            logger.info('Fold {}#{} train spr = {}'.format(
+                fold, num_folds, values['train']['spr']))
+            logger.info('Fold {}#{} train rmse = {}'.format(
+                fold, num_folds, values['train']['rmse']))
+            logger.info('Fold {}#{} test spr = {}'.format(
+                fold, num_folds, values['test']['spr']))
+            logger.info('Fold {}#{} test rmse = {}'.format(
+                fold, num_folds, values['test']['rmse']))
+        logger.info('Average train spr = {}'.format(avg_train_spr/num_folds))
+        logger.info('Average train rmse = {}'.format(avg_train_rmse/num_folds))
+        logger.info('Average test spr = {}'.format(avg_test_spr/num_folds))
+        logger.info('Average test rmse = {}'.format(avg_test_rmse/num_folds))
+
+    def compute_scores(self, splits, keep, fold):
+        self._results[fold] = {
+            'train': {
+                'spr': evaluator.evaluate(
+                    model[:, list(keep)], splits[fold]['train']['left_idx'],
+                    splits[fold]['train']['right_idx'],
+                    splits[fold]['train']['sim'],
+                    self._dataset, metric='spr'),
+                'rmse': evaluator.evaluate(
+                    model[:, list(keep)], splits[fold]['train']['left_idx'],
+                    splits[fold]['train']['right_idx'],
+                    splits[fold]['train']['sim'],
+                    self._dataset, metric='rmse'),
+            },
+            'test': {
+                'spr': evaluator.evaluate(
+                    model[:, list(keep)], splits[fold]['test']['left_idx'],
+                    splits[fold]['test']['right_idx'],
+                    splits[fold]['test']['sim'],
+                    self._dataset, metric='spr'),
+                'rmse': evaluator.evaluate(
+                    model[:, list(keep)], splits[fold]['test']['left_idx'],
+                    splits[fold]['test']['right_idx'],
+                    splits[fold]['test']['sim'],
+                    self._dataset, metric='rmse')
+            }
+        }
+        if self._dev_type == 'regular':
+            self._results[fold]['dev'] = {
+                'spr': evaluator.evaluate(
+                    model[:, list(keep)], splits[fold]['dev']['left_idx'],
+                    splits[fold]['dev']['right_idx'],
+                    splits[fold]['dev']['sim'],
+                    self._dataset, metric='spr'),
+                'rmse': evaluator.evaluate(
+                    model[:, list(keep)], splits[fold]['dev']['left_idx'],
+                    splits[fold]['dev']['right_idx'],
+                    splits[fold]['dev']['sim'],
+                    self._dataset, metric='rmse')
+            }
+
 
     def reduce_dim(self, keep, splits, max_train_spr, max_dev_spr, iterx, step,
                    save, fold):
@@ -332,16 +368,11 @@ class Sampler():
                 with multiprocessing.Pool(num_threads) as pool:
                     _sample_seq_mix = functools.partial(
                         self.sample_seq_mix_with_kfold, splits)
-                    train_test_folds_spr_dict = defaultdict(defaultdict)
                     for fold, keep, max_train_spr, max_dev_spr in pool.imap_unordered(
                      _sample_seq_mix, range(1, num_folds+1)):
                         # get scores on each kfold test set
-                        _compute_scores(self._dataset,
-                                        train_test_folds_spr_dict,
-                                        splits, keep,
-                                        max_train_spr, max_dev_spr,
-                                        fold, self._dev_type)
-                    _display_scores(train_test_folds_spr_dict)
+                        self.compute_scores(splits, keep, fold)
+                    self.display_scores()
             else:
                 self._output_basename = '{}.kfold-1#1'.format(
                     self._output_basename)

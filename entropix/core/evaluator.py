@@ -3,10 +3,10 @@ import os
 import logging
 import random
 import math
+from collections import defaultdict
 import numpy as np
 import scipy.spatial as spatial
 from scipy import stats
-from collections import defaultdict
 
 import entropix.utils.data as dutils
 
@@ -34,6 +34,11 @@ WS353_FILEPATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
 # Note: this is scipy's spearman, without tie adjustment
 def _spearman(x, y):
     return stats.spearmanr(x, y)[0]
+
+
+def rmse(x, y):
+    """Return root mean squared error"""
+    return np.sqrt(((x - y) ** 2).mean())
 
 
 def get_men_pairs_and_sim():
