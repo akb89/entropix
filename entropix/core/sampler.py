@@ -181,33 +181,36 @@ class Sampler():
             train_eval_metric = evaluator.get_eval_metric(
                 model[:, list(dims)], splits[fold]['train'],
                 dataset=self._dataset, metric=self._metric)
-            # looser condition than evaluator.is_improving
-            if not evaluator.is_degrading(train_eval_metric,
-                                          best_train_eval_metric,
+            if evaluator.is_degrading(train_eval_metric,
+                                      best_train_eval_metric,
+                                      metric=self._metric):
+                continue
+            if self._dev_type == 'regular':
+                dev_eval_metric = evaluator.get_eval_metric(
+                    model[:, list(dims)], splits[fold]['dev'],
+                    dataset=self._dataset, metric=self._metric)
+                if evaluator.is_degrading(dev_eval_metric,
+                                          best_dev_eval_metric,
                                           metric=self._metric):
+                    continue
+            remove.add(dim_idx)
+            logger.info('Constant best train {} = {} for fold {} removing '
+                        'dim_idx = {}. New ndim = {}'
+                        .format(self._metric, train_eval_metric, fold,
+                                dim_idx, len(dims)))
+            best_train_eval_metric = train_eval_metric
+            if self._dev_type == 'regular':
+                best_dev_eval_metric = dev_eval_metric
+            if self._debug:
                 if self._dev_type == 'regular':
-                    dev_eval_metric = evaluator.get_eval_metric(
-                        model[:, list(dims)], splits[fold]['dev'],
+                    logger.debug('dev {} = {} for fold {}'.format(
+                        self._metric, best_dev_eval_metric, fold))
+                if 'test' in splits[fold]:
+                    test_eval_metric = evaluator.get_eval_metric(
+                        model[:, list(dims)], splits[fold]['test'],
                         dataset=self._dataset, metric=self._metric)
-                    if evaluator.is_degrading(dev_eval_metric,
-                                              best_dev_eval_metric,
-                                              metric=self._metric):
-                        continue
-                remove.add(dim_idx)
-                logger.info('Constant best train {} = {} for fold {} removing '
-                            'dim_idx = {}. New ndim = {}'
-                            .format(self._metric, best_train_eval_metric, fold,
-                                    dim_idx, len(dims)))
-                if self._debug:
-                    if self._dev_type == 'regular':
-                        logger.debug('dev {} = {} for fold {}'.format(
-                            self._metric, best_dev_eval_metric, fold))
-                    if 'test' in splits[fold]:
-                        test_eval_metric = evaluator.get_eval_metric(
-                            model[:, list(dims)], splits[fold]['test'],
-                            dataset=self._dataset, metric=self._metric)
-                        logger.debug('test {} = {} for fold {}'.format(
-                            self._metric, test_eval_metric, fold))
+                    logger.debug('test {} = {} for fold {}'.format(
+                        self._metric, test_eval_metric, fold))
         if self._shuffle:
             reduce_filepath = '{}.keep.shuffled.iter-{}.reduce.step-{}.txt'.format(
                 self._output_basename, iterx, step)
