@@ -170,11 +170,8 @@ class Sampler():
         logger.info('Reducing dimensions while maintaining highest score '
                     'on eval metric {}. Step = {}'.format(self._metric, step))
         remove = set()
-        if self._shuffle:
-            dim_indexes = list(keep)
-            random.shuffle(dim_indexes)
-        else:
-            dim_indexes = sorted(keep)
+        dim_indexes = sorted(keep)  # make sure to always iterate over dims
+                                    # in a similar way
         for dim_idx in dim_indexes:
             dims = keep.difference(remove)
             dims.remove(dim_idx)
@@ -299,23 +296,13 @@ class Sampler():
                 keep.remove(dim_idx)
         return keep, best_train_eval_metric, best_dev_eval_metric
 
-    def sample_seq_mix(self, splits, fold):
+    def sample_seq_mix(self, splits, keep, dims, fold):
         logger.info('Shuffling mode {}'
                     .format('ON' if self._shuffle else 'OFF'))
         logger.info('Iterating over {} dims starting at {} and ending at {}'
                     .format(model.shape[1], self._start, self._end))
-        if self._shuffle:
-            keep = set(np.random.choice(
-                list(range(model.shape[1]))[self._start:self._end],
-                size=2, replace=False))
-        else:
-            keep = set([self._start, self._start+1])  # start at 2-dims
         for iterx in range(1, self._num_iter+1):
-            dims = [idx for idx in
-                    list(range(model.shape[1]))[self._start:self._end]
-                    if idx not in keep]
             if self._shuffle:
-                random.shuffle(dims)
                 keep_filepath = '{}.keep.shuffled.iter-{}.txt'.format(
                     self._output_basename, iterx)
             else:
@@ -334,10 +321,10 @@ class Sampler():
                                        save=True, fold=fold)
             return fold, keep
 
-    def sample_seq_mix_with_kfold(self, splits, fold):
+    def sample_seq_mix_with_kfold(self, splits, keep, dims, fold):
         self._output_basename = '{}.kfold-{}#{}'.format(
             self._output_basename, fold, len(splits.keys()))
-        return self.sample_seq_mix(splits, fold)
+        return self.sample_seq_mix(splits, keep, dims, fold)
 
     def sample_dimensions(self):
         logger.info('Sampling dimensions over a total of {} dims, optimizing '
@@ -360,6 +347,16 @@ class Sampler():
         else:
             left_idx, right_idx, sim = evaluator.load_words_and_sim(
                 self._vocab_filepath, self._dataset, shuffle=False)
+        if self._shuffle:
+            keep = set(np.random.choice(
+                list(range(model.shape[1]))[self._start:self._end],
+                size=2, replace=False))
+        else:
+            keep = set([self._start, self._start+1])  # start at 2-dims
+        dims = [idx for idx in list(range(model.shape[1]))[self._start:self._end]
+                if idx not in keep]
+        if self._shuffle:
+            random.shuffle(dims)
         if self._mode in ['seq', 'mix']:
             if self._kfolding:
                 # sample dimensons multi-threaded on all kfolds
@@ -374,7 +371,7 @@ class Sampler():
                     else self._max_num_threads
                 with multiprocessing.Pool(num_threads) as pool:
                     _sample_seq_mix = functools.partial(
-                        self.sample_seq_mix_with_kfold, splits)
+                        self.sample_seq_mix_with_kfold, splits, keep, dims)
                     for fold, keep in pool.imap_unordered(_sample_seq_mix,
                                                           range(1,
                                                                 num_folds+1)):
@@ -394,7 +391,7 @@ class Sampler():
                         }
                     }
                 }
-                self.sample_seq_mix(splits, fold=1)
+                self.sample_seq_mix(splits, keep, dims, fold=1)
         if self._mode == 'limit':
             sample_limit(model, dataset, left_idx, right_idx, sim,
                          output_basename, limit, start, end, rewind)
