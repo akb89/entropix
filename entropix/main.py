@@ -233,17 +233,25 @@ def _sample(args):
         keep_filepath_basename = '{}.shuffled.timestamp-{}'.format(
             keep_filepath_basename, datetime.datetime.now().timestamp())
     if args.kfolding:
-        keep_filepath_basename = '{}.timestamp-{}'.format(
-            keep_filepath_basename, datetime.datetime.now().timestamp())
+        if not args.shuffle:
+            keep_filepath_basename = '{}.timestamp-{}'.format(
+                keep_filepath_basename, datetime.datetime.now().timestamp())
     logger.info('Output basename = {}'.format(keep_filepath_basename))
     sampler = Sampler(args.model, args.vocab, args.dataset,
                       keep_filepath_basename, args.iter, args.shuffle,
                       args.mode, args.rate, args.start, args.end,
                       args.reduce, args.limit, args.rewind,
                       args.kfolding, args.kfold_size, args.num_threads,
-                      args.dev_type, args.debug, args.metric)
+                      args.dev_type, args.debug, args.metric, args.alpha)
     sampler.sample_dimensions()
 
+
+def restricted_weighted_alpha(x):
+    x = float(x)
+    if x <= 0 or x >= 1:
+        raise argparse.ArgumentTypeError('{} alpha not in range ]0.0, 1.0['
+                                         .format(x))
+    return x
 
 def restricted_kfold_size(x):
     x = float(x)
@@ -534,7 +542,7 @@ def main():
                                help='number of iterations')
     parser_sample.add_argument('-s', '--shuffle', action='store_true',
                                help='whether or not to shuffle at each iter')
-    parser_sample.add_argument('-a', '--mode', choices=['seq', 'mix', 'limit'],
+    parser_sample.add_argument('-z', '--mode', choices=['seq', 'mix', 'limit'],
                                default='seq',
                                help='which version of the algorithm to use')
     parser_sample.add_argument('-t', '--rate', type=int, default=100,
@@ -559,9 +567,14 @@ def main():
     parser_sample.add_argument('-y', '--dev-type', default='nodev',
                                choices=['nodev', 'regular', 'balanced'],
                                help='which type of dev split to use')
-    parser_sample.add_argument('-c', '--metric', choices=['spr', 'rmse'],
-                               required=True,
+    parser_sample.add_argument('-c', '--metric', required=True,
+                               choices=['spr', 'rmse', 'combined'],
                                help='which eval metric to use')
+    parser_sample.add_argument('-a', '--alpha', type=restricted_weighted_alpha,
+                               help='how to weight combined spr and rmse eval '
+                                    'metrics. alpha < 0.5 will bias eval '
+                                    'towards rmse. alpha > 0.5 will bias eval'
+                                    'towards spr')
     parser_sample.add_argument('-n', '--num-threads', type=int, default=1,
                                help='number of threads to use for parallel '
                                     'processing of kfold validation')

@@ -89,7 +89,7 @@ class Sampler():
     def __init__(self, singvectors_filepath, vocab_filepath, dataset,
                  output_basename, num_iter, shuffle, mode, rate, start, end,
                  reduce, limit, rewind, kfolding, kfold_size, max_num_threads,
-                 dev_type, debug, metric):
+                 dev_type, debug, metric, alpha):
         #self._model = np.load(singvectors_filepath)
         global model
         logger.info('Loading numpy model...')
@@ -113,6 +113,38 @@ class Sampler():
         self._debug = debug
         self._results = defaultdict(defaultdict)
         self._metric = metric
+        self._alpha = alpha
+
+    def debug(self, keep, splits, fold):
+        if self._metric != 'rmse':
+            train_rmse = evaluator.get_eval_metric(
+                model[:, list(keep)], splits[fold]['train'],
+                dataset=self._dataset, metric='rmse')
+            logger.debug('train rmse = {} on fold {}'.format(train_rmse, fold))
+        elif self._metric != 'spr':
+            train_spr = evaluator.get_eval_metric(
+                model[:, list(keep)], splits[fold]['train'],
+                dataset=self._dataset, metric='spr')
+            logger.debug('train spr = {} on fold {}'.format(train_spr, fold))
+        if self._dev_type == 'regular':
+            dev_rmse = evaluator.get_eval_metric(
+                model[:, list(keep)], splits[fold]['dev'],
+                dataset=self._dataset, metric='rmse')
+            dev_spr = evaluator.get_eval_metric(
+                model[:, list(keep)], splits[fold]['spr'],
+                dataset=self._dataset, metric='rmse')
+            logger.debug('dev rmse = {} for fold {}'.format(dev_rmse, fold))
+            logger.debug('dev spr = {} for fold {}'.format(dev_spr, fold))
+        if 'test' in splits[fold]:
+            test_rmse = evaluator.get_eval_metric(
+                model[:, list(keep)], splits[fold]['test'],
+                dataset=self._dataset, metric='rmse')
+            test_spr = evaluator.get_eval_metric(
+                model[:, list(keep)], splits[fold]['test'],
+                dataset=self._dataset, metric='spr')
+            logger.debug('test rmse = {} for fold {}'.format(test_rmse, fold))
+            logger.debug('test spr = {} for fold {}'.format(test_spr, fold))
+
 
     def display_scores(self):
         num_folds = len(self._results.keys())
@@ -177,7 +209,7 @@ class Sampler():
             dims.remove(dim_idx)
             train_eval_metric = evaluator.get_eval_metric(
                 model[:, list(dims)], splits[fold]['train'],
-                dataset=self._dataset, metric=self._metric)
+                dataset=self._dataset, metric=self._metric, alpha=self._alpha)
             if evaluator.is_degrading(train_eval_metric,
                                       best_train_eval_metric,
                                       metric=self._metric):
@@ -185,7 +217,8 @@ class Sampler():
             if self._dev_type == 'regular':
                 dev_eval_metric = evaluator.get_eval_metric(
                     model[:, list(dims)], splits[fold]['dev'],
-                    dataset=self._dataset, metric=self._metric)
+                    dataset=self._dataset, metric=self._metric,
+                    alpha=self._alpha)
                 if evaluator.is_degrading(dev_eval_metric,
                                           best_dev_eval_metric,
                                           metric=self._metric):
@@ -199,21 +232,9 @@ class Sampler():
             if self._dev_type == 'regular':
                 best_dev_eval_metric = dev_eval_metric
             if self._debug:
-                if self._dev_type == 'regular':
-                    logger.debug('dev {} = {} for fold {}'.format(
-                        self._metric, best_dev_eval_metric, fold))
-                if 'test' in splits[fold]:
-                    test_eval_metric = evaluator.get_eval_metric(
-                        model[:, list(dims)], splits[fold]['test'],
-                        dataset=self._dataset, metric=self._metric)
-                    logger.debug('test {} = {} for fold {}'.format(
-                        self._metric, test_eval_metric, fold))
-        if self._shuffle:
-            reduce_filepath = '{}.keep.shuffled.iter-{}.reduce.step-{}.txt'.format(
-                self._output_basename, iterx, step)
-        else:
-            reduce_filepath = '{}.keep.iter-{}.reduce.step-{}.txt'.format(
-                self._output_basename, iterx, step)
+                self.debug(keep, splits, fold)
+        reduce_filepath = '{}.keep.iter-{}.reduce.step-{}.txt'.format(
+            self._output_basename, iterx, step)
         logger.info('Finished reducing dims')
         keep = keep.difference(remove)
         if save:
@@ -233,26 +254,27 @@ class Sampler():
                     '{}. Iteration = {}'.format(self._metric, iterx))
         best_train_eval_metric = evaluator.get_eval_metric(
             model[:, list(keep)], splits[fold]['train'], dataset=self._dataset,
-            metric=self._metric)
+            metric=self._metric, alpha=self._alpha)
         added_counter = 0
         if self._dev_type == 'nodev':
             best_dev_eval_metric = 0
         elif self._dev_type == 'regular':
             best_dev_eval_metric = evaluator.get_eval_metric(
                 model[:, list(keep)], splits[fold]['dev'],
-                dataset=self._dataset, metric=self._metric)
+                dataset=self._dataset, metric=self._metric, alpha=self._alpha)
         for idx, dim_idx in enumerate(dims):
             keep.add(dim_idx)
             train_eval_metric = evaluator.get_eval_metric(
                 model[:, list(keep)], splits[fold]['train'],
-                dataset=self._dataset, metric=self._metric)
+                dataset=self._dataset, metric=self._metric, alpha=self._alpha)
             if evaluator.is_improving(train_eval_metric,
                                       best_train_eval_metric,
                                       metric=self._metric):
                 if self._dev_type == 'regular':
                     dev_eval_metric = evaluator.get_eval_metric(
                         model[:, list(keep)], splits[fold]['dev'],
-                        dataset=self._dataset, metric=self._metric)
+                        dataset=self._dataset, metric=self._metric,
+                        alpha=self._alpha)
                     if evaluator.is_degrading(dev_eval_metric,
                                               best_dev_eval_metric,
                                               metric=self._metric):
@@ -266,27 +288,7 @@ class Sampler():
                                 self._metric, best_train_eval_metric, fold,
                                 len(keep), idx, dim_idx))
                 if self._debug:
-                    if self._metric == 'spr':
-                        train_rmse = evaluator.get_eval_metric(
-                            model[:, list(keep)], splits[fold]['train'],
-                            dataset=self._dataset, metric='rmse')
-                        logger.debug('train rmse = {} on fold {}'.format(
-                            train_rmse, fold))
-                    elif self._metric == 'rmse':
-                        train_spr = evaluator.get_eval_metric(
-                            model[:, list(keep)], splits[fold]['train'],
-                            dataset=self._dataset, metric='spr')
-                        logger.debug('train spr = {} on fold {}'.format(
-                            train_spr, fold))
-                    if self._dev_type == 'regular':
-                        logger.debug('dev {} = {} for fold {}'.format(
-                            self._metric, best_dev_eval_metric, fold))
-                    if 'test' in splits[fold]:
-                        test_eval_metric = evaluator.get_eval_metric(
-                            model[:, list(keep)], splits[fold]['test'],
-                            dataset=self._dataset, metric=self._metric)
-                        logger.debug('test {} = {} for fold {}'.format(
-                            self._metric, test_eval_metric, fold))
+                    self.debug(keep, splits, fold)
                 if self._mode == 'mix' and added_counter % self._rate == 0:
                     keep = self.reduce_dim(keep, splits,
                                            best_train_eval_metric,
@@ -302,12 +304,8 @@ class Sampler():
         logger.info('Iterating over {} dims starting at {} and ending at {}'
                     .format(model.shape[1], self._start, self._end))
         for iterx in range(1, self._num_iter+1):
-            if self._shuffle:
-                keep_filepath = '{}.keep.shuffled.iter-{}.txt'.format(
-                    self._output_basename, iterx)
-            else:
-                keep_filepath = '{}.keep.iter-{}.txt'.format(
-                    self._output_basename, iterx)
+            keep_filepath = '{}.keep.iter-{}.txt'.format(
+                self._output_basename, iterx)
             keep, best_train_eval_metric, best_dev_eval_metric = self.increase_dim(
                 keep, dims, splits, iterx, fold)
             logger.info('Finished dim increase. Saving list of keep idx to {}'

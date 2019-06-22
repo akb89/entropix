@@ -115,17 +115,17 @@ def get_WS353_pairs_and_sim():
 
 
 def is_degrading(metric_value, best_metric_value, metric):
-    if metric not in ['spr', 'rmse']:
+    if metric not in ['spr', 'rmse', 'combined']:
         raise Exception('Unsupported metric: {}'.format(metric))
-    if metric == 'spr':
+    if metric in ['spr', 'combined']:
         return metric_value < best_metric_value
     return metric_value > best_metric_value
 
 
 def is_improving(metric_value, best_metric_value, metric):
-    if metric not in ['spr', 'rmse']:
+    if metric not in ['spr', 'rmse', 'combined']:
         raise Exception('Unsupported metric: {}'.format(metric))
-    if metric == 'spr':
+    if metric in ['spr', 'combined']:
         return metric_value > best_metric_value
     return metric_value < best_metric_value  # for rmse we want to lower the loss
 
@@ -164,15 +164,25 @@ def _get_spr_correlation(model, left_idx, right_idx, sim, dataset):
     return _spearman(sim, model_sim)
 
 
-def get_eval_metric(model, splits, dataset, metric):
-    if metric not in ['spr', 'rmse']:
+def _get_combined_spr_rmse(model, left_idx, right_idx, sim, dataset, alpha):
+    spr = _get_spr_correlation(model, left_idx, right_idx, sim, dataset)
+    rmse = _get_rmse(model, left_idx, right_idx, sim, dataset)
+    return alpha * spr - (1 - alpha) * rmse
+
+
+def get_eval_metric(model, splits, dataset, metric, alpha=None):
+    if metric not in ['spr', 'rmse', 'combined']:
         raise Exception('Unsupported metric: {}'.format(metric))
     if metric == 'spr':
         return _get_spr_correlation(
             model, splits['left_idx'], splits['right_idx'], splits['sim'],
             dataset)
-    return _get_rmse(model, splits['left_idx'], splits['right_idx'],
-                     splits['sim'], dataset)
+    if metric == 'rmse':
+        return _get_rmse(model, splits['left_idx'], splits['right_idx'],
+                         splits['sim'], dataset)
+    return _get_combined_spr_rmse(model, splits['left_idx'],
+                                  splits['right_idx'], splits['sim'], dataset,
+                                  alpha)
 
 
 def load_words_and_sim(vocab_filepath, dataset, shuffle):
