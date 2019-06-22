@@ -560,6 +560,7 @@ def main():
                                choices=['nodev', 'regular', 'balanced'],
                                help='which type of dev split to use')
     parser_sample.add_argument('-c', '--metric', choices=['spr', 'rmse'],
+                               required=True,
                                help='which eval metric to use')
     parser_sample.add_argument('-n', '--num-threads', type=int, default=1,
                                help='number of threads to use for parallel '
