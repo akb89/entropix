@@ -149,11 +149,15 @@ class Sampler():
     def display_scores(self):
         num_folds = len(self._results.keys())
         avg_train_spr = avg_train_rmse = avg_test_spr = avg_test_rmse = 0
+        avg_dim = 0
         for fold, values, in sorted(self._results.items()):
             avg_train_spr += values['train']['spr']
             avg_train_rmse += values['train']['rmse']
             avg_test_spr += values['test']['spr']
             avg_test_rmse += values['test']['rmse']
+            avg_dim += values['dim']
+            logger.info('Fold {}#{} dim = {}'.format(
+                fold, num_folds, values['dim']))
             logger.info('Fold {}#{} train spr = {}'.format(
                 fold, num_folds, values['train']['spr']))
             logger.info('Fold {}#{} train rmse = {}'.format(
@@ -162,6 +166,7 @@ class Sampler():
                 fold, num_folds, values['test']['spr']))
             logger.info('Fold {}#{} test rmse = {}'.format(
                 fold, num_folds, values['test']['rmse']))
+        logger.info('Average dim = {}'.format(round(avg_dim/num_folds)))
         logger.info('Average train spr = {}'.format(avg_train_spr/num_folds))
         logger.info('Average train rmse = {}'.format(avg_train_rmse/num_folds))
         logger.info('Average test spr = {}'.format(avg_test_spr/num_folds))
@@ -184,7 +189,8 @@ class Sampler():
                 'rmse': evaluator.get_eval_metric(
                     model[:, list(keep)], splits[fold]['test'],
                     self._dataset, metric='rmse')
-            }
+            },
+            'dim': len(keep)
         }
         if self._dev_type == 'regular':
             self._results[fold]['dev'] = {
