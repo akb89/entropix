@@ -121,7 +121,7 @@ class Sampler():
                 model[:, list(keep)], splits[fold]['train'],
                 dataset=self._dataset, metric='rmse')
             logger.debug('train rmse = {} on fold {}'.format(train_rmse, fold))
-        elif self._metric != 'spr':
+        if self._metric != 'spr':
             train_spr = evaluator.get_eval_metric(
                 model[:, list(keep)], splits[fold]['train'],
                 dataset=self._dataset, metric='spr')
