@@ -108,3 +108,5 @@ svd_test.py
 *.results
 models/
 ppmi_test.py
+output/
+logs/

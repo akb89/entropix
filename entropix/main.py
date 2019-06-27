@@ -5,12 +5,14 @@ This is the entry point of the application.
 import os
 
 import argparse
+import datetime
 import logging
 import logging.config
 
 import numpy as np
 import scipy
 from scipy import sparse
+from gensim.models import Word2Vec
 
 import entropix.utils.config as cutils
 import entropix.utils.files as futils
@@ -20,8 +22,9 @@ import entropix.core.evaluator as evaluator
 import entropix.core.generator as generator
 import entropix.core.reducer as reducer
 import entropix.core.remover as remover
-import entropix.core.sampler as sampler
 import entropix.core.weigher as weigher
+
+from entropix.core.sampler import Sampler
 
 logging.config.dictConfig(
     cutils.load(
@@ -31,21 +34,34 @@ logger = logging.getLogger(__name__)
 
 
 def _evaluate(args):
-    logger.info('Evaluating model against {}: {}'.format(args.dataset,
-                                                         args.model))
+    logger.info('Evaluating model on {}'.format(args.dataset))
     logger.info('Loading distributional space from {}'.format(args.model))
-    model = np.load(args.model)
-    logger.info('model size = {}'.format(model.shape))
-    model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
-    if args.dims:
-        dims = []
-        with open(args.dims, 'r', encoding='utf-8') as dims_stream:
-            for line in dims_stream:
-                dims.append(int(line.strip()))
-        logger.info('Sampling model with {} dimensions = {}'
-                    .format(len(dims), dims))
-        model = model[:, dims]
-    evaluator.evaluate_distributional_space(model, args.vocab, args.dataset)
+    if args.type == 'gensim':
+        model = Word2Vec.load(args.model).wv
+        logger.info('model size = {}'.format(model.vector_size))
+    elif args.type == 'numpy':
+        if not args.vocab:
+            raise Exception('Please specify the vocab parameter to evaluate'
+                            'a standard numpy model')
+        model = np.load(args.model)
+        if args.start is not None and args.end is not None:
+            model = model[:, args.start:args.end]
+        if args.dims:
+            dims = []
+            with open(args.dims, 'r', encoding='utf-8') as dims_stream:
+                for line in dims_stream:
+                    dims.append(int(line.strip()))
+            logger.info('Sampling model with {} dimensions = {}'
+                        .format(len(dims), dims))
+            model = model[:, dims]
+        logger.info('model size = {}'.format(model.shape))
+    evaluator.evaluate_distributional_space(model, args.dataset,
+                                            args.metric, args.type, args.vocab)
+
+
+def _compute_dimenergy(args):
+    energy = calculator.compute_energy(args.model, args.dimensions)
+    logger.info('Energy = {}'.format(energy))
 
 
 def _compute_energy(args):
@@ -195,8 +211,12 @@ def _reduce(args):
 
 
 def _sample(args):
+    if args.kfolding and args.mode not in ['seq', 'mix']:
+        raise Exception(
+            'kfolding is currently only supported in seq and mix modes')
     if args.output:
         dirname = args.output
+        os.makedirs(dirname, exist_ok=True)
     else:
         dirname = os.path.dirname(args.model)
     basename = os.path.basename(args.model).split('.singvectors.npy')[0]
@@ -209,20 +229,43 @@ def _sample(args):
     elif args.mode == 'seq':
         keep_filepath_basename = os.path.join(
             dirname,
-            '{}.{}.sampledims.mode-{}.niter-{}.start-{}.end-{}'.format(
-                basename, args.dataset, args.mode, args.iter, args.start,
-                args.end))
+            '{}.{}.sampledims.mode-{}.niter-{}.start-{}.end-{}'
+            .format(basename, args.dataset, args.mode, args.iter,
+                    args.start, args.end))
     elif args.mode == 'limit':
         keep_filepath_basename = os.path.join(
             dirname,
             '{}.{}.sampledims.mode-{}.d-{}.start-{}.end-{}'.format(
                 basename, args.dataset, args.mode, args.limit, args.start,
                 args.end))
+    if args.shuffle:
+        keep_filepath_basename = '{}.shuffled.timestamp-{}'.format(
+            keep_filepath_basename, datetime.datetime.now().timestamp())
+    if args.kfolding:
+        if not args.shuffle:
+            keep_filepath_basename = '{}.timestamp-{}'.format(
+                keep_filepath_basename, datetime.datetime.now().timestamp())
     logger.info('Output basename = {}'.format(keep_filepath_basename))
-    sampler.sample_dimensions(args.model, args.vocab, args.dataset,
-                              keep_filepath_basename, args.iter, args.shuffle,
-                              args.mode, args.rate, args.start, args.end,
-                              args.limit, args.rewind)
+    if args.debug:
+        logger.debug('Debug mode activated')
+    if args.logs_dirpath:
+        os.makedirs(args.logs_dirpath, exist_ok=True)
+    logger.debug('Outputing logs to {}'.format(args.logs_dirpath))
+    sampler = Sampler(args.model, args.vocab, args.dataset,
+                      keep_filepath_basename, args.iter, args.shuffle,
+                      args.mode, args.rate, args.start, args.end,
+                      args.reduce, args.limit, args.rewind,
+                      args.kfolding, args.kfold_size, args.num_threads,
+                      args.dev_type, args.debug, args.metric, args.alpha,
+                      args.logs_dirpath)
+    sampler.sample_dimensions()
+
+def restricted_kfold_size(x):
+    x = float(x)
+    if x < 0.0 or x > 0.5:
+        raise argparse.ArgumentTypeError('{} kfold-size not in range [0, 0.5]'
+                                         .format(x))
+    return x
 
 
 def restricted_energy(x):
@@ -231,6 +274,7 @@ def restricted_energy(x):
         raise argparse.ArgumentTypeError('{} energy not in range [0, 100]'
                                          .format(x))
     return x
+
 
 def restricted_alpha(x):
     x = float(x)
@@ -275,6 +319,7 @@ def _convert(args):
                     idx = int(line.strip().split('\t')[0])
                     vector = ' '.join([str(coord) for coord in model[idx]])
                     print('{} {}'.format(word, vector), file=model_stream)
+        logger.info('Saving to {}'.format(model_filepath))
     elif args.to == 'numpy':
         vocab_filepath = '{}.vocab'.format(output_basename)
         model = None
@@ -288,6 +333,7 @@ def _convert(args):
                     else:
                         model = np.append(model, embed, axis=0)
                     print('{}\t{}'.format(idx, items[0]), file=vocab_stream)
+        logger.info('Saving to {}.npy'.format(output_basename))
         np.save(output_basename, model)
         logger.info('Done')
 
@@ -302,6 +348,19 @@ def _cut(args):
     model = model[:, model.shape[1]-args.end:model.shape[1]-args.start]
     logger.info('New model shape = {}'.format(model.shape))
     np.save(basename, model)
+
+
+def _select(args):
+    logger.info('Saving model with dims from {}'.format(args.dims))
+    dims = []
+    with open(args.dims, 'r', encoding='utf-8') as dim_stream:
+        for line in dim_stream:
+            line = line.strip()
+            dims.append(int(line))
+    model = np.load(args.model)
+    model = model[:, ::-1]
+    model = model[:, dims]
+    np.save(args.dims, model)
 
 
 def main():
@@ -326,6 +385,16 @@ def main():
         'compute', formatter_class=argparse.RawTextHelpFormatter,
         help='compute entropy or pairwise cosine similarity metrics')
     compute_sub = parser_compute.add_subparsers()
+    parser_compute_dimenergy = compute_sub.add_parser(
+        'dim-energy', formatter_class=argparse.RawTextHelpFormatter,
+        help='compute energy of list of dimensions')
+    parser_compute_dimenergy.set_defaults(func=_compute_dimenergy)
+    parser_compute_dimenergy.add_argument(
+        '-m', '--model', required=True,
+        help='absolute path the .singvalues.npy')
+    parser_compute_dimenergy.add_argument(
+        '-d', '--dimensions', required=True,
+        help='absolute path to file with list of dimensions')
     parser_compute_energy = compute_sub.add_parser(
         'energy', formatter_class=argparse.RawTextHelpFormatter,
         help='compute energy of .npz or .npy model')
@@ -383,15 +452,26 @@ def main():
                                  help='absolute path to .npz matrix '
                                       'corresponding to the distributional '
                                       'space to evaluate')
-    parser_evaluate.add_argument('-v', '--vocab', required=True,
+    parser_evaluate.add_argument('-v', '--vocab',
                                  help='absolute path to .map vocabulary file')
     parser_evaluate.add_argument('-d', '--dataset', required=True,
-                                 choices=['men', 'simlex', 'simverb', 'sts2012'],
+                                 choices=['men', 'simlex', 'simverb',
+                                          'sts2012', 'ws353'],
                                  help='which dataset to evaluate on')
     parser_evaluate.add_argument('-i', '--dims',
                                  help='absolute path to .txt file containing'
                                       'a shortlist of dimensions, one per line'
                                       'to select from')
+    parser_evaluate.add_argument('-s', '--start', type=int,
+                                 help='index of singvectors dim to start from')
+    parser_evaluate.add_argument('-e', '--end', type=int,
+                                 help='index of singvectors dim to end at')
+    parser_evaluate.add_argument('-t', '--type', choices=['numpy', 'gensim'],
+                                 default='numpy',
+                                 help='model type')
+    parser_evaluate.add_argument('-c', '--metric', required=True,
+                                 choices=['spr', 'rmse'],
+                                 help='which eval metric to use')
     parser_generate = subparsers.add_parser(
         'generate', formatter_class=argparse.RawTextHelpFormatter,
         help='generate raw frequency count based model')
@@ -473,25 +553,52 @@ def main():
                                help='absolute path to output directory where '
                                     'to save sampled models')
     parser_sample.add_argument('-d', '--dataset', required=True,
-                               choices=['men', 'simlex', 'simverb'],
+                               choices=['men', 'simlex', 'simverb', 'sts2012'],
                                help='dataset to optimize on')
     parser_sample.add_argument('-i', '--iter', type=int, default=1,
                                help='number of iterations')
     parser_sample.add_argument('-s', '--shuffle', action='store_true',
                                help='whether or not to shuffle at each iter')
-    parser_sample.add_argument('-a', '--mode', choices=['seq', 'mix', 'limit'],
+    parser_sample.add_argument('-z', '--mode', choices=['seq', 'mix', 'limit'],
                                default='seq',
                                help='which version of the algorithm to use')
-    parser_sample.add_argument('-r', '--rate', type=int, default=10,
+    parser_sample.add_argument('-t', '--rate', type=int, default=100,
                                help='reduce every r dim in mix mode')
     parser_sample.add_argument('-b', '--start', type=int, default=0,
                                help='index of singvectors dim to start from')
     parser_sample.add_argument('-e', '--end', type=int, default=0,
-                               help='index of singvectors dim to and at')
+                               help='index of singvectors dim to end at')
+    parser_sample.add_argument('-r', '--reduce', action='store_true',
+                               help='if set, will apply reduce_dim in seq mode')
     parser_sample.add_argument('-l', '--limit', type=int, default=5,
                                help='max number of dim in limit mode')
     parser_sample.add_argument('-w', '--rewind', action='store_true',
                                help='if set, will rewind in limit mode')
+    parser_sample.add_argument('-k', '--kfolding', action='store_true',
+                               help='if set, will sample with kfold')
+    parser_sample.add_argument('-x', '--kfold-size',
+                               type=restricted_kfold_size, default=0,
+                               help='determine size of kfold. Should be in '
+                                    '[0, 0.5], that is, less than 50% of '
+                                    'total dataset size')
+    parser_sample.add_argument('-y', '--dev-type', default='nodev',
+                               choices=['nodev', 'regular', 'balanced'],
+                               help='which type of dev split to use')
+    parser_sample.add_argument('-c', '--metric', required=True,
+                               choices=['spr', 'rmse', 'combined'],
+                               help='which eval metric to use')
+    parser_sample.add_argument('-a', '--alpha', type=restricted_alpha,
+                               help='how to weight combined spr and rmse eval '
+                                    'metrics. alpha < 0.5 will bias eval '
+                                    'towards rmse. alpha > 0.5 will bias eval'
+                                    'towards spr')
+    parser_sample.add_argument('-n', '--num-threads', type=int, default=1,
+                               help='number of threads to use for parallel '
+                                    'processing of kfold validation')
+    parser_sample.add_argument('--debug', action='store_true',
+                               help='activate debugger')
+    parser_sample.add_argument('--logs-dir', dest='logs_dirpath',
+                               help='absolute path to logs directory')
     parser_convert = subparsers.add_parser(
         'convert', formatter_class=argparse.RawTextHelpFormatter,
         help='convert embeddings to and from text and numpy')
@@ -518,6 +625,14 @@ def main():
     parser_cut.add_argument('-s', '--start', type=int, required=True,
                             help='index of singvectors dim to start from')
     parser_cut.add_argument('-e', '--end', type=int, required=True,
-                            help='index of singvectors dim to and at')
+                            help='index of singvectors dim to end at')
+    parser_select = subparsers.add_parser(
+        'select', formatter_class=argparse.RawTextHelpFormatter,
+        help='save a model from a list of dims')
+    parser_select.set_defaults(func=_select)
+    parser_select.add_argument('-m', '--model', required=True,
+                               help='absolute path to .singvectors.npy')
+    parser_select.add_argument('-d', '--dims', required=True,
+                               help='absolute path to list of dimensions')
     args = parser.parse_args()
     args.func(args)

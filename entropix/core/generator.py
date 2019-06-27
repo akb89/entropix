@@ -58,7 +58,7 @@ def generate_distributional_model(output_dirpath, corpus_filepath,
     logger.info('Matrix info: {} non-zero entres, {} shape, {:.6f} density'
                 .format(M.getnnz(), M.shape,
                         M.getnnz()*1.0/(M.shape[0]*M.shape[1])))
-    logger.info('Saving matrix to {}.npz'.format(output_filepath_matrix))
+    logger.info('Saving matrix to {}'.format(output_filepath_matrix))
     sparse.save_npz(output_filepath_matrix, M)
     with open(output_filepath_map, 'w', encoding='utf-8') as output_stream:
         for word, idx in word_to_idx_dic.items():
