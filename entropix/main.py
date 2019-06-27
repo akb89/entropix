@@ -260,14 +260,6 @@ def _sample(args):
                       args.logs_dirpath)
     sampler.sample_dimensions()
 
-
-def restricted_weighted_alpha(x):
-    x = float(x)
-    if x <= 0 or x >= 1:
-        raise argparse.ArgumentTypeError('{} alpha not in range ]0.0, 1.0['
-                                         .format(x))
-    return x
-
 def restricted_kfold_size(x):
     x = float(x)
     if x < 0.0 or x > 0.5:
@@ -595,7 +587,7 @@ def main():
     parser_sample.add_argument('-c', '--metric', required=True,
                                choices=['spr', 'rmse', 'combined'],
                                help='which eval metric to use')
-    parser_sample.add_argument('-a', '--alpha', type=restricted_weighted_alpha,
+    parser_sample.add_argument('-a', '--alpha', type=restricted_alpha,
                                help='how to weight combined spr and rmse eval '
                                     'metrics. alpha < 0.5 will bias eval '
                                     'towards rmse. alpha > 0.5 will bias eval'
