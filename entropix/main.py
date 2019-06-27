@@ -12,6 +12,7 @@ import logging.config
 import numpy as np
 import scipy
 from scipy import sparse
+from gensim.models import Word2Vec
 
 import entropix.utils.config as cutils
 import entropix.utils.files as futils
@@ -33,21 +34,29 @@ logger = logging.getLogger(__name__)
 
 
 def _evaluate(args):
-    logger.info('Evaluating model against {}: {}'.format(args.dataset,
-                                                         args.model))
+    logger.info('Evaluating model on {}'.format(args.dataset))
     logger.info('Loading distributional space from {}'.format(args.model))
-    model = np.load(args.model)
-    logger.info('model size = {}'.format(model.shape))
-    model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
-    if args.dims:
-        dims = []
-        with open(args.dims, 'r', encoding='utf-8') as dims_stream:
-            for line in dims_stream:
-                dims.append(int(line.strip()))
-        logger.info('Sampling model with {} dimensions = {}'
-                    .format(len(dims), dims))
-        model = model[:, dims]
-    evaluator.evaluate_distributional_space(model, args.vocab, args.dataset)
+    if args.type == 'gensim':
+        model = Word2Vec.load(args.model).wv
+        logger.info('model size = {}'.format(model.vector_size))
+    elif args.type == 'numpy':
+        if not args.vocab:
+            raise Exception('Please specify the vocab parameter to evaluate'
+                            'a standard numpy model')
+        model = np.load(args.model)
+        if args.start is not None and args.end is not None:
+            model = model[:, args.start:args.end]
+        if args.dims:
+            dims = []
+            with open(args.dims, 'r', encoding='utf-8') as dims_stream:
+                for line in dims_stream:
+                    dims.append(int(line.strip()))
+            logger.info('Sampling model with {} dimensions = {}'
+                        .format(len(dims), dims))
+            model = model[:, dims]
+        logger.info('model size = {}'.format(model.shape))
+    evaluator.evaluate_distributional_space(model, args.dataset,
+                                            args.metric, args.type, args.vocab)
 
 
 def _compute_dimenergy(args):
@@ -445,16 +454,26 @@ def main():
                                  help='absolute path to .npz matrix '
                                       'corresponding to the distributional '
                                       'space to evaluate')
-    parser_evaluate.add_argument('-v', '--vocab', required=True,
+    parser_evaluate.add_argument('-v', '--vocab',
                                  help='absolute path to .map vocabulary file')
     parser_evaluate.add_argument('-d', '--dataset', required=True,
-                                 choices=['men', 'simlex', 'simverb', 'sts2012',
-                                          'ws353'],
+                                 choices=['men', 'simlex', 'simverb',
+                                          'sts2012', 'ws353'],
                                  help='which dataset to evaluate on')
     parser_evaluate.add_argument('-i', '--dims',
                                  help='absolute path to .txt file containing'
                                       'a shortlist of dimensions, one per line'
                                       'to select from')
+    parser_evaluate.add_argument('-s', '--start', type=int,
+                                 help='index of singvectors dim to start from')
+    parser_evaluate.add_argument('-e', '--end', type=int,
+                                 help='index of singvectors dim to end at')
+    parser_evaluate.add_argument('-t', '--type', choices=['numpy', 'gensim'],
+                                 default='numpy',
+                                 help='model type')
+    parser_evaluate.add_argument('-c', '--metric', required=True,
+                                 choices=['spr', 'rmse'],
+                                 help='which eval metric to use')
     parser_generate = subparsers.add_parser(
         'generate', formatter_class=argparse.RawTextHelpFormatter,
         help='generate raw frequency count based model')
@@ -550,7 +569,7 @@ def main():
     parser_sample.add_argument('-b', '--start', type=int, default=0,
                                help='index of singvectors dim to start from')
     parser_sample.add_argument('-e', '--end', type=int, default=0,
-                               help='index of singvectors dim to and at')
+                               help='index of singvectors dim to end at')
     parser_sample.add_argument('-r', '--reduce', action='store_true',
                                help='if set, will apply reduce_dim in seq mode')
     parser_sample.add_argument('-l', '--limit', type=int, default=5,
@@ -606,7 +625,7 @@ def main():
     parser_cut.add_argument('-s', '--start', type=int, required=True,
                             help='index of singvectors dim to start from')
     parser_cut.add_argument('-e', '--end', type=int, required=True,
-                            help='index of singvectors dim to and at')
+                            help='index of singvectors dim to end at')
     parser_select = subparsers.add_parser(
         'select', formatter_class=argparse.RawTextHelpFormatter,
         help='save a model from a list of dims')

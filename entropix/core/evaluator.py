@@ -130,7 +130,27 @@ def is_improving(metric_value, best_metric_value, metric):
     return metric_value < best_metric_value  # for rmse we want to lower the loss
 
 
-def _get_model_sim(model, left_idx, right_idx, dataset):
+def _cosine_similarity(peer_v, query_v):
+    if len(peer_v) != len(query_v):
+        raise ValueError('Vectors must be of same length')
+    num = np.dot(peer_v, query_v)
+    den_a = np.dot(peer_v, peer_v)
+    den_b = np.dot(query_v, query_v)
+    return num / (math.sqrt(den_a) * math.sqrt(den_b))
+
+
+def _get_gensim_model_sim(model, left_words, right_words):
+    sim = []
+    for left, right in zip(left_words, right_words):
+        if left not in model.wv.vocab or right not in model.wv.vocab:
+            logger.error('Could not find one of more pair item in model '
+                         'vocabulary: {}, {}'.format(left, right))
+            continue
+        sim.append(_cosine_similarity(model.wv[left], model.wv[right]))
+    return sim
+
+
+def _get_numpy_model_sim(model, left_idx, right_idx, dataset):
     if dataset in ['men', 'simlex', 'simverb', 'ws353']:
         left_vectors = model[left_idx]
         right_vectors = model[right_idx]
@@ -155,12 +175,12 @@ def _get_rmse(model, left_idx, right_idx, sim, dataset):
         sim = [x/50 for x in sim]  # men has sim in [0, 50]
     else:
         sim = [x/10 for x in sim]  # all other datasets have sim in [0, 10]
-    model_sim = _get_model_sim(model, left_idx, right_idx, dataset)
+    model_sim = _get_numpy_model_sim(model, left_idx, right_idx, dataset)
     return _rmse(sim, model_sim)
 
 
 def _get_spr_correlation(model, left_idx, right_idx, sim, dataset):
-    model_sim = _get_model_sim(model, left_idx, right_idx, dataset)
+    model_sim = _get_numpy_model_sim(model, left_idx, right_idx, dataset)
     return _spearman(sim, model_sim)
 
 
@@ -185,12 +205,9 @@ def get_eval_metric(model, splits, dataset, metric, alpha=None):
                                   alpha)
 
 
-def load_words_and_sim(vocab_filepath, dataset, shuffle):
+def _load_left_right_sim(dataset):
     if dataset not in ['men', 'simlex', 'simverb', 'sts2012', 'ws353']:
         raise Exception('Unsupported dataset {}'.format(dataset))
-    logger.info('Loading vocabulary...')
-    idx_to_word = dutils.load_vocab_mapping(vocab_filepath)
-    word_to_idx = {v: k for k, v in idx_to_word.items()}
     if dataset == 'men':
         left, right, sim = get_men_pairs_and_sim()
     elif dataset == 'simlex':
@@ -201,11 +218,17 @@ def load_words_and_sim(vocab_filepath, dataset, shuffle):
         left, right, sim = get_STS2012_pairs_and_sim()
     elif dataset == 'ws353':
         left, right, sim = get_WS353_pairs_and_sim()
-    else:
-        raise Exception('Unsupported dataset {}'.format(dataset))
+    return left, right, sim
+
+
+def load_words_and_sim(vocab_filepath, dataset, shuffle):
+    left, right, sim = _load_left_right_sim(dataset)
     left_idx = []
     right_idx = []
     f_sim = []
+    logger.info('Loading vocabulary from {}'.format(vocab_filepath))
+    idx_to_word = dutils.load_vocab_mapping(vocab_filepath)
+    word_to_idx = {v: k for k, v in idx_to_word.items()}
     if dataset in ['men', 'simlex', 'simverb', 'ws353']:
         for l, r, s in zip(left, right, sim):
             if l in word_to_idx and r in word_to_idx:
@@ -231,21 +254,43 @@ def load_words_and_sim(vocab_filepath, dataset, shuffle):
         return left_idx, right_idx, f_sim
 
 
-def evaluate_distributional_space(model, vocab_filepath, dataset):
+def evaluate_distributional_space(model, dataset, metric, model_type,
+                                  vocab_filepath):
     """Evaluate a numpy model against the MEN/Simlex/Simverb datasets."""
-    logger.info('Checking embeddings quality against {} similarity ratings'
-                .format(dataset))
-    left_idx, right_idx, sim = load_words_and_sim(vocab_filepath, dataset,
-                                                  shuffle=False)
-    spr = evaluate(model, left_idx, right_idx, sim, dataset)
-    # logger.info('Cosine distribution stats on MEN:')
-    # logger.info('   Min = {}'.format(diag.min()))
-    # logger.info('   Max = {}'.format(diag.max()))
-    # logger.info('   Average = {}'.format(diag.mean()))
-    # logger.info('   Median = {}'.format(np.median(diag)))
-    # logger.info('   STD = {}'.format(np.std(diag)))
-    logger.info('SPEARMAN: {}'.format(spr))
-    return spr
+    logger.info('Evaluating distributional space...')
+    if model_type == 'numpy':
+        left_idx, right_idx, sim = load_words_and_sim(
+            vocab_filepath, dataset, shuffle=False)
+        splits = {
+            'left_idx': left_idx,
+            'right_idx': right_idx,
+            'sim': sim
+        }
+        eval_metric = get_eval_metric(model, splits, dataset, metric,
+                                      alpha=None)
+    elif model_type == 'gensim':
+        logger.info('Loading gensim vocabulary')
+        left, right, sim = _load_left_right_sim(dataset)
+        _sim = []
+        for x, y, z in zip(left, right, sim):
+            if x not in model.wv.vocab or y not in model.wv.vocab:
+                logger.error('Could not find one of more pair item in model '
+                             'vocabulary: {}, {}'.format(x, y))
+                continue
+            _sim.append(z)
+        model_sim = _get_gensim_model_sim(model, left, right)
+        if metric == 'rmse':
+            if dataset == 'men':
+                _sim = [x/50 for x in _sim]  # men has sim in [0, 50]
+            else:
+                _sim = [x/10 for x in _sim]  # all other datasets have sim in [0, 10]
+            # for x, y in zip(_sim, model_sim):
+            #     print(x, y)
+            eval_metric = _rmse(np.array(_sim), np.array(model_sim))
+        elif metric == 'spr':
+            eval_metric = _spearman(_sim, model_sim)
+    logger.info('{} = {}'.format(metric, eval_metric))
+    return eval_metric
 
 
 def _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size, dev_type):
