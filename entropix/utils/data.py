@@ -5,6 +5,8 @@ import logging
 import random
 import math
 from collections import defaultdict
+
+import numpy as np
 from scipy import sparse
 
 logger = logging.getLogger(__name__)
@@ -118,52 +120,67 @@ def load_idx_and_sim(left, right, sim, vocab, dataset, shuffle):
     return left_idx, right_idx, f_sim
 
 
-def _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size, dev_type):
+def _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size, dev_type,
+                            dataset, output_logpath):
     if dev_type not in ['nodev', 'regular']:
         raise Exception('Unsupported dev_type = {}'.format(dev_type))
     kfold_dict = defaultdict(defaultdict)
     len_test_set = max(math.floor(len(sim)*kfold_size), 1)
     fold = 1
     max_num_fold = math.floor(len(sim) / len_test_set)
-    while fold <= max_num_fold:
-        test_start_idx = (fold-1)*len_test_set
-        test_end_len = test_start_idx + len_test_set
-        test_end_idx = test_end_len if test_end_len <= len(sim) else len(sim)
-        test_split_idx_set = set(range(test_start_idx, test_end_idx))
-        kfold_dict[fold]['test'] = {
-            'left_idx': left_idx[test_start_idx:test_end_idx],
-            'right_idx': right_idx[test_start_idx:test_end_idx],
-            'sim': sim[test_start_idx:test_end_idx]
-        }
-        train_split_idx_set = set(range(0, len(sim))) - test_split_idx_set
-        if dev_type == 'nodev':
-            train_split_idx_list = sorted(list(train_split_idx_set))
-            kfold_dict[fold]['train'] = {
-                'left_idx': [left_idx[idx] for idx in train_split_idx_list],
-                'right_idx': [right_idx[idx] for idx in train_split_idx_list],
-                'sim': [sim[idx] for idx in train_split_idx_list]
+    with open('{}.folds.log'.format(output_logpath), 'w', encoding='utf-8') as folds_log:
+        print('{} avg sim = {}'.format(dataset, np.mean(sim)), file=folds_log)
+        print('{} std sim = {}'.format(dataset, np.std(sim)), file=folds_log)
+        while fold <= max_num_fold:
+            test_start_idx = (fold-1)*len_test_set
+            test_end_len = test_start_idx + len_test_set
+            test_end_idx = test_end_len if test_end_len <= len(sim) else len(sim)
+            test_split_idx_set = set(range(test_start_idx, test_end_idx))
+            kfold_dict[fold]['test'] = {
+                'left_idx': left_idx[test_start_idx:test_end_idx],
+                'right_idx': right_idx[test_start_idx:test_end_idx],
+                'sim': sim[test_start_idx:test_end_idx]
             }
-        elif dev_type == 'regular':
-            dev_split_idx_set = set(random.sample(train_split_idx_set,
-                                                  len(test_split_idx_set)))
-            train_split_idx_set = train_split_idx_set - dev_split_idx_set
-            dev_split_idx_list = sorted(list(dev_split_idx_set))
-            train_split_idx_list = sorted(list(train_split_idx_set))
-            kfold_dict[fold]['dev'] = {
-                'left_idx': [left_idx[idx] for idx in dev_split_idx_list],
-                'right_idx': [right_idx[idx] for idx in dev_split_idx_list],
-                'sim': [sim[idx] for idx in dev_split_idx_list]
-            }
-            kfold_dict[fold]['train'] = {
-                'left_idx': [left_idx[idx] for idx in train_split_idx_list],
-                'right_idx': [right_idx[idx] for idx in train_split_idx_list],
-                'sim': [sim[idx] for idx in train_split_idx_list]
-            }
-        fold += 1
+            train_split_idx_set = set(range(0, len(sim))) - test_split_idx_set
+            if dev_type == 'nodev':
+                train_split_idx_list = sorted(list(train_split_idx_set))
+                kfold_dict[fold]['train'] = {
+                    'left_idx': [left_idx[idx] for idx in train_split_idx_list],
+                    'right_idx': [right_idx[idx] for idx in train_split_idx_list],
+                    'sim': [sim[idx] for idx in train_split_idx_list]
+                }
+            elif dev_type == 'regular':
+                dev_split_idx_set = set(random.sample(train_split_idx_set,
+                                                      len(test_split_idx_set)))
+                train_split_idx_set = train_split_idx_set - dev_split_idx_set
+                dev_split_idx_list = sorted(list(dev_split_idx_set))
+                train_split_idx_list = sorted(list(train_split_idx_set))
+                kfold_dict[fold]['dev'] = {
+                    'left_idx': [left_idx[idx] for idx in dev_split_idx_list],
+                    'right_idx': [right_idx[idx] for idx in dev_split_idx_list],
+                    'sim': [sim[idx] for idx in dev_split_idx_list]
+                }
+                kfold_dict[fold]['train'] = {
+                    'left_idx': [left_idx[idx] for idx in train_split_idx_list],
+                    'right_idx': [right_idx[idx] for idx in train_split_idx_list],
+                    'sim': [sim[idx] for idx in train_split_idx_list]
+                }
+            print('fold {} train avg sim = {}'.format(
+                fold, np.mean(kfold_dict[fold]['train']['sim'])),
+                  file=folds_log)
+            print('fold {} train std sim = {}'.format(
+                fold, np.std(kfold_dict[fold]['train']['sim'])),
+                  file=folds_log)
+            print('fold {} test avg sim = {}'.format(
+                fold, np.mean(kfold_dict[fold]['test']['sim'])),
+                  file=folds_log)
+            print('fold {} test std sim = {}'.format(
+                fold, np.std(kfold_dict[fold]['test']['sim'])), file=folds_log)
+            fold += 1
     return kfold_dict
 
 
-def load_kfold_splits(vocab, dataset, kfold_size, dev_type):
+def load_kfold_splits(vocab, dataset, kfold_size, dev_type, output_logpath):
     """Return a kfold train/test dict.
 
     The dict has the form dict[kfold_num] = {train_dict, test_dict} where
@@ -186,4 +203,4 @@ def load_kfold_splits(vocab, dataset, kfold_size, dev_type):
             }
         }
     return _load_kfold_splits_dict(left_idx, right_idx, f_sim, kfold_size,
-                                   dev_type)
+                                   dev_type, dataset, output_logpath)

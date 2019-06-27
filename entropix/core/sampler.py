@@ -46,26 +46,26 @@ class Sampler():
         self._results = defaultdict(defaultdict)
         self._metric = metric
         self._alpha = alpha
-        self._splits = dutils.load_kfold_splits(
-            self._vocab, self._dataset, self._kfold_size,
-            self._dev_type)
         if logs_dirpath:
             self._logs_basepath = os.path.join(
                 logs_dirpath, os.path.basename(output_basepath))
         else:
             self._logs_basepath = output_basepath
         self._logs_filepath = None
+        self._splits = dutils.load_kfold_splits(
+            self._vocab, self._dataset, self._kfold_size,
+            self._dev_type, self._logs_basepath)
 
-    def debug(self, keep, splits, fold):
+    def debug(self, keep, fold):
         train_rmse = evaluator.evaluate(
-            model[:, list(keep)], splits[fold]['train'],
+            model[:, list(keep)], self._splits[fold]['train'],
             dataset=self._dataset, metric='rmse')
         logger.debug('train rmse = {} on fold {}'.format(train_rmse, fold))
         train_rmse_log_name = '{}.train.rmse.log'.format(self._logs_filepath)
         with open(train_rmse_log_name, 'a', encoding='utf-8') as train_rmse_log:
             print(train_rmse, file=train_rmse_log)
         train_spr = evaluator.evaluate(
-            model[:, list(keep)], splits[fold]['train'],
+            model[:, list(keep)], self._splits[fold]['train'],
             dataset=self._dataset, metric='spr')
         logger.debug('train spr = {} on fold {}'.format(train_spr, fold))
         train_spr_log_name = '{}.train.spr.log'.format(self._logs_filepath)
@@ -73,23 +73,23 @@ class Sampler():
             print(train_spr, file=train_spr_log)
         if self._dev_type == 'regular':
             dev_rmse = evaluator.evaluate(
-                model[:, list(keep)], splits[fold]['dev'],
+                model[:, list(keep)], self._splits[fold]['dev'],
                 dataset=self._dataset, metric='rmse')
             logger.debug('dev rmse = {} for fold {}'.format(dev_rmse, fold))
             dev_spr = evaluator.evaluate(
-                model[:, list(keep)], splits[fold]['spr'],
+                model[:, list(keep)], self._splits[fold]['spr'],
                 dataset=self._dataset, metric='rmse')
             logger.debug('dev spr = {} for fold {}'.format(dev_spr, fold))
-        if 'test' in splits[fold]:
+        if 'test' in self._splits[fold]:
             test_rmse = evaluator.evaluate(
-                model[:, list(keep)], splits[fold]['test'],
+                model[:, list(keep)], self._splits[fold]['test'],
                 dataset=self._dataset, metric='rmse')
             logger.debug('test rmse = {} for fold {}'.format(test_rmse, fold))
             test_rmse_log_name = '{}.test.rmse.log'.format(self._logs_filepath)
             with open(test_rmse_log_name, 'a', encoding='utf-8') as test_rmse_log:
                 print(test_rmse, file=test_rmse_log)
             test_spr = evaluator.evaluate(
-                model[:, list(keep)], splits[fold]['test'],
+                model[:, list(keep)], self._splits[fold]['test'],
                 dataset=self._dataset, metric='spr')
             logger.debug('test spr = {} for fold {}'.format(test_spr, fold))
             test_spr_log_name = '{}.test.spr.log'.format(self._logs_filepath)
@@ -223,22 +223,22 @@ class Sampler():
                 np.std([x['test']['rmse'] for x in self._results.values()])),
                   file=out_res)
 
-    def compute_scores(self, splits, keep, fold):
+    def compute_scores(self, keep, fold):
         self._results[fold] = {
             'train': {
                 'spr': evaluator.evaluate(
-                    model[:, list(keep)], splits[fold]['train'],
+                    model[:, list(keep)], self._splits[fold]['train'],
                     self._dataset, metric='spr'),
                 'rmse': evaluator.evaluate(
-                    model[:, list(keep)], splits[fold]['train'],
+                    model[:, list(keep)], self._splits[fold]['train'],
                     self._dataset, metric='rmse'),
             },
             'test': {
                 'spr': evaluator.evaluate(
-                    model[:, list(keep)], splits[fold]['test'],
+                    model[:, list(keep)], self._splits[fold]['test'],
                     self._dataset, metric='spr'),
                 'rmse': evaluator.evaluate(
-                    model[:, list(keep)], splits[fold]['test'],
+                    model[:, list(keep)], self._splits[fold]['test'],
                     self._dataset, metric='rmse')
             },
             'dim': len(keep)
@@ -246,15 +246,15 @@ class Sampler():
         if self._dev_type == 'regular':
             self._results[fold]['dev'] = {
                 'spr': evaluator.evaluate(
-                    model[:, list(keep)], splits[fold]['dev'],
+                    model[:, list(keep)], self._splits[fold]['dev'],
                     self._dataset, metric='spr'),
                 'rmse': evaluator.evaluate(
-                    model[:, list(keep)], splits[fold]['dev'],
+                    model[:, list(keep)], self._splits[fold]['dev'],
                     self._dataset, metric='rmse')
             }
 
 
-    def reduce_dim(self, keep, splits, best_train_eval_metric,
+    def reduce_dim(self, keep, best_train_eval_metric,
                    best_dev_eval_metric, iterx, step, save, fold):
         logger.info('Reducing dimensions while maintaining highest score '
                     'on eval metric {}. Step = {}'.format(self._metric, step))
@@ -265,7 +265,7 @@ class Sampler():
             dims = keep.difference(remove)
             dims.remove(dim_idx)
             train_eval_metric = evaluator.evaluate(
-                model[:, list(dims)], splits[fold]['train'],
+                model[:, list(dims)], self._splits[fold]['train'],
                 dataset=self._dataset, metric=self._metric, alpha=self._alpha)
             if evaluator.is_degrading(train_eval_metric,
                                       best_train_eval_metric,
@@ -273,7 +273,7 @@ class Sampler():
                 continue
             if self._dev_type == 'regular':
                 dev_eval_metric = evaluator.evaluate(
-                    model[:, list(dims)], splits[fold]['dev'],
+                    model[:, list(dims)], self._splits[fold]['dev'],
                     dataset=self._dataset, metric=self._metric,
                     alpha=self._alpha)
                 if evaluator.is_degrading(dev_eval_metric,
@@ -289,7 +289,7 @@ class Sampler():
             if self._dev_type == 'regular':
                 best_dev_eval_metric = dev_eval_metric
             if self._debug:
-                self.debug(keep, splits, fold)
+                self.debug(keep, fold)
         reduce_filepath = '{}.keep.iter-{}.reduce.step-{}.txt'.format(
             self._output_filepath, iterx, step)
         logger.info('Finished reducing dims')
@@ -302,34 +302,34 @@ class Sampler():
                       file=reduced_stream)
         if remove:
             step += 1
-            self.reduce_dim(keep, splits, best_train_eval_metric,
+            self.reduce_dim(keep, best_train_eval_metric,
                             best_dev_eval_metric, iterx, step, save, fold)
         return keep
 
-    def increase_dim(self, keep, dims, splits, iterx, fold):
+    def increase_dim(self, keep, dims, iterx, fold):
         logger.info('Increasing dimensions to maximize score on eval metric '
                     '{}. Iteration = {}'.format(self._metric, iterx))
         best_train_eval_metric = evaluator.evaluate(
-            model[:, list(keep)], splits[fold]['train'], dataset=self._dataset,
+            model[:, list(keep)], self._splits[fold]['train'], dataset=self._dataset,
             metric=self._metric, alpha=self._alpha)
         added_counter = 0
         if self._dev_type == 'nodev':
             best_dev_eval_metric = 0
         elif self._dev_type == 'regular':
             best_dev_eval_metric = evaluator.evaluate(
-                model[:, list(keep)], splits[fold]['dev'],
+                model[:, list(keep)], self._splits[fold]['dev'],
                 dataset=self._dataset, metric=self._metric, alpha=self._alpha)
         for idx, dim_idx in enumerate(dims):
             keep.add(dim_idx)
             train_eval_metric = evaluator.evaluate(
-                model[:, list(keep)], splits[fold]['train'],
+                model[:, list(keep)], self._splits[fold]['train'],
                 dataset=self._dataset, metric=self._metric, alpha=self._alpha)
             if evaluator.is_improving(train_eval_metric,
                                       best_train_eval_metric,
                                       metric=self._metric):
                 if self._dev_type == 'regular':
                     dev_eval_metric = evaluator.evaluate(
-                        model[:, list(keep)], splits[fold]['dev'],
+                        model[:, list(keep)], self._splits[fold]['dev'],
                         dataset=self._dataset, metric=self._metric,
                         alpha=self._alpha)
                     if evaluator.is_degrading(dev_eval_metric,
@@ -345,17 +345,16 @@ class Sampler():
                                 self._metric, best_train_eval_metric, fold,
                                 len(keep), idx, dim_idx))
                 if self._debug:
-                    self.debug(keep, splits, fold)
+                    self.debug(keep, fold)
                 if self._mode == 'mix' and added_counter % self._rate == 0:
-                    keep = self.reduce_dim(keep, splits,
-                                           best_train_eval_metric,
+                    keep = self.reduce_dim(keep, best_train_eval_metric,
                                            best_dev_eval_metric, iterx, step=1,
                                            save=False, fold=fold)
             else:
                 keep.remove(dim_idx)
         return keep, best_train_eval_metric, best_dev_eval_metric
 
-    def sample_seq_mix(self, splits, keep, dims, fold):
+    def sample_seq_mix(self, keep, dims, fold):
         logger.info('Shuffling mode {}'
                     .format('ON' if self._shuffle else 'OFF'))
         logger.info('Iterating over {} dims starting at {} and ending at {}'
@@ -364,25 +363,25 @@ class Sampler():
             keep_filepath = '{}.keep.iter-{}.txt'.format(
                 self._output_filepath, iterx)
             keep, best_train_eval_metric, best_dev_eval_metric = self.increase_dim(
-                keep, dims, splits, iterx, fold)
+                keep, dims, iterx, fold)
             logger.info('Finished dim increase. Saving list of keep idx to {}'
                         .format(keep_filepath))
             with open(keep_filepath, 'w', encoding='utf-8') as keep_stream:
                 print('\n'.join([str(idx) for idx in sorted(keep)]),
                       file=keep_stream)
             if self._reduce:
-                keep = self.reduce_dim(keep, splits, best_train_eval_metric,
+                keep = self.reduce_dim(keep, best_train_eval_metric,
                                        best_dev_eval_metric, iterx, step=1,
                                        save=True, fold=fold)
             return fold, keep
 
-    def sample_seq_mix_with_kfold(self, splits, keep, dims, fold):
+    def sample_seq_mix_with_kfold(self, keep, dims, fold):
         self._output_filepath = '{}.kfold{}-{}'.format(
-            self._output_basepath, fold, len(splits.keys()))
+            self._output_basepath, fold, len(self._splits.keys()))
         if self._debug:
             self._logs_filepath = '{}.kfold{}-{}'.format(
-                self._logs_basepath, fold, len(splits.keys()))
-        return self.sample_seq_mix(splits, keep, dims, fold)
+                self._logs_basepath, fold, len(self._splits.keys()))
+        return self.sample_seq_mix(keep, dims, fold)
 
     def sample_dimensions(self):
         logger.info('Sampling dimensions over a total of {} dims, optimizing '
@@ -398,12 +397,6 @@ class Sampler():
         if self._dataset not in ['men', 'simlex', 'simverb', 'sts2012']:
             raise Exception('Unsupported eval dataset: {}'
                             .format(self._dataset))
-        if self._kfolding:
-            splits = dutils.load_kfold_splits(
-                self._vocab, self._dataset, self._kfold_size,
-                self._dev_type)
-        else:
-            raise Exception('Non-kfold mode needs reimplementation')
         if self._shuffle:
             keep = set(np.random.choice(
                 list(range(model.shape[1]))[self._start:self._end],
@@ -417,22 +410,22 @@ class Sampler():
         if self._mode in ['seq', 'mix']:
             if self._kfolding:
                 # sample dimensons multi-threaded on all kfolds
-                num_folds = len(splits.keys())
+                num_folds = len(self._splits.keys())
                 logger.info('Applying kfolding on k={} folds where each test '
                             'fold is of size {} and accounts for {}% of '
                             'the data'.format(
                                 num_folds,
-                                len(splits[1]['test']['sim']),
+                                len(self._splits[1]['test']['sim']),
                                 self._kfold_size*100))
                 num_threads = num_folds if num_folds <= self._max_num_threads \
                     else self._max_num_threads
                 with multiprocessing.Pool(num_threads) as pool:
                     _sample_seq_mix = functools.partial(
-                        self.sample_seq_mix_with_kfold, splits, keep, dims)
+                        self.sample_seq_mix_with_kfold, keep, dims)
                     for fold, keep in pool.imap_unordered(_sample_seq_mix,
                                                           range(1,
                                                                 num_folds+1)):
-                        self.compute_scores(splits, keep, fold)
+                        self.compute_scores(keep, fold)
                     self.display_scores()
             else:
                 raise Exception('Non-kfold mode needs reimplementation')
