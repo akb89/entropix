@@ -9,81 +9,11 @@ from collections import defaultdict
 
 import numpy as np
 import entropix.core.evaluator as evaluator
+import entropix.utils.data as dutils
 
 __all__ = ('Sampler')
 
 logger = logging.getLogger(__name__)
-
-
-# TODO: refactor this
-def sample_limit(model, dataset, left_idx, right_idx, sim, output_filepath,
-                 limit, start, end, rewind):
-    """Increase dims up to dlim taking the best dim each time.
-
-    With rewind, go back each time new dim is added to check if can add a
-    better one.
-    """
-    max_spr = 0.
-    dims = set()
-    max_num_dim_best = 0
-    for k in range(limit):
-        best_dim_idx = -1
-        least_worst_dim = -1
-        least_worst_spr = 0.
-        for dim_idx in range(start, end):
-            if dim_idx in dims:
-                continue
-            dims.add(dim_idx)
-            spr = evaluator.evaluate(model[:, list(dims)], left_idx, right_idx,
-                                     sim, dataset)
-            if spr > max_spr:
-                max_spr = spr
-                best_dim_idx = dim_idx
-                logger.info('Current best = {} with dims = {}'
-                            .format(max_spr, sorted(dims)))
-            elif spr > least_worst_spr:
-                least_worst_spr = spr
-                least_worst_dim = dim_idx
-            dims.remove(dim_idx)
-        if best_dim_idx == -1:
-            logger.info('Could not find a better SPR correlation with {} '
-                        'dims. Added least worst dim to continue'.format(k+1))
-            dims.add(least_worst_dim)
-        else:
-            dims.add(best_dim_idx)
-            max_num_dim_best += 1
-        if rewind and len(dims) > 1:
-            for i in sorted(dims):
-                best_dim = -1
-                if i == least_worst_dim or i == best_dim_idx:
-                    continue
-                dims.remove(i)
-                for idx in range(start, end):
-                    if idx == i or idx in dims:
-                        continue
-                    dims.add(idx)
-                    spr = evaluator.evaluate(model[:, list(dims)], left_idx,
-                                             right_idx, sim, dataset)
-                    if spr > max_spr:
-                        max_spr = spr
-                        best_dim = idx
-                        logger.info('Rewinded best = {} with dims = {}'
-                                    .format(max_spr, sorted(dims)))
-                    dims.remove(idx)
-                if best_dim == -1:
-                    dims.add(i)
-                else:
-                    dims.add(best_dim)
-    logger.info('Best SPR = {} found using {} dims = {}'
-                .format(max_spr, max_num_dim_best, sorted(dims)))
-    if rewind:
-        final_filepath = '{}.final.rewind.txt'.format(output_basename)
-    else:
-        final_filepath = '{}.final.txt'.format(output_basename)
-    logger.info('Saving output to file {}'.format(final_filepath))
-    with open(final_filepath, 'w', encoding='utf-8') as final_stream:
-        print('\n'.join([str(idx) for idx in sorted(dims)]), file=final_stream)
-
 
 class Sampler():
 
@@ -95,7 +25,7 @@ class Sampler():
         global model
         logger.info('Loading numpy model...')
         model = np.load(singvectors_filepath)
-        self._vocab_filepath = vocab_filepath
+        self._vocab = dutils.load_vocab(vocab_filepath)
         self._dataset = dataset
         self._output_basepath = output_basepath
         self._output_filepath = None
@@ -116,6 +46,9 @@ class Sampler():
         self._results = defaultdict(defaultdict)
         self._metric = metric
         self._alpha = alpha
+        self._splits = dutils.load_kfold_splits(
+            self._vocab, self._dataset, self._kfold_size,
+            self._dev_type)
         if logs_dirpath:
             self._logs_basepath = os.path.join(
                 logs_dirpath, os.path.basename(output_basepath))
@@ -124,49 +57,49 @@ class Sampler():
         self._logs_filepath = None
 
     def debug(self, keep, splits, fold):
-        train_rmse = evaluator.get_eval_metric(
+        train_rmse = evaluator.evaluate(
             model[:, list(keep)], splits[fold]['train'],
             dataset=self._dataset, metric='rmse')
         logger.debug('train rmse = {} on fold {}'.format(train_rmse, fold))
         train_rmse_log_name = '{}.train.rmse.log'.format(self._logs_filepath)
-        with open(train_rmse_log_name, 'a') as train_rmse_log:
+        with open(train_rmse_log_name, 'a', encoding='utf-8') as train_rmse_log:
             print(train_rmse, file=train_rmse_log)
-        train_spr = evaluator.get_eval_metric(
+        train_spr = evaluator.evaluate(
             model[:, list(keep)], splits[fold]['train'],
             dataset=self._dataset, metric='spr')
         logger.debug('train spr = {} on fold {}'.format(train_spr, fold))
         train_spr_log_name = '{}.train.spr.log'.format(self._logs_filepath)
-        with open(train_spr_log_name, 'a') as train_spr_log:
+        with open(train_spr_log_name, 'a', encoding='utf-8') as train_spr_log:
             print(train_spr, file=train_spr_log)
         if self._dev_type == 'regular':
-            dev_rmse = evaluator.get_eval_metric(
+            dev_rmse = evaluator.evaluate(
                 model[:, list(keep)], splits[fold]['dev'],
                 dataset=self._dataset, metric='rmse')
             logger.debug('dev rmse = {} for fold {}'.format(dev_rmse, fold))
-            dev_spr = evaluator.get_eval_metric(
+            dev_spr = evaluator.evaluate(
                 model[:, list(keep)], splits[fold]['spr'],
                 dataset=self._dataset, metric='rmse')
             logger.debug('dev spr = {} for fold {}'.format(dev_spr, fold))
         if 'test' in splits[fold]:
-            test_rmse = evaluator.get_eval_metric(
+            test_rmse = evaluator.evaluate(
                 model[:, list(keep)], splits[fold]['test'],
                 dataset=self._dataset, metric='rmse')
             logger.debug('test rmse = {} for fold {}'.format(test_rmse, fold))
             test_rmse_log_name = '{}.test.rmse.log'.format(self._logs_filepath)
-            with open(test_rmse_log_name, 'a') as test_rmse_log:
+            with open(test_rmse_log_name, 'a', encoding='utf-8') as test_rmse_log:
                 print(test_rmse, file=test_rmse_log)
-            test_spr = evaluator.get_eval_metric(
+            test_spr = evaluator.evaluate(
                 model[:, list(keep)], splits[fold]['test'],
                 dataset=self._dataset, metric='spr')
             logger.debug('test spr = {} for fold {}'.format(test_spr, fold))
             test_spr_log_name = '{}.test.spr.log'.format(self._logs_filepath)
-            with open(test_spr_log_name, 'a') as test_spr_log:
+            with open(test_spr_log_name, 'a', encoding='utf-8') as test_spr_log:
                 print(test_spr, file=test_spr_log)
 
 
     def display_scores(self):
         num_folds = len(self._results.keys())
-        with open('{}.results'.format(self._logs_basepath), 'w') as out_res:
+        with open('{}.results'.format(self._logs_basepath), 'w', encoding='utf-8') as out_res:
             for fold, values, in sorted(self._results.items()):
                 logger.info('Fold {}/{} dim = {}'.format(
                     fold, num_folds, values['dim']))
@@ -293,18 +226,18 @@ class Sampler():
     def compute_scores(self, splits, keep, fold):
         self._results[fold] = {
             'train': {
-                'spr': evaluator.get_eval_metric(
+                'spr': evaluator.evaluate(
                     model[:, list(keep)], splits[fold]['train'],
                     self._dataset, metric='spr'),
-                'rmse': evaluator.get_eval_metric(
+                'rmse': evaluator.evaluate(
                     model[:, list(keep)], splits[fold]['train'],
                     self._dataset, metric='rmse'),
             },
             'test': {
-                'spr': evaluator.get_eval_metric(
+                'spr': evaluator.evaluate(
                     model[:, list(keep)], splits[fold]['test'],
                     self._dataset, metric='spr'),
-                'rmse': evaluator.get_eval_metric(
+                'rmse': evaluator.evaluate(
                     model[:, list(keep)], splits[fold]['test'],
                     self._dataset, metric='rmse')
             },
@@ -312,10 +245,10 @@ class Sampler():
         }
         if self._dev_type == 'regular':
             self._results[fold]['dev'] = {
-                'spr': evaluator.get_eval_metric(
+                'spr': evaluator.evaluate(
                     model[:, list(keep)], splits[fold]['dev'],
                     self._dataset, metric='spr'),
-                'rmse': evaluator.get_eval_metric(
+                'rmse': evaluator.evaluate(
                     model[:, list(keep)], splits[fold]['dev'],
                     self._dataset, metric='rmse')
             }
@@ -331,7 +264,7 @@ class Sampler():
         for dim_idx in dim_indexes:
             dims = keep.difference(remove)
             dims.remove(dim_idx)
-            train_eval_metric = evaluator.get_eval_metric(
+            train_eval_metric = evaluator.evaluate(
                 model[:, list(dims)], splits[fold]['train'],
                 dataset=self._dataset, metric=self._metric, alpha=self._alpha)
             if evaluator.is_degrading(train_eval_metric,
@@ -339,7 +272,7 @@ class Sampler():
                                       metric=self._metric):
                 continue
             if self._dev_type == 'regular':
-                dev_eval_metric = evaluator.get_eval_metric(
+                dev_eval_metric = evaluator.evaluate(
                     model[:, list(dims)], splits[fold]['dev'],
                     dataset=self._dataset, metric=self._metric,
                     alpha=self._alpha)
@@ -376,26 +309,26 @@ class Sampler():
     def increase_dim(self, keep, dims, splits, iterx, fold):
         logger.info('Increasing dimensions to maximize score on eval metric '
                     '{}. Iteration = {}'.format(self._metric, iterx))
-        best_train_eval_metric = evaluator.get_eval_metric(
+        best_train_eval_metric = evaluator.evaluate(
             model[:, list(keep)], splits[fold]['train'], dataset=self._dataset,
             metric=self._metric, alpha=self._alpha)
         added_counter = 0
         if self._dev_type == 'nodev':
             best_dev_eval_metric = 0
         elif self._dev_type == 'regular':
-            best_dev_eval_metric = evaluator.get_eval_metric(
+            best_dev_eval_metric = evaluator.evaluate(
                 model[:, list(keep)], splits[fold]['dev'],
                 dataset=self._dataset, metric=self._metric, alpha=self._alpha)
         for idx, dim_idx in enumerate(dims):
             keep.add(dim_idx)
-            train_eval_metric = evaluator.get_eval_metric(
+            train_eval_metric = evaluator.evaluate(
                 model[:, list(keep)], splits[fold]['train'],
                 dataset=self._dataset, metric=self._metric, alpha=self._alpha)
             if evaluator.is_improving(train_eval_metric,
                                       best_train_eval_metric,
                                       metric=self._metric):
                 if self._dev_type == 'regular':
-                    dev_eval_metric = evaluator.get_eval_metric(
+                    dev_eval_metric = evaluator.evaluate(
                         model[:, list(keep)], splits[fold]['dev'],
                         dataset=self._dataset, metric=self._metric,
                         alpha=self._alpha)
@@ -466,13 +399,11 @@ class Sampler():
             raise Exception('Unsupported eval dataset: {}'
                             .format(self._dataset))
         if self._kfolding:
-            splits = evaluator.load_kfold_splits_dict(
-                self._vocab_filepath, self._dataset, self._kfold_size,
+            splits = dutils.load_kfold_splits(
+                self._vocab, self._dataset, self._kfold_size,
                 self._dev_type)
         else:
-            vocab = evaluator.load_vocab(self._vocab_filepath)
-            left_idx, right_idx, sim = evaluator.load_words_and_sim(
-                vocab, self._dataset, shuffle=False)
+            raise Exception('Non-kfold mode needs reimplementation')
         if self._shuffle:
             keep = set(np.random.choice(
                 list(range(model.shape[1]))[self._start:self._end],
@@ -504,20 +435,6 @@ class Sampler():
                         self.compute_scores(splits, keep, fold)
                     self.display_scores()
             else:
-                self._output_filepath = '{}.kfold1-1'.format(
-                    self._output_basepath)
-                # train with a single fold and not dev/test -> use all data
-                # for dimensionality selection
-                splits = {
-                    1: {
-                        'train': {
-                            'left_idx': left_idx,
-                            'right_idx': right_idx,
-                            'sim': sim
-                        }
-                    }
-                }
-                self.sample_seq_mix(splits, keep, dims, fold=1)
-        if self._mode == 'limit':
-            sample_limit(model, dataset, left_idx, right_idx, sim,
-                         output_basename, limit, start, end, rewind)
+                raise Exception('Non-kfold mode needs reimplementation')
+        else:
+            raise Exception('limit mode needs reimplementation')

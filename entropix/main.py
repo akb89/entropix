@@ -577,7 +577,7 @@ def main():
     parser_sample.add_argument('-k', '--kfolding', action='store_true',
                                help='if set, will sample with kfold')
     parser_sample.add_argument('-x', '--kfold-size',
-                               type=restricted_kfold_size, default=.2,
+                               type=restricted_kfold_size, default=0,
                                help='determine size of kfold. Should be in '
                                     '[0, 0.5], that is, less than 50% of '
                                     'total dataset size')
