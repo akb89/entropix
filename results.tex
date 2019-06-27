@@ -1,0 +1,33 @@
+\documentclass[utf8]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usepgfplotslibrary{external}
+\pgfplotsset{compat=newest}
+\usepackage{filecontents}
+\begin{document}
+\begin{figure}[h!tpb]
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Top N\% most frequent lexical units,
+     ylabel=Percentage in targets distribution,
+     legend cell align={left},
+     legend style={at={(0.6, 0.8)}, anchor= south west}
+     ]
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.mode-seq.niter-1.start-0.end-20.timestamp-1561561243.903665.kfold1-5.test.rmse.log};
+     \addlegendentry{dev};
+     % \addplot[color=green, mark=none] table[x expr=\coordindex,y index=1] {logs/xp.009.lu.distrib.train.ft.dat};
+     % \addlegendentry{FT};
+     % \addplot[color=green, mark=none] table {logs/xp.012.lu.distrib.train.ft.ex.dat};
+     % \addlegendentry{FT+EX};
+     % \addplot[color=orange, mark=none] table {logs/xp.030.lu.distrib.train.ft.dat};
+     % \addlegendentry{XP30};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Distribution of lexical units in development (dev) set, training
+   set with fulltext (FT), with fulltext and exemplar (FT+EX) and with}
+\end{figure}
+\end{document}

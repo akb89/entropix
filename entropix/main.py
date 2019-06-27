@@ -246,12 +246,18 @@ def _sample(args):
             keep_filepath_basename = '{}.timestamp-{}'.format(
                 keep_filepath_basename, datetime.datetime.now().timestamp())
     logger.info('Output basename = {}'.format(keep_filepath_basename))
+    if args.debug:
+        logger.debug('Debug mode activated')
+    if args.logs_dirpath:
+        os.makedirs(args.logs_dirpath, exist_ok=True)
+    logger.debug('Outputing logs to {}'.format(args.logs_dirpath))
     sampler = Sampler(args.model, args.vocab, args.dataset,
                       keep_filepath_basename, args.iter, args.shuffle,
                       args.mode, args.rate, args.start, args.end,
                       args.reduce, args.limit, args.rewind,
                       args.kfolding, args.kfold_size, args.num_threads,
-                      args.dev_type, args.debug, args.metric, args.alpha)
+                      args.dev_type, args.debug, args.metric, args.alpha,
+                      args.logs_dirpath)
     sampler.sample_dimensions()
 
 
@@ -599,6 +605,8 @@ def main():
                                     'processing of kfold validation')
     parser_sample.add_argument('--debug', action='store_true',
                                help='activate debugger')
+    parser_sample.add_argument('--logs-dir', dest='logs_dirpath',
+                               help='absolute path to logs directory')
     parser_convert = subparsers.add_parser(
         'convert', formatter_class=argparse.RawTextHelpFormatter,
         help='convert embeddings to and from text and numpy')

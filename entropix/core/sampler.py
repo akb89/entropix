@@ -1,5 +1,6 @@
 """Dimensionality reduction through dimensionality selection."""
 
+import os
 import logging
 import random
 import functools
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 # TODO: refactor this
-def sample_limit(model, dataset, left_idx, right_idx, sim, output_basename,
+def sample_limit(model, dataset, left_idx, right_idx, sim, output_filepath,
                  limit, start, end, rewind):
     """Increase dims up to dlim taking the best dim each time.
 
@@ -87,16 +88,17 @@ def sample_limit(model, dataset, left_idx, right_idx, sim, output_basename,
 class Sampler():
 
     def __init__(self, singvectors_filepath, vocab_filepath, dataset,
-                 output_basename, num_iter, shuffle, mode, rate, start, end,
+                 output_basepath, num_iter, shuffle, mode, rate, start, end,
                  reduce, limit, rewind, kfolding, kfold_size, max_num_threads,
-                 dev_type, debug, metric, alpha):
+                 dev_type, debug, metric, alpha, logs_dirpath):
         #self._model = np.load(singvectors_filepath)
         global model
         logger.info('Loading numpy model...')
         model = np.load(singvectors_filepath)
         self._vocab_filepath = vocab_filepath
         self._dataset = dataset
-        self._output_basename = output_basename
+        self._output_basepath = output_basepath
+        self._output_filepath = None
         self._num_iter = num_iter
         self._shuffle = shuffle
         self._mode = mode
@@ -114,63 +116,179 @@ class Sampler():
         self._results = defaultdict(defaultdict)
         self._metric = metric
         self._alpha = alpha
+        if logs_dirpath:
+            self._logs_basepath = os.path.join(
+                logs_dirpath, os.path.basename(output_basepath))
+        else:
+            self._logs_basepath = output_basepath
+        self._logs_filepath = None
 
     def debug(self, keep, splits, fold):
-        if self._metric != 'rmse':
-            train_rmse = evaluator.get_eval_metric(
-                model[:, list(keep)], splits[fold]['train'],
-                dataset=self._dataset, metric='rmse')
-            logger.debug('train rmse = {} on fold {}'.format(train_rmse, fold))
-        if self._metric != 'spr':
-            train_spr = evaluator.get_eval_metric(
-                model[:, list(keep)], splits[fold]['train'],
-                dataset=self._dataset, metric='spr')
-            logger.debug('train spr = {} on fold {}'.format(train_spr, fold))
+        train_rmse = evaluator.get_eval_metric(
+            model[:, list(keep)], splits[fold]['train'],
+            dataset=self._dataset, metric='rmse')
+        logger.debug('train rmse = {} on fold {}'.format(train_rmse, fold))
+        train_rmse_log_name = '{}.train.rmse.log'.format(self._logs_filepath)
+        with open(train_rmse_log_name, 'a') as train_rmse_log:
+            print(train_rmse, file=train_rmse_log)
+        train_spr = evaluator.get_eval_metric(
+            model[:, list(keep)], splits[fold]['train'],
+            dataset=self._dataset, metric='spr')
+        logger.debug('train spr = {} on fold {}'.format(train_spr, fold))
+        train_spr_log_name = '{}.train.spr.log'.format(self._logs_filepath)
+        with open(train_spr_log_name, 'a') as train_spr_log:
+            print(train_spr, file=train_spr_log)
         if self._dev_type == 'regular':
             dev_rmse = evaluator.get_eval_metric(
                 model[:, list(keep)], splits[fold]['dev'],
                 dataset=self._dataset, metric='rmse')
+            logger.debug('dev rmse = {} for fold {}'.format(dev_rmse, fold))
             dev_spr = evaluator.get_eval_metric(
                 model[:, list(keep)], splits[fold]['spr'],
                 dataset=self._dataset, metric='rmse')
-            logger.debug('dev rmse = {} for fold {}'.format(dev_rmse, fold))
             logger.debug('dev spr = {} for fold {}'.format(dev_spr, fold))
         if 'test' in splits[fold]:
             test_rmse = evaluator.get_eval_metric(
                 model[:, list(keep)], splits[fold]['test'],
                 dataset=self._dataset, metric='rmse')
+            logger.debug('test rmse = {} for fold {}'.format(test_rmse, fold))
+            test_rmse_log_name = '{}.test.rmse.log'.format(self._logs_filepath)
+            with open(test_rmse_log_name, 'a') as test_rmse_log:
+                print(test_rmse, file=test_rmse_log)
             test_spr = evaluator.get_eval_metric(
                 model[:, list(keep)], splits[fold]['test'],
                 dataset=self._dataset, metric='spr')
-            logger.debug('test rmse = {} for fold {}'.format(test_rmse, fold))
             logger.debug('test spr = {} for fold {}'.format(test_spr, fold))
+            test_spr_log_name = '{}.test.spr.log'.format(self._logs_filepath)
+            with open(test_spr_log_name, 'a') as test_spr_log:
+                print(test_spr, file=test_spr_log)
 
 
     def display_scores(self):
         num_folds = len(self._results.keys())
-        avg_train_spr = avg_train_rmse = avg_test_spr = avg_test_rmse = 0
-        avg_dim = 0
-        for fold, values, in sorted(self._results.items()):
-            avg_train_spr += values['train']['spr']
-            avg_train_rmse += values['train']['rmse']
-            avg_test_spr += values['test']['spr']
-            avg_test_rmse += values['test']['rmse']
-            avg_dim += values['dim']
-            logger.info('Fold {}#{} dim = {}'.format(
-                fold, num_folds, values['dim']))
-            logger.info('Fold {}#{} train spr = {}'.format(
-                fold, num_folds, values['train']['spr']))
-            logger.info('Fold {}#{} train rmse = {}'.format(
-                fold, num_folds, values['train']['rmse']))
-            logger.info('Fold {}#{} test spr = {}'.format(
-                fold, num_folds, values['test']['spr']))
-            logger.info('Fold {}#{} test rmse = {}'.format(
-                fold, num_folds, values['test']['rmse']))
-        logger.info('Average dim = {}'.format(round(avg_dim/num_folds)))
-        logger.info('Average train spr = {}'.format(avg_train_spr/num_folds))
-        logger.info('Average train rmse = {}'.format(avg_train_rmse/num_folds))
-        logger.info('Average test spr = {}'.format(avg_test_spr/num_folds))
-        logger.info('Average test rmse = {}'.format(avg_test_rmse/num_folds))
+        with open('{}.results'.format(self._logs_basepath), 'w') as out_res:
+            for fold, values, in sorted(self._results.items()):
+                logger.info('Fold {}/{} dim = {}'.format(
+                    fold, num_folds, values['dim']))
+                print('Fold {}/{} dim = {}'.format(
+                    fold, num_folds, values['dim']), file=out_res)
+                logger.info('Fold {}/{} train spr = {}'.format(
+                    fold, num_folds, values['train']['spr']))
+                print('Fold {}/{} train spr = {}'.format(
+                    fold, num_folds, values['train']['spr']), file=out_res)
+                logger.info('Fold {}/{} train rmse = {}'.format(
+                    fold, num_folds, values['train']['rmse']))
+                print('Fold {}/{} train rmse = {}'.format(
+                    fold, num_folds, values['train']['rmse']), file=out_res)
+                logger.info('Fold {}/{} test spr = {}'.format(
+                    fold, num_folds, values['test']['spr']))
+                print('Fold {}/{} test spr = {}'.format(
+                    fold, num_folds, values['test']['spr']), file=out_res)
+                logger.info('Fold {}/{} test rmse = {}'.format(
+                    fold, num_folds, values['test']['rmse']))
+                print('Fold {}/{} test rmse = {}'.format(
+                    fold, num_folds, values['test']['rmse']), file=out_res)
+            logger.info('--------------------')
+            logger.info('Min dim = {}'.format(
+                np.min([x['dim'] for x in self._results.values()])))
+            print('Min dim = {}'.format(
+                np.min([x['dim'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Max dim = {}'.format(
+                np.max([x['dim'] for x in self._results.values()])))
+            print('Max dim = {}'.format(
+                np.max([x['dim'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Average dim = {}'.format(
+                np.mean([x['dim'] for x in self._results.values()])))
+            print('Average dim = {}'.format(
+                np.mean([x['dim'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Std dim = {}'.format(
+                np.std([x['dim'] for x in self._results.values()])))
+            print('Std dim = {}'.format(
+                np.std([x['dim'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Min train spr = {}'.format(
+                np.min([x['train']['spr'] for x in self._results.values()])))
+            print('Min train spr = {}'.format(
+                np.min([x['train']['spr'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Max train spr = {}'.format(
+                np.max([x['train']['spr'] for x in self._results.values()])))
+            print('Max train spr = {}'.format(
+                np.max([x['train']['spr'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Average train spr = {}'.format(
+                np.mean([x['train']['spr'] for x in self._results.values()])))
+            print('Average train spr = {}'.format(
+                np.mean([x['train']['spr'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Std train spr = {}'.format(
+                np.std([x['train']['spr'] for x in self._results.values()])))
+            print('Std train spr = {}'.format(
+                np.std([x['train']['spr'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Min train rmse = {}'.format(
+                np.min([x['train']['rmse'] for x in self._results.values()])))
+            print('Min train rmse = {}'.format(
+                np.min([x['train']['rmse'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Max train rmse = {}'.format(
+                np.max([x['train']['rmse'] for x in self._results.values()])))
+            print('Max train rmse = {}'.format(
+                np.max([x['train']['rmse'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Average train rmse = {}'.format(
+                np.mean([x['train']['rmse'] for x in self._results.values()])))
+            print('Average train rmse = {}'.format(
+                np.mean([x['train']['rmse'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Std train rmse = {}'.format(
+                np.std([x['train']['rmse'] for x in self._results.values()])))
+            print('Std train rmse = {}'.format(
+                np.std([x['train']['rmse'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Min test spr = {}'.format(
+                np.min([x['test']['spr'] for x in self._results.values()])))
+            print('Min test spr = {}'.format(
+                np.min([x['test']['spr'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Max test spr = {}'.format(
+                np.max([x['test']['spr'] for x in self._results.values()])))
+            print('Max test spr = {}'.format(
+                np.max([x['test']['spr'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Average test spr = {}'.format(
+                np.mean([x['test']['spr'] for x in self._results.values()])))
+            print('Average test spr = {}'.format(
+                np.mean([x['test']['spr'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Std test spr = {}'.format(
+                np.std([x['test']['spr'] for x in self._results.values()])))
+            print('Std test spr = {}'.format(
+                np.std([x['test']['spr'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Min test rmse = {}'.format(
+                np.min([x['test']['rmse'] for x in self._results.values()])))
+            print('Min test rmse = {}'.format(
+                np.min([x['test']['rmse'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Max test rmse = {}'.format(
+                np.max([x['test']['rmse'] for x in self._results.values()])))
+            print('Max test rmse = {}'.format(
+                np.max([x['test']['rmse'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Average test rmse = {}'.format(
+                np.mean([x['test']['rmse'] for x in self._results.values()])))
+            print('Average test rmse = {}'.format(
+                np.mean([x['test']['rmse'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Std test rmse = {}'.format(
+                np.std([x['test']['rmse'] for x in self._results.values()])))
+            print('Std test rmse = {}'.format(
+                np.std([x['test']['rmse'] for x in self._results.values()])),
+                  file=out_res)
 
     def compute_scores(self, splits, keep, fold):
         self._results[fold] = {
@@ -240,7 +358,7 @@ class Sampler():
             if self._debug:
                 self.debug(keep, splits, fold)
         reduce_filepath = '{}.keep.iter-{}.reduce.step-{}.txt'.format(
-            self._output_basename, iterx, step)
+            self._output_filepath, iterx, step)
         logger.info('Finished reducing dims')
         keep = keep.difference(remove)
         if save:
@@ -311,7 +429,7 @@ class Sampler():
                     .format(model.shape[1], self._start, self._end))
         for iterx in range(1, self._num_iter+1):
             keep_filepath = '{}.keep.iter-{}.txt'.format(
-                self._output_basename, iterx)
+                self._output_filepath, iterx)
             keep, best_train_eval_metric, best_dev_eval_metric = self.increase_dim(
                 keep, dims, splits, iterx, fold)
             logger.info('Finished dim increase. Saving list of keep idx to {}'
@@ -326,8 +444,11 @@ class Sampler():
             return fold, keep
 
     def sample_seq_mix_with_kfold(self, splits, keep, dims, fold):
-        self._output_basename = '{}.kfold-{}#{}'.format(
-            self._output_basename, fold, len(splits.keys()))
+        self._output_filepath = '{}.kfold{}-{}'.format(
+            self._output_basepath, fold, len(splits.keys()))
+        if self._debug:
+            self._logs_filepath = '{}.kfold{}-{}'.format(
+                self._logs_basepath, fold, len(splits.keys()))
         return self.sample_seq_mix(splits, keep, dims, fold)
 
     def sample_dimensions(self):
@@ -349,8 +470,9 @@ class Sampler():
                 self._vocab_filepath, self._dataset, self._kfold_size,
                 self._dev_type)
         else:
+            vocab = evaluator.load_vocab(self._vocab_filepath)
             left_idx, right_idx, sim = evaluator.load_words_and_sim(
-                self._vocab_filepath, self._dataset, shuffle=False)
+                vocab, self._dataset, shuffle=False)
         if self._shuffle:
             keep = set(np.random.choice(
                 list(range(model.shape[1]))[self._start:self._end],
@@ -382,8 +504,8 @@ class Sampler():
                         self.compute_scores(splits, keep, fold)
                     self.display_scores()
             else:
-                self._output_basename = '{}.kfold-1#1'.format(
-                    self._output_basename)
+                self._output_filepath = '{}.kfold1-1'.format(
+                    self._output_basepath)
                 # train with a single fold and not dev/test -> use all data
                 # for dimensionality selection
                 splits = {
