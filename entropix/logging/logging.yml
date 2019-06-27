@@ -10,7 +10,7 @@ handlers:
     formatter: simple
 loggers:
   entropix.core:
-    level: INFO
+    level: DEBUG
     handlers: [console]
   entropix.main:
     level: INFO

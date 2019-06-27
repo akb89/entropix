@@ -41,6 +41,7 @@ def test_get_reduced_rank():
     assert reducer._get_reduced_rank(S, 80) == 2
     assert reducer._get_reduced_rank(S, 50) == 3
 
+
 def test_reduce():
     S = np.array([1, 2, 3, 4])
     U = np.array([[4, 3, 2, 1], [8, 7, 6, 5]])
