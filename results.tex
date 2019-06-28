@@ -1,33 +1,361 @@
 \documentclass[utf8]{article}
 \usepackage[utf8]{inputenc}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[autolanguage]{numprint}
+\usepackage{booktabs}
+\usepackage{siunitx}
 \usepackage{pgfplots}
 \usepackage{pgfplotstable}
 \usepgfplotslibrary{external}
 \pgfplotsset{compat=newest}
-\usepackage{filecontents}
+
+
+\title{Dim Paper Status Report}
+\author{Alexandre Kabbach}
+\date{}
+
 \begin{document}
+\maketitle
+
+All experiments are reported for $win=2$, $mincount=300$, $k=\numprint{10000}$ and
+$k\_fold\_size=.20$ (20\%).
+
+\section{Optimizing on SPR ($\alpha=1$)}
+
 \begin{figure}[h!tpb]
+  \begin{minipage}[t]{.48\linewidth}
   \centering
   \resizebox{\linewidth}{!}{
    \begin{tikzpicture}
     \begin{axis}[
-     xlabel=Top N\% most frequent lexical units,
-     ylabel=Percentage in targets distribution,
+     xlabel=Number of steps,
+     ylabel=SPR,
      legend cell align={left},
      legend style={at={(0.6, 0.8)}, anchor= south west}
      ]
-     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.mode-seq.niter-1.start-0.end-20.timestamp-1561561243.903665.kfold1-5.test.rmse.log};
-     \addlegendentry{dev};
-     % \addplot[color=green, mark=none] table[x expr=\coordindex,y index=1] {logs/xp.009.lu.distrib.train.ft.dat};
-     % \addlegendentry{FT};
-     % \addplot[color=green, mark=none] table {logs/xp.012.lu.distrib.train.ft.ex.dat};
-     % \addlegendentry{FT+EX};
-     % \addplot[color=orange, mark=none] table {logs/xp.030.lu.distrib.train.ft.dat};
-     % \addlegendentry{XP30};
     \end{axis}
    \end{tikzpicture}
   }
-  \caption{Distribution of lexical units in development (dev) set, training
-   set with fulltext (FT), with fulltext and exemplar (FT+EX) and with}
+  \caption{Evolution of SPR on MEN when optimizing on SPR}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.6, 0.8)}, anchor= south west}
+     ]
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on MEN when optimizing on SPR}
+   \end{minipage}
 \end{figure}
+
+\begin{figure}[h!tpb]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.6, 0.8)}, anchor= south west}
+     ]
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMLEX when optimizing on SPR}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.6, 0.8)}, anchor= south west}
+     ]
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMLEX when optimizing on SPR}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[h!tpb]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.6, 0.8)}, anchor= south west}
+     ]
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on SPR}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.6, 0.8)}, anchor= south west}
+     ]
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on SPR}
+   \end{minipage}
+\end{figure}
+
+\section{Optimizing on RMSE ($\alpha=0$)}
+
+\begin{table}[htbp]
+    \centering
+    \resizebox{\linewidth}{!}{
+    \begin{tabular}{l *{20}{S[table-auto-round, table-format=1.2]}}
+     \toprule
+        & \multicolumn{4}{c}{train-spr} & \multicolumn{4}{c}{test-spr} & \multicolumn{4}{c}{train-rmse} & \multicolumn{4}{c}{test-rmse} & \multicolumn{4}{c}{dim} \\
+        Dataset & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} \\
+        \midrule
+        MEN & 0.7162017866792295 & 0.730070780635521 & 0.722096050559855 & 0.004553903235035702 & 0.6783243843839868 & 0.7234115314294127 & 0.7017919206593252 & 0.018265430817874757 & 0.239528997032236 & 0.24649416637422056 & 0.243465248601738 & 0.002867408331770694 & 0.24917264217511173 & 0.266525597323098 & 0.2554405858530299 & 0.007086912386872623 & 47 & 55 & 50.2 & 2.9933259094191533 \\
+        SIMLEX & 0.48734322459995166 & 0.5603482675285804 & 0.517002048929226 & 0.026953593674012996 & 0.28788169527477325 & 0.4886105020125436 & 0.4034340783724904 & 0.08183808532341484 & 0.2671045546232988 & 0.27852198446560256 & 0.2732779591187868 & 0.004601443505570589 & 0.28674498685514266 & 0.32425546346502815 & 0.3025342233416619 & 0.01423841134268926 & 214 & 263 & 238 & 16.745148551147583 \\
+        SIMVERB & 0.29117235946131925 & 0.3315012771748588 & 0.30416766779816384 & 0.015349228143451132 & 0.19082216666582966 & 0.30542436689807695 & 0.2494240373791034 & 0.04535678970011988 & 0.30273805848678514 & 0.3091735013553289 & 0.30571605192791296 & 0.0023622935476786517 & 0.30722628346642267 & 0.3264518623829941 & 0.3182782472918948 & 0.007351386110639899 & 103 & 119 & 112.4 & 5.71314274283428  \\
+     \bottomrule
+    \end{tabular}
+    }
+    \caption{}
+\end{table}
+
+\begin{figure}[h!tpb]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.2)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561648389.837659.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561648389.837659.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     % \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561648389.837659.kfold5-5.train.spr.log};
+     % \addlegendentry{fold5-train};
+     % \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561648389.837659.kfold5-5.test.spr.log};
+     % \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on MEN when optimizing on RMSE}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.5)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561648389.837659.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561648389.837659.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     % \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561648389.837659.kfold5-5.train.rmse.log};
+     % \addlegendentry{fold5-train};
+     % \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561648389.837659.kfold5-5.test.rmse.log};
+     % \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on MEN when optimizing on RMSE}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[h!tpb]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.2)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simlex.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649189.539322.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simlex.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649189.539322.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     % \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simlex.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649189.539322.kfold5-5.train.spr.log};
+     % \addlegendentry{fold5-train};
+     % \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simlex.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649189.539322.kfold5-5.test.spr.log};
+     % \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMLEX when optimizing on RMSE}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.5)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simlex.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649189.539322.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simlex.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649189.539322.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     % \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simlex.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649189.539322.kfold5-5.train.rmse.log};
+     % \addlegendentry{fold5-train};
+     % \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simlex.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649189.539322.kfold5-5.test.rmse.log};
+     % \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMLEX when optimizing on RMSE}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[h!tpb]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.2)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649230.700773.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649230.700773.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     % \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649230.700773.kfold5-5.train.spr.log};
+     % \addlegendentry{fold5-train};
+     % \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649230.700773.kfold5-5.test.spr.log};
+     % \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on RMSE}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.5)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649230.700773.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649230.700773.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     % \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649230.700773.kfold5-5.train.rmse.log};
+     % \addlegendentry{fold5-train};
+     % \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.mode-seq.niter-1.start-0.end-0.timestamp-1561649230.700773.kfold5-5.test.rmse.log};
+     % \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on RMSE}
+   \end{minipage}
+\end{figure}
+
+\section{SPR-RMSE joint optimization ($\alpha=0.5$)}
+
+\section{Reduce}
+\subsection{$\alpha=1$}
+\subsection{$\alpha=0$}
+\subsection{$\alpha=0.5$}
+
+
+\section{Shuffling}
+\subsection{$\alpha=1$}
+\subsection{$\alpha=0$}
+\subsection{$\alpha=0.5$}
+
+\begin{figure}[h!tpb]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.6, 0.8)}, anchor= south west}
+     ]
+     % \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.mode-seq.niter-1.start-0.end-20.timestamp-1561561243.903665.kfold1-5.test.rmse.log};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.6, 0.8)}, anchor= south west}
+     ]
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{}
+   \end{minipage}
+\end{figure}
+
+\begin{table}[htbp]
+    \centering
+    \resizebox{\linewidth}{!}{
+    \begin{tabular}{l *{20}{S[table-auto-round, table-format=1.2]}}
+     \toprule
+        & \multicolumn{4}{c}{train-spr} & \multicolumn{4}{c}{test-spr} & \multicolumn{4}{c}{train-rmse} & \multicolumn{4}{c}{test-rmse} & \multicolumn{4}{c}{dim} \\
+        Dataset & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} \\
+        \midrule
+        MEN &  \\
+        SIMLEX &  \\
+        SIMVERB &  \\
+     \bottomrule
+    \end{tabular}
+    }
+    \caption{}
+\end{table}
+
 \end{document}
