@@ -13,6 +13,7 @@ __all__ = ('count_words')
 def count_words(corpus_filepath, min_count, output_dirpath=None):
     """Count words in a corpus."""
     output_filepath = futils.get_counts_filepath(corpus_filepath,
+                                                 min_count,
                                                  output_dirpath)
     _counts = defaultdict(int)
     logger.info('Counting words in {}'.format(corpus_filepath))
