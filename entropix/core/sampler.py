@@ -122,26 +122,6 @@ class Sampler():
                 print('Fold {}/{} test rmse = {}'.format(
                     fold, num_folds, values['test']['rmse']), file=out_res)
             logger.info('--------------------')
-            logger.info('Min dim = {}'.format(
-                np.min([x['dim'] for x in self._results.values()])))
-            print('Min dim = {}'.format(
-                np.min([x['dim'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Max dim = {}'.format(
-                np.max([x['dim'] for x in self._results.values()])))
-            print('Max dim = {}'.format(
-                np.max([x['dim'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Average dim = {}'.format(
-                np.mean([x['dim'] for x in self._results.values()])))
-            print('Average dim = {}'.format(
-                np.mean([x['dim'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Std dim = {}'.format(
-                np.std([x['dim'] for x in self._results.values()])))
-            print('Std dim = {}'.format(
-                np.std([x['dim'] for x in self._results.values()])),
-                  file=out_res)
             logger.info('Min train spr = {}'.format(
                 np.min([x['train']['spr'] for x in self._results.values()])))
             print('Min train spr = {}'.format(
@@ -161,26 +141,6 @@ class Sampler():
                 np.std([x['train']['spr'] for x in self._results.values()])))
             print('Std train spr = {}'.format(
                 np.std([x['train']['spr'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Min train rmse = {}'.format(
-                np.min([x['train']['rmse'] for x in self._results.values()])))
-            print('Min train rmse = {}'.format(
-                np.min([x['train']['rmse'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Max train rmse = {}'.format(
-                np.max([x['train']['rmse'] for x in self._results.values()])))
-            print('Max train rmse = {}'.format(
-                np.max([x['train']['rmse'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Average train rmse = {}'.format(
-                np.mean([x['train']['rmse'] for x in self._results.values()])))
-            print('Average train rmse = {}'.format(
-                np.mean([x['train']['rmse'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Std train rmse = {}'.format(
-                np.std([x['train']['rmse'] for x in self._results.values()])))
-            print('Std train rmse = {}'.format(
-                np.std([x['train']['rmse'] for x in self._results.values()])),
                   file=out_res)
             logger.info('Min test spr = {}'.format(
                 np.min([x['test']['spr'] for x in self._results.values()])))
@@ -202,6 +162,26 @@ class Sampler():
             print('Std test spr = {}'.format(
                 np.std([x['test']['spr'] for x in self._results.values()])),
                   file=out_res)
+            logger.info('Min train rmse = {}'.format(
+                np.min([x['train']['rmse'] for x in self._results.values()])))
+            print('Min train rmse = {}'.format(
+                np.min([x['train']['rmse'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Max train rmse = {}'.format(
+                np.max([x['train']['rmse'] for x in self._results.values()])))
+            print('Max train rmse = {}'.format(
+                np.max([x['train']['rmse'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Average train rmse = {}'.format(
+                np.mean([x['train']['rmse'] for x in self._results.values()])))
+            print('Average train rmse = {}'.format(
+                np.mean([x['train']['rmse'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Std train rmse = {}'.format(
+                np.std([x['train']['rmse'] for x in self._results.values()])))
+            print('Std train rmse = {}'.format(
+                np.std([x['train']['rmse'] for x in self._results.values()])),
+                  file=out_res)
             logger.info('Min test rmse = {}'.format(
                 np.min([x['test']['rmse'] for x in self._results.values()])))
             print('Min test rmse = {}'.format(
@@ -221,6 +201,26 @@ class Sampler():
                 np.std([x['test']['rmse'] for x in self._results.values()])))
             print('Std test rmse = {}'.format(
                 np.std([x['test']['rmse'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Min dim = {}'.format(
+                np.min([x['dim'] for x in self._results.values()])))
+            print('Min dim = {}'.format(
+                np.min([x['dim'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Max dim = {}'.format(
+                np.max([x['dim'] for x in self._results.values()])))
+            print('Max dim = {}'.format(
+                np.max([x['dim'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Average dim = {}'.format(
+                np.mean([x['dim'] for x in self._results.values()])))
+            print('Average dim = {}'.format(
+                np.mean([x['dim'] for x in self._results.values()])),
+                  file=out_res)
+            logger.info('Std dim = {}'.format(
+                np.std([x['dim'] for x in self._results.values()])))
+            print('Std dim = {}'.format(
+                np.std([x['dim'] for x in self._results.values()])),
                   file=out_res)
 
     def compute_scores(self, keep, fold):
