@@ -11,8 +11,8 @@ from scipy import sparse
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('load_model_from_npz', 'load_vocab', 'load_idx_and_sim',
-           'load_word_pairs_and_sim')
+__all__ = ('load_model_from_npz', 'load_vocab', 'load_kfold_splits',
+           'load_dataset')
 
 DATASETS = {
     'men': os.path.join(os.path.dirname(os.path.dirname(__file__)),
@@ -27,7 +27,7 @@ DATASETS = {
                           'resources', 'WS353.combined.txt')
 }
 
-def load_word_pairs_and_sim(dataset):
+def _load_word_pairs_and_sim(dataset):
     """Load word pairs and similarity from a given dataset."""
     if dataset not in ['men', 'simlex', 'simverb', 'sts2012', 'ws353']:
         raise Exception('Unsupported dataset {}'.format(dataset))
@@ -87,7 +87,7 @@ def load_dimensions_list(dimensions_filepath):
     return ret
 
 
-def load_idx_and_sim(left, right, sim, vocab, dataset, shuffle):
+def _load_idx_and_sim(left, right, sim, vocab, dataset, shuffle):
     """Load discretized features and similarities for a given dataset.
 
     Will retain only words that are in the vocabulary.
@@ -118,6 +118,14 @@ def load_idx_and_sim(left, right, sim, vocab, dataset, shuffle):
         unz_shuffle = list(zip(*shuffled_zip))
         return list(unz_shuffle[0]), list(unz_shuffle[1]), list(unz_shuffle[2])
     return left_idx, right_idx, f_sim
+
+
+def load_dataset(dataset, vocab):
+    """Load left and right words + sim from dataset with vocab."""
+    if dataset not in ['men', 'simlex', 'simverb', 'ws353']:
+        raise Exception('Unsupported dataset: {}'.format(dataset))
+    left, right, sim = _load_word_pairs_and_sim(dataset)
+    return _load_idx_and_sim(left, right, sim, vocab, dataset, shuffle=False)
 
 
 def _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size, dev_type,
@@ -189,8 +197,8 @@ def load_kfold_splits(vocab, dataset, kfold_size, dev_type, output_logpath):
     of the total dataset dedicated to testing.
     kfold_size should be a float > 0 and <= 0.5
     """
-    left, right, sim = load_word_pairs_and_sim(dataset)
-    left_idx, right_idx, f_sim = load_idx_and_sim(
+    left, right, sim = _load_word_pairs_and_sim(dataset)
+    left_idx, right_idx, f_sim = _load_idx_and_sim(
         left, right, sim, vocab, dataset, shuffle=True)
     if kfold_size == 0:
         return {
