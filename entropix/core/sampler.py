@@ -20,7 +20,7 @@ class Sampler():
     def __init__(self, singvectors_filepath, vocab_filepath, dataset,
                  output_basepath, num_iter, shuffle, mode, rate, start, end,
                  reduce, limit, rewind, kfolding, kfold_size, max_num_threads,
-                 dev_type, debug, metric, alpha, logs_dirpath):
+                 dev_type, debug, metric, alpha, logs_dirpath, distance):
         #self._model = np.load(singvectors_filepath)
         global model
         logger.info('Loading numpy model...')
@@ -46,6 +46,7 @@ class Sampler():
         self._results = defaultdict(defaultdict)
         self._metric = metric
         self._alpha = alpha
+        self._distance = distance
         if logs_dirpath:
             self._logs_basepath = os.path.join(
                 logs_dirpath, os.path.basename(output_basepath))
@@ -59,14 +60,14 @@ class Sampler():
     def debug(self, keep, fold):
         train_rmse = evaluator.evaluate(
             model[:, list(keep)], self._splits[fold]['train'],
-            dataset=self._dataset, metric='rmse')
+            dataset=self._dataset, metric='rmse', distance=self._distance)
         logger.debug('train rmse = {} on fold {}'.format(train_rmse, fold))
         train_rmse_log_name = '{}.train.rmse.log'.format(self._logs_filepath)
         with open(train_rmse_log_name, 'a', encoding='utf-8') as train_rmse_log:
             print(train_rmse, file=train_rmse_log)
         train_spr = evaluator.evaluate(
             model[:, list(keep)], self._splits[fold]['train'],
-            dataset=self._dataset, metric='spr')
+            dataset=self._dataset, metric='spr', distance=self._distance)
         logger.debug('train spr = {} on fold {}'.format(train_spr, fold))
         train_spr_log_name = '{}.train.spr.log'.format(self._logs_filepath)
         with open(train_spr_log_name, 'a', encoding='utf-8') as train_spr_log:
@@ -74,23 +75,23 @@ class Sampler():
         if self._dev_type == 'regular':
             dev_rmse = evaluator.evaluate(
                 model[:, list(keep)], self._splits[fold]['dev'],
-                dataset=self._dataset, metric='rmse')
+                dataset=self._dataset, metric='rmse', distance=self._distance)
             logger.debug('dev rmse = {} for fold {}'.format(dev_rmse, fold))
             dev_spr = evaluator.evaluate(
                 model[:, list(keep)], self._splits[fold]['spr'],
-                dataset=self._dataset, metric='rmse')
+                dataset=self._dataset, metric='rmse', distance=self._distance)
             logger.debug('dev spr = {} for fold {}'.format(dev_spr, fold))
         if 'test' in self._splits[fold]:
             test_rmse = evaluator.evaluate(
                 model[:, list(keep)], self._splits[fold]['test'],
-                dataset=self._dataset, metric='rmse')
+                dataset=self._dataset, metric='rmse', distance=self._distance)
             logger.debug('test rmse = {} for fold {}'.format(test_rmse, fold))
             test_rmse_log_name = '{}.test.rmse.log'.format(self._logs_filepath)
             with open(test_rmse_log_name, 'a', encoding='utf-8') as test_rmse_log:
                 print(test_rmse, file=test_rmse_log)
             test_spr = evaluator.evaluate(
                 model[:, list(keep)], self._splits[fold]['test'],
-                dataset=self._dataset, metric='spr')
+                dataset=self._dataset, metric='spr', distance=self._distance)
             logger.debug('test spr = {} for fold {}'.format(test_spr, fold))
             test_spr_log_name = '{}.test.spr.log'.format(self._logs_filepath)
             with open(test_spr_log_name, 'a', encoding='utf-8') as test_spr_log:
@@ -228,18 +229,18 @@ class Sampler():
             'train': {
                 'spr': evaluator.evaluate(
                     model[:, list(keep)], self._splits[fold]['train'],
-                    self._dataset, metric='spr'),
+                    self._dataset, metric='spr', distance=self._distance),
                 'rmse': evaluator.evaluate(
                     model[:, list(keep)], self._splits[fold]['train'],
-                    self._dataset, metric='rmse'),
+                    self._dataset, metric='rmse', distance=self._distance),
             },
             'test': {
                 'spr': evaluator.evaluate(
                     model[:, list(keep)], self._splits[fold]['test'],
-                    self._dataset, metric='spr'),
+                    self._dataset, metric='spr', distance=self._distance),
                 'rmse': evaluator.evaluate(
                     model[:, list(keep)], self._splits[fold]['test'],
-                    self._dataset, metric='rmse')
+                    self._dataset, metric='rmse', distance=self._distance)
             },
             'dim': len(keep)
         }
@@ -247,10 +248,10 @@ class Sampler():
             self._results[fold]['dev'] = {
                 'spr': evaluator.evaluate(
                     model[:, list(keep)], self._splits[fold]['dev'],
-                    self._dataset, metric='spr'),
+                    self._dataset, metric='spr', distance=self._distance),
                 'rmse': evaluator.evaluate(
                     model[:, list(keep)], self._splits[fold]['dev'],
-                    self._dataset, metric='rmse')
+                    self._dataset, metric='rmse', distance=self._distance)
             }
 
 
@@ -266,7 +267,8 @@ class Sampler():
             dims.remove(dim_idx)
             train_eval_metric = evaluator.evaluate(
                 model[:, list(dims)], self._splits[fold]['train'],
-                dataset=self._dataset, metric=self._metric, alpha=self._alpha)
+                dataset=self._dataset, metric=self._metric, alpha=self._alpha,
+                distance=self._distance)
             if evaluator.is_degrading(train_eval_metric,
                                       best_train_eval_metric,
                                       metric=self._metric):
@@ -275,7 +277,7 @@ class Sampler():
                 dev_eval_metric = evaluator.evaluate(
                     model[:, list(dims)], self._splits[fold]['dev'],
                     dataset=self._dataset, metric=self._metric,
-                    alpha=self._alpha)
+                    alpha=self._alpha, distance=self._distance)
                 if evaluator.is_degrading(dev_eval_metric,
                                           best_dev_eval_metric,
                                           metric=self._metric):
@@ -311,19 +313,21 @@ class Sampler():
                     '{}. Iteration = {}'.format(self._metric, iterx))
         best_train_eval_metric = evaluator.evaluate(
             model[:, list(keep)], self._splits[fold]['train'], dataset=self._dataset,
-            metric=self._metric, alpha=self._alpha)
+            metric=self._metric, alpha=self._alpha, distance=self._distance)
         added_counter = 0
         if self._dev_type == 'nodev':
             best_dev_eval_metric = 0
         elif self._dev_type == 'regular':
             best_dev_eval_metric = evaluator.evaluate(
                 model[:, list(keep)], self._splits[fold]['dev'],
-                dataset=self._dataset, metric=self._metric, alpha=self._alpha)
+                dataset=self._dataset, metric=self._metric, alpha=self._alpha,
+                distance=self._distance)
         for idx, dim_idx in enumerate(dims):
             keep.add(dim_idx)
             train_eval_metric = evaluator.evaluate(
                 model[:, list(keep)], self._splits[fold]['train'],
-                dataset=self._dataset, metric=self._metric, alpha=self._alpha)
+                dataset=self._dataset, metric=self._metric, alpha=self._alpha,
+                distance=self._distance)
             if evaluator.is_improving(train_eval_metric,
                                       best_train_eval_metric,
                                       metric=self._metric):
@@ -331,7 +335,7 @@ class Sampler():
                     dev_eval_metric = evaluator.evaluate(
                         model[:, list(keep)], self._splits[fold]['dev'],
                         dataset=self._dataset, metric=self._metric,
-                        alpha=self._alpha)
+                        alpha=self._alpha, distance=self._distance)
                     if evaluator.is_degrading(dev_eval_metric,
                                               best_dev_eval_metric,
                                               metric=self._metric):
