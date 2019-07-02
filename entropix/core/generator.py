@@ -62,5 +62,6 @@ def generate_distributional_model(output_dirpath, corpus_filepath,
     sparse.save_npz(output_filepath_matrix, M)
     with open(output_filepath_map, 'w', encoding='utf-8') as output_stream:
         for word, idx in word_to_idx_dic.items():
-            print('{}\t{}'.format(idx, word), file=output_stream)
+            print('{}\t{}\t{}'.format(idx, word, word_to_count_dic[word]),
+                  file=output_stream)
     return M, word_to_idx_dic

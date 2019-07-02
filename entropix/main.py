@@ -56,7 +56,8 @@ def _evaluate(args):
             model = model[:, dims]
         logger.info('model size = {}'.format(model.shape))
     evaluator.evaluate_distributional_space(model, args.dataset,
-                                            args.metric, args.type, args.vocab)
+                                            args.metric, args.type, args.vocab,
+                                            args.distance)
 
 
 def _compute_dimenergy(args):
@@ -257,7 +258,7 @@ def _sample(args):
                       args.reduce, args.limit, args.rewind,
                       args.kfolding, args.kfold_size, args.num_threads,
                       args.dev_type, args.debug, args.metric, args.alpha,
-                      args.logs_dirpath)
+                      args.logs_dirpath, args.distance)
     sampler.sample_dimensions()
 
 def restricted_kfold_size(x):
@@ -467,11 +468,14 @@ def main():
     parser_evaluate.add_argument('-e', '--end', type=int,
                                  help='index of singvectors dim to end at')
     parser_evaluate.add_argument('-t', '--type', choices=['numpy', 'gensim'],
-                                 default='numpy',
+                                 required=True,
                                  help='model type')
     parser_evaluate.add_argument('-c', '--metric', required=True,
                                  choices=['spr', 'rmse'],
                                  help='which eval metric to use')
+    parser_evaluate.add_argument('-a', '--distance', required=True,
+                                 choices=['cosine', 'euclidean'],
+                                 help='which distance to use for similarity')
     parser_generate = subparsers.add_parser(
         'generate', formatter_class=argparse.RawTextHelpFormatter,
         help='generate raw frequency count based model')
@@ -599,6 +603,9 @@ def main():
                                help='activate debugger')
     parser_sample.add_argument('--logs-dir', dest='logs_dirpath',
                                help='absolute path to logs directory')
+    parser_sample.add_argument('--distance', required=True,
+                               choices=['cosine', 'euclidean'],
+                               help='which distance to use for similarity')
     parser_convert = subparsers.add_parser(
         'convert', formatter_class=argparse.RawTextHelpFormatter,
         help='convert embeddings to and from text and numpy')

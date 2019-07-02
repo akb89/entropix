@@ -40,7 +40,31 @@ def get_gensim_model_sim(model, left_words, right_words):
     return sim
 
 
-def get_numpy_model_sim(model, left_idx, right_idx, dataset):
+def similarity(left_vectors, right_vectors, distance):
+    """Compute euclidian or cosine similarity between two matrices."""
+    if distance not in ['cosine', 'euclidean']:
+        raise Exception('Unsupported distance: {}'.format(distance))
+    if left_vectors.shape != right_vectors.shape:
+        raise Exception(
+            'Cannot compute similarity from numpy arrays of different shape: '
+            '{} != {}'.format(left_vectors.shape(), right_vectors.shape()))
+    dim = left_vectors.shape[1]
+    if distance == 'cosine':
+        sim = 1 - spatial.distance.cdist(left_vectors, right_vectors, 'cosine')
+        return np.diagonal(sim)
+    else:
+        # normalized_left = left_vectors / np.apply_along_axis(np.linalg.norm, 1, left_vectors).reshape(-1, 1)
+        # normalized_right = right_vectors / np.apply_along_axis(np.linalg.norm, 1, right_vectors).reshape(-1, 1)
+        # sim = 1 - spatial.distance.cdist(normalized_left,
+        #                                  normalized_right,
+        #                                  'euclidean') / dim
+        euc = spatial.distance.cdist(left_vectors, right_vectors, 'euclidean')
+        diag = np.diag(euc)
+        sim = (diag - np.min(diag)) / (np.max(diag) - np.min(diag))
+        return sim
+
+
+def get_numpy_model_sim(model, left_idx, right_idx, dataset, distance):
     if dataset in ['men', 'simlex', 'simverb', 'ws353']:
         left_vectors = model[left_idx]
         right_vectors = model[right_idx]
@@ -53,11 +77,10 @@ def get_numpy_model_sim(model, left_idx, right_idx, dataset):
         for idx_list in right_idx:
             vec = np.sum([model[el] for el in idx_list], axis=0)
             right_vectors.append(vec)
-    cos = 1 - spatial.distance.cdist(left_vectors, right_vectors, 'cosine')
-    return np.diagonal(cos)
+    return similarity(left_vectors, right_vectors, distance)
 
 
-def get_rmse(model, left_idx, right_idx, sim, dataset):
+def get_rmse(model, left_idx, right_idx, sim, dataset, distance):
     if dataset not in ['men', 'simlex', 'simverb', 'ws353']:
         raise Exception('Unsupported dataset: {}'.format(dataset))
     # Normalize sim values between [0, 1]
@@ -65,19 +88,19 @@ def get_rmse(model, left_idx, right_idx, sim, dataset):
         sim = [x/50 for x in sim]  # men has sim in [0, 50]
     else:
         sim = [x/10 for x in sim]  # all other datasets have sim in [0, 10]
-    model_sim = get_numpy_model_sim(model, left_idx, right_idx, dataset)
+    model_sim = get_numpy_model_sim(model, left_idx, right_idx, dataset, distance)
     return root_mean_square_error(sim, model_sim)
 
 
-def get_spr_correlation(model, left_idx, right_idx, sim, dataset):
-    model_sim = get_numpy_model_sim(model, left_idx, right_idx, dataset)
+def get_spr_correlation(model, left_idx, right_idx, sim, dataset, distance):
+    model_sim = get_numpy_model_sim(model, left_idx, right_idx, dataset, distance)
     return spearman(sim, model_sim)
 
 
-def get_combined_spr_rmse(model, left_idx, right_idx, sim, dataset, alpha):
+def get_combined_spr_rmse(model, left_idx, right_idx, sim, dataset, alpha, distance):
     if alpha < 0 or alpha > 1:
         raise Exception('Invalid alpha value = {}. Should be in [0, 1]'
                         .format(alpha))
-    spr = get_spr_correlation(model, left_idx, right_idx, sim, dataset)
-    rmse = get_rmse(model, left_idx, right_idx, sim, dataset)
+    spr = get_spr_correlation(model, left_idx, right_idx, sim, dataset, distance)
+    rmse = get_rmse(model, left_idx, right_idx, sim, dataset, distance)
     return alpha * spr - (1 - alpha) * rmse
