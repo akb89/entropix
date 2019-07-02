@@ -8,7 +8,7 @@ import scipy.spatial as spatial
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('get_combined_spr_rmse', 'get_spr_correlation', 'get_rmse')
+__all__ = ('get_combined_spr_rmse', 'get_spr_correlation', 'get_rmse', 'similarity')
 
 # Note: this is scipy's spearman, without tie adjustment
 def spearman(x, y):
