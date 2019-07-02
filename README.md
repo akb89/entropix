@@ -29,5 +29,6 @@ To apply SVD on a PPMI-weighed model, with k=10000, run:
 ```
 entropix svd \
   --model /abs/path/to/ppmi/npz/model \
-  --dim 10000
+  --dim 10000 \
+  --which LM  # largest singular values 
 ```

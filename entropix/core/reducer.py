@@ -6,6 +6,8 @@ from scipy import sparse
 from scipy.sparse.linalg import svds
 from scipy.linalg import svd
 
+import entropix.utils.data as dutils
+
 logger = logging.getLogger(__name__)
 
 __all__ = ('apply_svd', 'reduce')
@@ -82,11 +84,27 @@ def reduce(singvalues, singvectors, top, alpha, energy, output_filepath=None):
 
 
 def _apply_sparse_svd(M, dim, sing_values_filepath,
-                      sing_vectors_filepath, compact=False):
+                      sing_vectors_filepath, which, dataset=None,
+                      vocab_filepath=None, compact=False):
     if dim == 0 or dim >= M.shape[1]:
         dim = M.shape[1] - 1
-    logger.info('Applying SVD on sparse matrix with k = {}'.format(dim))
-    U, S, _ = svds(M, k=dim, which='LM', return_singular_vectors='u')
+    if dataset:
+        logger.info('Applying SVD on sparse matrix limited to word pairs '
+                    'found in {}, with which = {} and k = {}'
+                    .format(dataset, which, dim))
+    else:
+        logger.info('Applying SVD on sparse matrix with which = {} and k = {}'
+                    .format(which, dim))
+    if dataset and not vocab_filepath:
+        raise Exception('--vocab parameter is required when specifying '
+                        'on entropix svd --dataset')
+    if dataset:
+        vocab = dutils.load_vocab(vocab_filepath)
+        left_idx, right_idx, _ = dutils.load_dataset(dataset, vocab)
+        dataset_idx = left_idx + right_idx
+        M = M[dataset_idx]
+    logger.info('Applying SVD...')
+    U, S, _ = svds(M, k=dim, which=which, return_singular_vectors='u')
     if compact:
         if np.all(S):
             raise Exception('Compact option set to true but all singular '
@@ -97,8 +115,12 @@ def _apply_sparse_svd(M, dim, sing_values_filepath,
         first_zero_rank = np.nonzero(S)[0].size
         S = S[:first_zero_rank]
         U = U[:, :first_zero_rank]
-    logger.info('Energy of original matrix = {}'.format(M.power(2).sum()))
-    logger.info('Energy of reduced matrix = {}'.format(np.sum(S ** 2)))
+
+    orig_nrj = M.power(2).sum()
+    reduced_nrj = np.sum(S ** 2)
+    logger.info('Energy of original matrix = {}'.format(orig_nrj))
+    logger.info('Energy of reduced matrix = {}'.format(reduced_nrj))
+    logger.info('Energy ration = {}%'.format((reduced_nrj/orig_nrj)*100))
     logger.info('Saving singular values to {}'.format(sing_values_filepath))
     S = S[::-1]  # put singular values in decreasing order of values
     np.save(sing_values_filepath, S)
@@ -120,7 +142,8 @@ def _apply_exact_svd(model_filepath, sing_values_filepath,
 
 
 def apply_svd(model_filepath, dim, sing_values_filepath,
-              sing_vectors_filepath, compact=False):
+              sing_vectors_filepath, which, dataset=None,
+              vocab_filepath=None, compact=False):
     """Apply SVD to matrix and save singular values and vectors to files.
 
     If compact is true, only non-null singular values will be kept.
@@ -128,7 +151,7 @@ def apply_svd(model_filepath, dim, sing_values_filepath,
     if model_filepath.endswith('.npz'):
         M = sparse.load_npz(model_filepath)
         _apply_sparse_svd(M, dim, sing_values_filepath, sing_vectors_filepath,
-                          compact)
+                          which, dataset, vocab_filepath, compact)
     elif model_filepath.endswith('.npy'):
         DM = np.load(model_filepath)
         M = sparse.csr_matrix(DM)

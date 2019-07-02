@@ -30,20 +30,28 @@ def _get_model_basename(model_filepath):
     return model_filepath.split('.npz')[0]
 
 
-def get_singvectors_filepath(sparse_model_filepath, dim, compact):
+def get_singvectors_filepath(sparse_model_filepath, dim, which, dataset,
+                             compact):
     """Return absolute path to singular vectors .npz file."""
     model_basename = _get_model_basename(sparse_model_filepath)
     if compact:
         return '{}.singvectors.npy'.format(model_basename)
-    return '{}.k{}.singvectors.npy'.format(model_basename, dim)
+    if dataset:
+        return '{}.k{}.{}.{}.singvectors.npy'.format(model_basename, dim,
+                                                     which, dataset)
+    return '{}.k{}.{}.singvectors.npy'.format(model_basename, dim, which)
 
 
-def get_singvalues_filepath(sparse_model_filepath, dim, compact):
+def get_singvalues_filepath(sparse_model_filepath, dim, which, dataset,
+                            compact):
     """Return absolute path to singular values .npz file."""
     model_basename = _get_model_basename(sparse_model_filepath)
     if compact:
         '{}.singvalues.npy'.format(model_basename)
-    return '{}.k{}.singvalues.npy'.format(model_basename, dim)
+    if dataset:
+        return '{}.k{}.{}.{}.singvalues.npy'.format(model_basename, dim,
+                                                    which, dataset)
+    return '{}.k{}.{}.singvalues.npy'.format(model_basename, dim, which)
 
 
 def get_input_filepaths(dirpath):

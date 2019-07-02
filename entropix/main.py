@@ -142,12 +142,18 @@ def _svd(args):
     logger.info('Applying SVD to model {}'.format(args.model))
     sing_values_filepath = futils.get_singvalues_filepath(args.model,
                                                           args.dim,
+                                                          args.which,
+                                                          args.dataset,
                                                           args.compact)
     sing_vectors_filepaths = futils.get_singvectors_filepath(args.model,
                                                              args.dim,
+                                                             args.which,
+                                                             args.dataset,
                                                              args.compact)
     reducer.apply_svd(args.model, args.dim, sing_values_filepath,
-                      sing_vectors_filepaths, compact=args.compact)
+                      sing_vectors_filepaths, args.which,
+                      dataset=args.dataset, vocab_filepath=args.vocab,
+                      compact=args.compact)
 
 
 def _compute_pairwise_cosines(args):
@@ -524,6 +530,17 @@ def main():
                                  'space to reduce via svd')
     parser_svd.add_argument('-k', '--dim', default=0, type=int,
                             help='number of dimensions in final model')
+    parser_svd.add_argument('-w', '--which', choices=['LM', 'SM'],
+                            help='Which k singular values to find:'
+                                 'LM : largest singular values'
+                                 'SM : smallest singular values')
+    parser_svd.add_argument('-d', '--dataset',
+                            choices=['men', 'simlex', 'simverb'],
+                            help='if specified, will perform SVD only on '
+                                 'the words contained in the dataset')
+    parser_svd.add_argument('-v', '--vocab',
+                            help='absolute path to vocabulary. '
+                                 'To be specified only with --dataset')
     parser_svd.add_argument('-c', '--compact', action='store_true',
                             help='whether or not to store a compact matrix')
     parser_weigh = subparsers.add_parser(

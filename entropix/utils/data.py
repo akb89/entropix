@@ -121,7 +121,7 @@ def _load_idx_and_sim(left, right, sim, vocab, dataset, shuffle):
 
 
 def load_dataset(dataset, vocab):
-    """Load left and right words + sim from dataset with vocab."""
+    """Load left and right word idx + sim from dataset with vocab."""
     if dataset not in ['men', 'simlex', 'simverb', 'ws353']:
         raise Exception('Unsupported dataset: {}'.format(dataset))
     left, right, sim = _load_word_pairs_and_sim(dataset)
