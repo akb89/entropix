@@ -148,23 +148,25 @@ def apply_svd(model_filepath, dim, sing_values_filepath,
 
     If compact is true, only non-null singular values will be kept.
     """
-    if model_filepath.endswith('.npz'):
-        M = sparse.load_npz(model_filepath)
-    elif model_filepath.endswith('.npy'):
-        DM = np.load(model_filepath)
-        M = sparse.csr_matrix(DM)
-    else:
-        raise Exception('Unsupported model extension. Should be .npz or .npy: '
-                        '{}'.format(model_filepath))
-    _apply_sparse_svd(M, dim, sing_values_filepath, sing_vectors_filepath,
-                      which, dataset, vocab_filepath, compact)
+    # if model_filepath.endswith('.npz'):
+    #     M = sparse.load_npz(model_filepath)
+    # elif model_filepath.endswith('.npy'):
+    #     DM = np.load(model_filepath)
+    #     M = sparse.csr_matrix(DM)
+    # else:
+    #     raise Exception('Unsupported model extension. Should be .npz or .npy: '
+    #                     '{}'.format(model_filepath))
+    _apply_sparse_svd(model_filepath, dim, sing_values_filepath,
+                      sing_vectors_filepath, which, dataset, vocab_filepath,
+                      compact)
 
 
 def apply_fast_ica(model_filepath, dataset, vocab_filepath):
     model = _get_reduced_sparse_matrix(model_filepath, dataset, vocab_filepath)
     X = model.todense()
     logger.info('Running FastICA on {} components...'.format(model.shape[0]))
-    transformer = FastICA(n_components=model.shape[0])
+    # X = sparse.load_npz(model_filepath)
+    transformer = FastICA(n_components=model.shape[0], max_iter=1000, whiten=True)
     X_transformed = transformer.fit_transform(X)
     ica_model_filepath = futils.get_ica_model_filepath(model_filepath, dataset)
     logger.info('Saving output ICA model to {}'.format(ica_model_filepath))

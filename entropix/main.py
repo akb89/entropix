@@ -621,7 +621,7 @@ def main():
                                help='which distance to use for similarity')
     parser_sample.add_argument('--singvalues',
                                help='absolute path to singular values')
-    parser_sample.add_argument('--singalpha',
+    parser_sample.add_argument('--singalpha', type=float,
                                default=0,
                                help='power alpha for singular values')
     parser_convert = subparsers.add_parser(

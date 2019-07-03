@@ -25,14 +25,13 @@ def _load_model(model_filepath, singvalues_filepath=None,
         logger.info('Loading numpy model...')
         singvectors = np.load(model_filepath)
         if sing_alpha == 0:
-            return model
+            return singvectors
         singvalues = np.load(singvalues_filepath)
         logger.info('Loading model with singalpha = {} from singvalues {}'
                     .format(sing_alpha, singvalues_filepath))
         if sing_alpha == 1:
-            return np.matmul(model, np.diag(singvalues))
-        diag = np.diag(np.power(singvalues, 2))
-        return np.matmul(model, diag)
+            return np.matmul(singvectors, np.diag(singvalues))
+        return np.matmul(singvectors, np.diag(np.power(singvalues, sing_alpha)))
     logger.info('Loading scikit-learn ICA model...')
     return joblib.load(model_filepath)
 
