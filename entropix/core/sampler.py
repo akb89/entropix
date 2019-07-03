@@ -7,6 +7,7 @@ import functools
 import multiprocessing
 from collections import defaultdict
 
+import joblib
 import numpy as np
 import entropix.core.evaluator as evaluator
 import entropix.utils.data as dutils
@@ -15,18 +16,26 @@ __all__ = ('Sampler')
 
 logger = logging.getLogger(__name__)
 
-def _load_model(singvectors_filepath, singvalues_filepath, sing_alpha):
-    logger.info('Loading numpy model...')
-    model = np.load(singvectors_filepath)
-    if sing_alpha == 0:
-        return model
-    singvalues = np.load(singvalues_filepath)
-    logger.info('Loading model with singalpha = {} from singvalues {}'
-                .format(sing_alpha, singvalues_filepath))
-    if sing_alpha == 1:
-        return np.matmul(model, np.diag(singvalues))
-    diag = np.diag(np.power(singvalues, 2))
-    return np.matmul(model, diag)
+
+def _load_model(model_filepath, singvalues_filepath=None,
+                sing_alpha=None):
+    if not model_filepath.endswith('.npy') and not model_filepath.endswith('.ica'):
+        raise Exception('Unsupported model extension {}'.format(model_filepath))
+    if model_filepath.endswith('.npy'):
+        logger.info('Loading numpy model...')
+        singvectors = np.load(model_filepath)
+        if sing_alpha == 0:
+            return model
+        singvalues = np.load(singvalues_filepath)
+        logger.info('Loading model with singalpha = {} from singvalues {}'
+                    .format(sing_alpha, singvalues_filepath))
+        if sing_alpha == 1:
+            return np.matmul(model, np.diag(singvalues))
+        diag = np.diag(np.power(singvalues, 2))
+        return np.matmul(model, diag)
+    logger.info('Loading scikit-learn ICA model...')
+    return joblib.load(model_filepath)
+
 
 class Sampler():
 

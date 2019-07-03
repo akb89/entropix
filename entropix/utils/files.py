@@ -10,7 +10,12 @@ __all__ = ('get_input_filepaths', 'get_vocab_filepath', 'get_cosines_filepath',
            'get_sparsematrix_filepath', 'get_singvalues_filepath',
            'get_singvectors_filepath', 'get_singvalues_filepaths',
            'get_models_filepaths', 'get_fit_vocab_filepath',
-           'get_dense_mtx_filepath')
+           'get_dense_mtx_filepath', 'get_ica_model_filepath')
+
+
+def get_ica_model_filepath(sparse_model_filepath, dataset):
+    model_basename = _get_model_basename(sparse_model_filepath)
+    return '{}.{}.ica'.format(model_basename, dataset)
 
 
 def get_dense_mtx_filepath(mtx_filepath, dataset):

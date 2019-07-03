@@ -1,17 +1,19 @@
 """SVD."""
 
 import logging
+import joblib
 import numpy as np
 from scipy import sparse
 from scipy.sparse.linalg import svds
 from scipy.linalg import svd
+from sklearn.decomposition import FastICA
 
 import entropix.utils.data as dutils
 import entropix.utils.files as futils
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('apply_svd', 'reduce')
+__all__ = ('apply_svd', 'reduce', 'apply_fast_ica')
 
 
 def _get_reduced_rank(singvalues, energy_ratio):
@@ -47,7 +49,14 @@ def _get_top_sorted_singv(singvalues, singvectors, top):
     return sdsingvalues[:len(sdsingvalues)-top], sdsingvectors[:, :len(singvalues)-top]
 
 
-def _get_reduced_sparse_matrix(sparse_matrix, dataset, vocab_filepath):
+def _get_reduced_sparse_matrix(sparse_matrix_filepath, dataset,
+                               vocab_filepath):
+    logger.info('Reducing sparse matrix to {} dataset from {}'
+                .format(dataset, sparse_matrix_filepath))
+    logger.info('Loading sparse matrix from {}'.format(sparse_matrix_filepath))
+    sparse_matrix = sparse.load_npz(sparse_matrix_filepath)
+    logger.info('Reducing sparse matrix of shape = {}'
+                .format(sparse_matrix.shape))
     vocab = dutils.load_vocab(vocab_filepath)
     left_idx, right_idx, _ = dutils.load_dataset(dataset, vocab)
     dataset_idx = list(set(left_idx) | set(right_idx))
@@ -63,10 +72,8 @@ def reduce(sparse_matrix_filepath, dataset, vocab_filepath):
     Converting the sparse reduced matrix to a dense one after removing all
     zero columns.
     """
-    logger.info('Loading sparse matrix from {}'.format(sparse_matrix_filepath))
-    M = sparse.load_npz(sparse_matrix_filepath)
-    logger.info('Reducing sparse matrix of shape = {}'.format(M.shape))
-    reduced_sparse = _get_reduced_sparse_matrix(M, dataset, vocab_filepath)
+    reduced_sparse = _get_reduced_sparse_matrix(
+        sparse_matrix_filepath, dataset, vocab_filepath)
     logger.info('Reduced to sparse matrix of shape = {}'.format(reduced_sparse.shape))
     nonzero_columns = sorted(set(reduced_sparse.nonzero()[1]))
     reduced_sparse_nonzero = reduced_sparse[:, nonzero_columns]
@@ -151,3 +158,14 @@ def apply_svd(model_filepath, dim, sing_values_filepath,
                         '{}'.format(model_filepath))
     _apply_sparse_svd(M, dim, sing_values_filepath, sing_vectors_filepath,
                       which, dataset, vocab_filepath, compact)
+
+
+def apply_fast_ica(model_filepath, dataset, vocab_filepath):
+    model = _get_reduced_sparse_matrix(model_filepath, dataset, vocab_filepath)
+    X = model.todense()
+    logger.info('Running FastICA on {} components...'.format(model.shape[0]))
+    transformer = FastICA(n_components=model.shape[0])
+    X_transformed = transformer.fit_transform(X)
+    ica_model_filepath = futils.get_ica_model_filepath(model_filepath, dataset)
+    logger.info('Saving output ICA model to {}'.format(ica_model_filepath))
+    joblib.dump(X_transformed, ica_model_filepath, compress=0)

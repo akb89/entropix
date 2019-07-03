@@ -11,6 +11,7 @@ import logging.config
 
 import numpy as np
 import scipy
+import joblib
 from scipy import sparse
 from gensim.models import Word2Vec
 
@@ -54,6 +55,9 @@ def _evaluate(args):
             logger.info('Sampling model with {} dimensions = {}'
                         .format(len(dims), dims))
             model = model[:, dims]
+        logger.info('model size = {}'.format(model.shape))
+    elif args.type == 'ica':
+        model = joblib.load(args.model)
         logger.info('model size = {}'.format(model.shape))
     evaluator.evaluate_distributional_space(model, args.dataset,
                                             args.metric, args.type, args.vocab,
@@ -355,6 +359,10 @@ def _select(args):
     np.save(args.dims, model)
 
 
+def _ica(args):
+    reducer.apply_fast_ica(args.model, args.dataset, args.vocab)
+
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -458,7 +466,8 @@ def main():
                                  help='index of singvectors dim to start from')
     parser_evaluate.add_argument('-e', '--end', type=int,
                                  help='index of singvectors dim to end at')
-    parser_evaluate.add_argument('-t', '--type', choices=['numpy', 'gensim'],
+    parser_evaluate.add_argument('-t', '--type', choices=['numpy', 'gensim',
+                                                          'ica'],
                                  required=True,
                                  help='model type')
     parser_evaluate.add_argument('-c', '--metric', required=True,
@@ -516,6 +525,20 @@ def main():
                                  'To be specified only with --dataset')
     parser_svd.add_argument('-c', '--compact', action='store_true',
                             help='whether or not to store a compact matrix')
+    parser_ica = subparsers.add_parser(
+        'ica', formatter_class=argparse.RawTextHelpFormatter,
+        help='apply FastICA to input sparse matrix')
+    parser_ica.set_defaults(func=_ica)
+    parser_ica.add_argument('-m', '--model', required=True,
+                            help='absolute path to .npz matrix '
+                                 'corresponding to the ppmi '
+                                 'count matrix to apply ica to')
+    parser_ica.add_argument('-d', '--dataset', required=True,
+                            choices=['men', 'simlex', 'simverb'],
+                            help='perform ICA only on '
+                                 'the words contained in the dataset')
+    parser_ica.add_argument('-v', '--vocab', required=True,
+                            help='absolute path to vocabulary')
     parser_weigh = subparsers.add_parser(
         'weigh', formatter_class=argparse.RawTextHelpFormatter,
         help='weigh sparse matrix according to weighing function')
