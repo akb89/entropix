@@ -15,16 +15,29 @@ __all__ = ('Sampler')
 
 logger = logging.getLogger(__name__)
 
+def _load_model(singvectors_filepath, singvalues_filepath, sing_alpha):
+    logger.info('Loading numpy model...')
+    model = np.load(singvectors_filepath)
+    if sing_alpha == 0:
+        return model
+    singvalues = np.load(singvalues_filepath)
+    logger.info('Loading model with singalpha = {} from singvalues {}'
+                .format(sing_alpha, singvalues_filepath))
+    if sing_alpha == 1:
+        return np.matmul(model, np.diag(singvalues))
+    diag = np.diag(np.power(singvalues, 2))
+    return np.matmul(model, diag)
+
 class Sampler():
 
     def __init__(self, singvectors_filepath, vocab_filepath, dataset,
                  output_basepath, num_iter, shuffle, mode, rate, start, end,
                  reduce, limit, rewind, kfolding, kfold_size, max_num_threads,
-                 dev_type, debug, metric, alpha, logs_dirpath, distance):
+                 dev_type, debug, metric, alpha, logs_dirpath, distance,
+                 singvalues_filepath, sing_alpha):
         #self._model = np.load(singvectors_filepath)
         global model
-        logger.info('Loading numpy model...')
-        model = np.load(singvectors_filepath)
+        model = _load_model(singvectors_filepath, singvalues_filepath, sing_alpha)
         self._vocab = dutils.load_vocab(vocab_filepath)
         self._dataset = dataset
         self._output_basepath = output_basepath
@@ -306,7 +319,7 @@ class Sampler():
             step += 1
             self.reduce_dim(keep, best_train_eval_metric,
                             best_dev_eval_metric, iterx, step, save, fold)
-        return keep
+        return keep, best_train_eval_metric, best_dev_eval_metric
 
     def increase_dim(self, keep, dims, iterx, fold):
         logger.info('Increasing dimensions to maximize score on eval metric '
@@ -351,9 +364,10 @@ class Sampler():
                 if self._debug:
                     self.debug(keep, fold)
                 if self._mode == 'mix' and added_counter % self._rate == 0:
-                    keep = self.reduce_dim(keep, best_train_eval_metric,
-                                           best_dev_eval_metric, iterx, step=1,
-                                           save=False, fold=fold)
+                    keep, best_train_eval_metric, best_dev_eval_metric =\
+                     self.reduce_dim(keep, best_train_eval_metric,
+                                     best_dev_eval_metric, iterx, step=1,
+                                     save=False, fold=fold)
             else:
                 keep.remove(dim_idx)
         return keep, best_train_eval_metric, best_dev_eval_metric
@@ -374,10 +388,11 @@ class Sampler():
                 print('\n'.join([str(idx) for idx in sorted(keep)]),
                       file=keep_stream)
             if self._reduce:
-                keep = self.reduce_dim(keep, best_train_eval_metric,
-                                       best_dev_eval_metric, iterx, step=1,
-                                       save=True, fold=fold)
-            return fold, keep
+                keep, best_train_eval_metric, best_dev_eval_metric =\
+                 self.reduce_dim(keep, best_train_eval_metric,
+                                 best_dev_eval_metric, iterx, step=1,
+                                 save=True, fold=fold)
+        return fold, keep
 
     def sample_seq_mix_with_kfold(self, keep, dims, fold):
         self._output_filepath = '{}.kfold{}-{}'.format(

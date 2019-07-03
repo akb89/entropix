@@ -12,7 +12,7 @@ from scipy import sparse
 logger = logging.getLogger(__name__)
 
 __all__ = ('load_model_from_npz', 'load_vocab', 'load_kfold_splits',
-           'load_dataset')
+           'load_dataset', 'save_fit_vocab')
 
 DATASETS = {
     'men': os.path.join(os.path.dirname(os.path.dirname(__file__)),
@@ -26,6 +26,15 @@ DATASETS = {
     'ws353': os.path.join(os.path.dirname(os.path.dirname(__file__)),
                           'resources', 'WS353.combined.txt')
 }
+
+
+def save_fit_vocab(dataset_idx, vocab, fit_vocab_filepath):
+    logger.info('Saving fit vocab to {}'.format(fit_vocab_filepath))
+    reverse_vocab = {value: key for key, value in vocab.items()}
+    with open(fit_vocab_filepath, 'w', encoding='utf-8') as fit:
+        for idx, item_idx in enumerate(dataset_idx):
+            print('{}\t{}'.format(idx, reverse_vocab[item_idx]), file=fit)
+
 
 def _load_word_pairs_and_sim(dataset):
     """Load word pairs and similarity from a given dataset."""

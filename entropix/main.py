@@ -198,23 +198,7 @@ def _compute_singvectors_distribution(args):
 
 
 def _reduce(args):
-    singvalues = np.load(args.singvalues)
-    singvectors = np.load(args.singvectors)
-    if args.save:
-        outname = '{}.reduced.top{}.energy{}.alpha{}.npy'.format(
-            os.path.basename(args.singvectors).split('.singvectors.npy')[0],
-            args.top, args.energy, args.alpha)
-        if args.outputdir:
-            os.makedirs(args.outputdir, exist_ok=True)
-            output_filepath = os.path.join(args.outputdir, outname)
-        else:
-            output_filepath = os.path.join(os.path.dirname(args.singvectors),
-                                           outname)
-        reducer.reduce(singvalues, singvectors, args.top, args.alpha,
-                       args.energy, output_filepath)
-    else:
-        reducer.reduce(singvalues, singvectors, args.top, args.alpha,
-                       args.energy)
+    reducer.reduce(args.sparse, args.dataset, args.vocab)
 
 
 def _sample(args):
@@ -264,7 +248,8 @@ def _sample(args):
                       args.reduce, args.limit, args.rewind,
                       args.kfolding, args.kfold_size, args.num_threads,
                       args.dev_type, args.debug, args.metric, args.alpha,
-                      args.logs_dirpath, args.distance)
+                      args.logs_dirpath, args.distance, args.singvalues,
+                      args.singalpha)
     sampler.sample_dimensions()
 
 def restricted_kfold_size(x):
@@ -498,28 +483,16 @@ def main():
                                  help='size of context window')
     parser_reduce = subparsers.add_parser(
         'reduce', formatter_class=argparse.RawTextHelpFormatter,
-        help='reduce a space by composing singular vectors and values')
+        help='reduce a sparse matrix to a dense one containing the rows of '
+             'the dataset only')
     parser_reduce.set_defaults(func=_reduce)
-    parser_reduce.add_argument('-u', '--singvectors', required=True,
-                               help='absolute path to .singvectors.npy')
-    parser_reduce.add_argument('-s', '--singvalues', required=True,
-                               help='absolute path to .singvalues.npy')
-    parser_reduce.add_argument('-t', '--top', default=0, type=int,
-                               help='keep all but top n highest singvalues')
-    parser_reduce.add_argument('-a', '--alpha', default=1.0,
-                               type=restricted_alpha,
-                               help='raise singvalues at power alpha')
-    parser_reduce.add_argument('-e', '--energy', default=100,
-                               type=restricted_energy,
-                               help='how much energy of the original sigma'
-                                    'to keep')
-    parser_reduce.add_argument('-o', '--save', action='store_true',
-                               help='whether or not to save the output '
-                                    'reduced matrix')
-    parser_reduce.add_argument('-d', '--outputdir',
-                               help='absolute path to output directory where'
-                                    'to save model. If not set, will default'
-                                    'to -u directory is -o is true')
+    parser_reduce.add_argument('-m', '--sparse', required=True,
+                               help='absolute path to .npz sparse matrix')
+    parser_reduce.add_argument('-d', '--dataset', required=True,
+                               choices=['men', 'simlex', 'simverb'],
+                               help='name of dataset')
+    parser_reduce.add_argument('-v', '--vocab', required=True,
+                               help='absolute path to vocabulary')
     parser_svd = subparsers.add_parser(
         'svd', formatter_class=argparse.RawTextHelpFormatter,
         help='apply svd to input matrix')
@@ -623,6 +596,11 @@ def main():
     parser_sample.add_argument('--distance', required=True,
                                choices=['cosine', 'euclidean'],
                                help='which distance to use for similarity')
+    parser_sample.add_argument('--singvalues',
+                               help='absolute path to singular values')
+    parser_sample.add_argument('--singalpha',
+                               default=0,
+                               help='power alpha for singular values')
     parser_convert = subparsers.add_parser(
         'convert', formatter_class=argparse.RawTextHelpFormatter,
         help='convert embeddings to and from text and numpy')

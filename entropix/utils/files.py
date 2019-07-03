@@ -9,7 +9,17 @@ __all__ = ('get_input_filepaths', 'get_vocab_filepath', 'get_cosines_filepath',
            'get_cosines_distribution_filepath', 'get_counts_filepath',
            'get_sparsematrix_filepath', 'get_singvalues_filepath',
            'get_singvectors_filepath', 'get_singvalues_filepaths',
-           'get_models_filepaths')
+           'get_models_filepaths', 'get_fit_vocab_filepath',
+           'get_dense_mtx_filepath')
+
+
+def get_dense_mtx_filepath(mtx_filepath, dataset):
+    return '{}.{}.reduced.npy'.format(mtx_filepath.split('.npz')[0], dataset)
+
+
+def get_fit_vocab_filepath(vocab_filepath, dataset):
+    return '{}.{}.vocab'.format(vocab_filepath.split('.vocab')[0],
+                                dataset)
 
 
 def get_models_filepaths(model_dirpath):
@@ -35,7 +45,7 @@ def get_singvectors_filepath(sparse_model_filepath, dim, which, dataset,
     """Return absolute path to singular vectors .npz file."""
     model_basename = _get_model_basename(sparse_model_filepath)
     if compact:
-        return '{}.singvectors.npy'.format(model_basename)
+        model_basename = '{}.compact'.format(model_basename)
     if dataset:
         return '{}.k{}.{}.{}.singvectors.npy'.format(model_basename, dim,
                                                      which, dataset)
@@ -47,7 +57,7 @@ def get_singvalues_filepath(sparse_model_filepath, dim, which, dataset,
     """Return absolute path to singular values .npz file."""
     model_basename = _get_model_basename(sparse_model_filepath)
     if compact:
-        '{}.singvalues.npy'.format(model_basename)
+        model_basename = '{}.compact'.format(model_basename)
     if dataset:
         return '{}.k{}.{}.{}.singvalues.npy'.format(model_basename, dim,
                                                     which, dataset)

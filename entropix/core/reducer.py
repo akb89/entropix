@@ -7,6 +7,7 @@ from scipy.sparse.linalg import svds
 from scipy.linalg import svd
 
 import entropix.utils.data as dutils
+import entropix.utils.files as futils
 
 logger = logging.getLogger(__name__)
 
@@ -46,48 +47,39 @@ def _get_top_sorted_singv(singvalues, singvectors, top):
     return sdsingvalues[:len(sdsingvalues)-top], sdsingvectors[:, :len(singvalues)-top]
 
 
-def reduce(singvalues, singvectors, top, alpha, energy, output_filepath=None):
-    """Return U*S^alpha.
+def _get_reduced_sparse_matrix(sparse_matrix, dataset, vocab_filepath):
+    vocab = dutils.load_vocab(vocab_filepath)
+    left_idx, right_idx, _ = dutils.load_dataset(dataset, vocab)
+    dataset_idx = list(set(left_idx) | set(right_idx))
+    fit_vocab_filepath = futils.get_fit_vocab_filepath(
+        vocab_filepath, dataset)
+    dutils.save_fit_vocab(dataset_idx, vocab, fit_vocab_filepath)
+    return sparse_matrix[dataset_idx]
 
-    Reduce singular values: remove top-n values, get energy*original_energy
+
+def reduce(sparse_matrix_filepath, dataset, vocab_filepath):
+    """Reducing a sparse matrix to the rows of the words contained in a dataset.
+
+    Converting the sparse reduced matrix to a dense one after removing all
+    zero columns.
     """
-    logger.info('Reducing singular vectors and values...')
-    if not (0 <= energy <= 100):
-        raise Exception('Invalid energy value: {}. Should be in [0, 100]'
-                        .format(energy))
-    if not (0 <= alpha <= 1):
-        raise Exception('Invalid alpha value: {}. Should be in [0, 1]'
-                        .format(alpha))
-    if not (0 <= top < len(singvalues)):
-        raise Exception('Invalid top value: {}. Should be in '
-                        '[0, len(singvalues)={}]'.format(top, len(singvalues)))
-    # Make sure that singvalues/singvectors are ranked in incr. order of val
-    singvalues, singvectors = _get_top_sorted_singv(singvalues, singvectors, top)
-    if energy < 100:
-        reduced_energy_rank = _get_reduced_rank(singvalues, energy)
-        singvalues = singvalues[reduced_energy_rank:]
-        singvectors = singvectors[:, reduced_energy_rank:]
-    logger.info(singvalues)
-    if output_filepath:
-        singvalues_filepath = '{}.singvalues.npy'.format(
-            output_filepath.split('.npy')[0])
-        np.save(singvalues_filepath, singvalues)
-    if alpha == 0:
-        reduced = singvectors
-    elif alpha == 1:
-        reduced = np.matmul(singvectors, np.diag(singvalues))
-    else:
-        reduced = np.matmul(singvectors, np.diag(np.power(singvalues, alpha)))
-    if output_filepath:
-        np.save(output_filepath, reduced)
-    return reduced
+    logger.info('Loading sparse matrix from {}'.format(sparse_matrix_filepath))
+    M = sparse.load_npz(sparse_matrix_filepath)
+    logger.info('Reducing sparse matrix of shape = {}'.format(M.shape))
+    reduced_sparse = _get_reduced_sparse_matrix(M, dataset, vocab_filepath)
+    logger.info('Reduced to sparse matrix of shape = {}'.format(reduced_sparse.shape))
+    nonzero_columns = sorted(set(reduced_sparse.nonzero()[1]))
+    reduced_sparse_nonzero = reduced_sparse[:, nonzero_columns]
+    logger.info('Converting to dense nonzero (columns) matrix of shape = {}'
+                .format(reduced_sparse_nonzero.shape))
+    output_dense_mtx_path = futils.get_dense_mtx_filepath(sparse_matrix_filepath, dataset)
+    logger.info('Saving output dense matrix to: {}'.format(output_dense_mtx_path))
+    np.save(output_dense_mtx_path, reduced_sparse_nonzero.todense())
 
 
 def _apply_sparse_svd(M, dim, sing_values_filepath,
                       sing_vectors_filepath, which, dataset=None,
                       vocab_filepath=None, compact=False):
-    if dim == 0 or dim >= M.shape[1]:
-        dim = M.shape[1] - 1
     if dataset:
         logger.info('Applying SVD on sparse matrix limited to word pairs '
                     'found in {}, with which = {} and k = {}'
@@ -99,32 +91,33 @@ def _apply_sparse_svd(M, dim, sing_values_filepath,
         raise Exception('--vocab parameter is required when specifying '
                         'on entropix svd --dataset')
     if dataset:
-        vocab = dutils.load_vocab(vocab_filepath)
-        left_idx, right_idx, _ = dutils.load_dataset(dataset, vocab)
-        dataset_idx = left_idx + right_idx
-        M = M[dataset_idx]
+        M = _get_reduced_sparse_matrix(M, dataset, vocab_filepath)
+    if dim == 0 or dim >= min(M.shape):
+        dim = min(M.shape) - 1
     logger.info('Applying SVD...')
     U, S, _ = svds(M, k=dim, which=which, return_singular_vectors='u')
     if compact:
         if np.all(S):
-            raise Exception('Compact option set to true but all singular '
-                            'values are non-null. Try using svd with '
-                            'a higher dim parameter')
-        logger.info('Compact set to true: keeping non-null singular values '
-                    'only')
-        first_zero_rank = np.nonzero(S)[0].size
-        S = S[:first_zero_rank]
-        U = U[:, :first_zero_rank]
-
+            logger.warning('Compact option set to true but all singular '
+                           'values are non-null. Try using svd with '
+                           'a higher dim parameter')
+        else:
+            logger.info('Compact set to true: keeping non-null singular values '
+                        'only')
+            first_zero_rank = np.nonzero(S)[0].size
+            S = S[:first_zero_rank]
+            U = U[:, :first_zero_rank]
     orig_nrj = M.power(2).sum()
     reduced_nrj = np.sum(S ** 2)
     logger.info('Energy of original matrix = {}'.format(orig_nrj))
     logger.info('Energy of reduced matrix = {}'.format(reduced_nrj))
     logger.info('Energy ration = {}%'.format((reduced_nrj/orig_nrj)*100))
-    logger.info('Saving singular values to {}'.format(sing_values_filepath))
+    logger.info('Saving singular values of shape = {} to {}'
+                .format(S.shape, sing_values_filepath))
     S = S[::-1]  # put singular values in decreasing order of values
     np.save(sing_values_filepath, S)
-    logger.info('Saving singular vectors to {}'.format(sing_vectors_filepath))
+    logger.info('Saving singular vectors of shape = {} to {}'
+                .format(U.shape, sing_vectors_filepath))
     U = U[:, ::-1]  # put singular vectors in decreasing order of sing. values
     np.save(sing_vectors_filepath, U)
     return U, S
@@ -150,13 +143,11 @@ def apply_svd(model_filepath, dim, sing_values_filepath,
     """
     if model_filepath.endswith('.npz'):
         M = sparse.load_npz(model_filepath)
-        _apply_sparse_svd(M, dim, sing_values_filepath, sing_vectors_filepath,
-                          which, dataset, vocab_filepath, compact)
     elif model_filepath.endswith('.npy'):
         DM = np.load(model_filepath)
         M = sparse.csr_matrix(DM)
-        _apply_sparse_svd(M, dim, sing_values_filepath, sing_vectors_filepath,
-                          compact)
     else:
         raise Exception('Unsupported model extension. Should be .npz or .npy: '
                         '{}'.format(model_filepath))
+    _apply_sparse_svd(M, dim, sing_values_filepath, sing_vectors_filepath,
+                      which, dataset, vocab_filepath, compact)
