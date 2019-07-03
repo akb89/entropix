@@ -84,7 +84,7 @@ def reduce(sparse_matrix_filepath, dataset, vocab_filepath):
     np.save(output_dense_mtx_path, reduced_sparse_nonzero.todense())
 
 
-def _apply_sparse_svd(M, dim, sing_values_filepath,
+def _apply_sparse_svd(sparse_matrix_filepath, dim, sing_values_filepath,
                       sing_vectors_filepath, which, dataset=None,
                       vocab_filepath=None, compact=False):
     if dataset:
@@ -98,7 +98,10 @@ def _apply_sparse_svd(M, dim, sing_values_filepath,
         raise Exception('--vocab parameter is required when specifying '
                         'on entropix svd --dataset')
     if dataset:
-        M = _get_reduced_sparse_matrix(M, dataset, vocab_filepath)
+        M = _get_reduced_sparse_matrix(sparse_matrix_filepath, dataset,
+                                       vocab_filepath)
+    else:
+        M = sparse.load_npz(sparse_matrix_filepath)
     if dim == 0 or dim >= min(M.shape):
         dim = min(M.shape) - 1
     logger.info('Applying SVD...')
