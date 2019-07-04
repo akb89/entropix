@@ -47,11 +47,11 @@ def evaluate_distributional_space(model, dataset, metric, model_type,
                                   vocab_filepath, distance):
     """Evaluate a numpy model against the MEN/Simlex/Simverb datasets."""
     logger.info('Evaluating distributional space...')
-    if model_type not in ['numpy', 'gensim']:
+    if model_type not in ['numpy', 'gensim', 'ica']:
         raise Exception('Unsupporteed model-type: {}'.format(model_type))
     if metric not in ['spr', 'rmse']:
         raise Exception('Unsupported metric: {}'.format(metric))
-    if model_type == 'numpy':
+    if model_type in ['numpy', 'ica']:
         vocab = dutils.load_vocab(vocab_filepath)
         left_idx, right_idx, sim = dutils.load_dataset(dataset, vocab)
         if metric == 'rmse':

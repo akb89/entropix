@@ -11,6 +11,7 @@ import logging.config
 
 import numpy as np
 import scipy
+import joblib
 from scipy import sparse
 from gensim.models import Word2Vec
 
@@ -23,6 +24,7 @@ import entropix.core.generator as generator
 import entropix.core.reducer as reducer
 import entropix.core.remover as remover
 import entropix.core.weigher as weigher
+import entropix.core.overlap_analyser as analyser
 
 from entropix.core.sampler import Sampler
 
@@ -54,6 +56,9 @@ def _evaluate(args):
             logger.info('Sampling model with {} dimensions = {}'
                         .format(len(dims), dims))
             model = model[:, dims]
+        logger.info('model size = {}'.format(model.shape))
+    elif args.type == 'ica':
+        model = joblib.load(args.model)
         logger.info('model size = {}'.format(model.shape))
     evaluator.evaluate_distributional_space(model, args.dataset,
                                             args.metric, args.type, args.vocab,
@@ -142,12 +147,18 @@ def _svd(args):
     logger.info('Applying SVD to model {}'.format(args.model))
     sing_values_filepath = futils.get_singvalues_filepath(args.model,
                                                           args.dim,
+                                                          args.which,
+                                                          args.dataset,
                                                           args.compact)
     sing_vectors_filepaths = futils.get_singvectors_filepath(args.model,
                                                              args.dim,
+                                                             args.which,
+                                                             args.dataset,
                                                              args.compact)
     reducer.apply_svd(args.model, args.dim, sing_values_filepath,
-                      sing_vectors_filepaths, compact=args.compact)
+                      sing_vectors_filepaths, args.which,
+                      dataset=args.dataset, vocab_filepath=args.vocab,
+                      compact=args.compact)
 
 
 def _compute_pairwise_cosines(args):
@@ -192,23 +203,7 @@ def _compute_singvectors_distribution(args):
 
 
 def _reduce(args):
-    singvalues = np.load(args.singvalues)
-    singvectors = np.load(args.singvectors)
-    if args.save:
-        outname = '{}.reduced.top{}.energy{}.alpha{}.npy'.format(
-            os.path.basename(args.singvectors).split('.singvectors.npy')[0],
-            args.top, args.energy, args.alpha)
-        if args.outputdir:
-            os.makedirs(args.outputdir, exist_ok=True)
-            output_filepath = os.path.join(args.outputdir, outname)
-        else:
-            output_filepath = os.path.join(os.path.dirname(args.singvectors),
-                                           outname)
-        reducer.reduce(singvalues, singvectors, args.top, args.alpha,
-                       args.energy, output_filepath)
-    else:
-        reducer.reduce(singvalues, singvectors, args.top, args.alpha,
-                       args.energy)
+    reducer.reduce(args.sparse, args.dataset, args.vocab)
 
 
 def _sample(args):
@@ -258,7 +253,8 @@ def _sample(args):
                       args.reduce, args.limit, args.rewind,
                       args.kfolding, args.kfold_size, args.num_threads,
                       args.dev_type, args.debug, args.metric, args.alpha,
-                      args.logs_dirpath, args.distance)
+                      args.logs_dirpath, args.distance, args.singvalues,
+                      args.singalpha)
     sampler.sample_dimensions()
 
 def restricted_kfold_size(x):
@@ -364,6 +360,14 @@ def _select(args):
     np.save(args.dims, model)
 
 
+def _ica(args):
+    reducer.apply_fast_ica(args.model, args.dataset, args.vocab)
+
+
+def _analyse_ppmi_rows_overlap(args):
+    analyser.analyse_overlap(args.model, args.vocab, args.dataset)
+
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -467,7 +471,8 @@ def main():
                                  help='index of singvectors dim to start from')
     parser_evaluate.add_argument('-e', '--end', type=int,
                                  help='index of singvectors dim to end at')
-    parser_evaluate.add_argument('-t', '--type', choices=['numpy', 'gensim'],
+    parser_evaluate.add_argument('-t', '--type', choices=['numpy', 'gensim',
+                                                          'ica'],
                                  required=True,
                                  help='model type')
     parser_evaluate.add_argument('-c', '--metric', required=True,
@@ -492,28 +497,16 @@ def main():
                                  help='size of context window')
     parser_reduce = subparsers.add_parser(
         'reduce', formatter_class=argparse.RawTextHelpFormatter,
-        help='reduce a space by composing singular vectors and values')
+        help='reduce a sparse matrix to a dense one containing the rows of '
+             'the dataset only')
     parser_reduce.set_defaults(func=_reduce)
-    parser_reduce.add_argument('-u', '--singvectors', required=True,
-                               help='absolute path to .singvectors.npy')
-    parser_reduce.add_argument('-s', '--singvalues', required=True,
-                               help='absolute path to .singvalues.npy')
-    parser_reduce.add_argument('-t', '--top', default=0, type=int,
-                               help='keep all but top n highest singvalues')
-    parser_reduce.add_argument('-a', '--alpha', default=1.0,
-                               type=restricted_alpha,
-                               help='raise singvalues at power alpha')
-    parser_reduce.add_argument('-e', '--energy', default=100,
-                               type=restricted_energy,
-                               help='how much energy of the original sigma'
-                                    'to keep')
-    parser_reduce.add_argument('-o', '--save', action='store_true',
-                               help='whether or not to save the output '
-                                    'reduced matrix')
-    parser_reduce.add_argument('-d', '--outputdir',
-                               help='absolute path to output directory where'
-                                    'to save model. If not set, will default'
-                                    'to -u directory is -o is true')
+    parser_reduce.add_argument('-m', '--sparse', required=True,
+                               help='absolute path to .npz sparse matrix')
+    parser_reduce.add_argument('-d', '--dataset', required=True,
+                               choices=['men', 'simlex', 'simverb'],
+                               help='name of dataset')
+    parser_reduce.add_argument('-v', '--vocab', required=True,
+                               help='absolute path to vocabulary')
     parser_svd = subparsers.add_parser(
         'svd', formatter_class=argparse.RawTextHelpFormatter,
         help='apply svd to input matrix')
@@ -524,8 +517,33 @@ def main():
                                  'space to reduce via svd')
     parser_svd.add_argument('-k', '--dim', default=0, type=int,
                             help='number of dimensions in final model')
+    parser_svd.add_argument('-w', '--which', choices=['LM', 'SM'],
+                            help='Which k singular values to find:'
+                                 'LM : largest singular values'
+                                 'SM : smallest singular values')
+    parser_svd.add_argument('-d', '--dataset',
+                            choices=['men', 'simlex', 'simverb'],
+                            help='if specified, will perform SVD only on '
+                                 'the words contained in the dataset')
+    parser_svd.add_argument('-v', '--vocab',
+                            help='absolute path to vocabulary. '
+                                 'To be specified only with --dataset')
     parser_svd.add_argument('-c', '--compact', action='store_true',
                             help='whether or not to store a compact matrix')
+    parser_ica = subparsers.add_parser(
+        'ica', formatter_class=argparse.RawTextHelpFormatter,
+        help='apply FastICA to input sparse matrix')
+    parser_ica.set_defaults(func=_ica)
+    parser_ica.add_argument('-m', '--model', required=True,
+                            help='absolute path to .npz matrix '
+                                 'corresponding to the ppmi '
+                                 'count matrix to apply ica to')
+    parser_ica.add_argument('-d', '--dataset', required=True,
+                            choices=['men', 'simlex', 'simverb'],
+                            help='perform ICA only on '
+                                 'the words contained in the dataset')
+    parser_ica.add_argument('-v', '--vocab', required=True,
+                            help='absolute path to vocabulary')
     parser_weigh = subparsers.add_parser(
         'weigh', formatter_class=argparse.RawTextHelpFormatter,
         help='weigh sparse matrix according to weighing function')
@@ -606,6 +624,11 @@ def main():
     parser_sample.add_argument('--distance', required=True,
                                choices=['cosine', 'euclidean'],
                                help='which distance to use for similarity')
+    parser_sample.add_argument('--singvalues',
+                               help='absolute path to singular values')
+    parser_sample.add_argument('--singalpha', type=float,
+                               default=0,
+                               help='power alpha for singular values')
     parser_convert = subparsers.add_parser(
         'convert', formatter_class=argparse.RawTextHelpFormatter,
         help='convert embeddings to and from text and numpy')
@@ -641,5 +664,16 @@ def main():
                                help='absolute path to .singvectors.npy')
     parser_select.add_argument('-d', '--dims', required=True,
                                help='absolute path to list of dimensions')
+    parser_analyse_ppmi_rows_overlap = subparsers.add_parser(
+        'analyse-overlap', formatter_class=argparse.RawTextHelpFormatter,
+        help='provides qualitative data on features overlap in a provided dataset')
+    parser_analyse_ppmi_rows_overlap.set_defaults(func=_analyse_ppmi_rows_overlap)
+    parser_analyse_ppmi_rows_overlap.add_argument('-m', '--model', required=True,
+                                                  help='absolute path to .npz matrix')
+    parser_analyse_ppmi_rows_overlap.add_argument('-v', '--vocab', required=True,
+                                                  help='vocabulary mapping for dsm')
+    parser_analyse_ppmi_rows_overlap.add_argument('-d', '--dataset', required=True,
+                                                  choices=['men', 'simlex', 'simverb'],
+                                                  help='which dataset to consider')
     args = parser.parse_args()
     args.func(args)
