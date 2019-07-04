@@ -24,6 +24,7 @@ import entropix.core.generator as generator
 import entropix.core.reducer as reducer
 import entropix.core.remover as remover
 import entropix.core.weigher as weigher
+import entropix.core.overlap_analyser as analyser
 
 from entropix.core.sampler import Sampler
 
@@ -363,6 +364,10 @@ def _ica(args):
     reducer.apply_fast_ica(args.model, args.dataset, args.vocab)
 
 
+def _analyse_ppmi_rows_overlap(args):
+    analyser.analyse_overlap(args.model, args.vocab, args.dataset)
+
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -659,5 +664,16 @@ def main():
                                help='absolute path to .singvectors.npy')
     parser_select.add_argument('-d', '--dims', required=True,
                                help='absolute path to list of dimensions')
+    parser_analyse_ppmi_rows_overlap = subparsers.add_parser(
+        'analyse-overlap', formatter_class=argparse.RawTextHelpFormatter,
+        help='provides qualitative data on features overlap in a provided dataset')
+    parser_analyse_ppmi_rows_overlap.set_defaults(func=_analyse_ppmi_rows_overlap)
+    parser_analyse_ppmi_rows_overlap.add_argument('-m', '--model', required=True,
+                                                  help='absolute path to .npz matrix')
+    parser_analyse_ppmi_rows_overlap.add_argument('-v', '--vocab', required=True,
+                                                  help='vocabulary mapping for dsm')
+    parser_analyse_ppmi_rows_overlap.add_argument('-d', '--dataset', required=True,
+                                                  choices=['men', 'simlex', 'simverb'],
+                                                  help='which dataset to consider')
     args = parser.parse_args()
     args.func(args)
