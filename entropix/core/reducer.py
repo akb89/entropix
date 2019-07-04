@@ -101,10 +101,12 @@ def _apply_sparse_svd(sparse_matrix_filepath, dim, sing_values_filepath,
         M = _get_reduced_sparse_matrix(sparse_matrix_filepath, dataset,
                                        vocab_filepath)
     else:
+        logger.info('Loading sparse matrix from {}'
+                    .format(sparse_matrix_filepath))
         M = sparse.load_npz(sparse_matrix_filepath)
     if dim == 0 or dim >= min(M.shape):
         dim = min(M.shape) - 1
-    logger.info('Applying SVD...')
+    logger.info('Running SVD...')
     U, S, _ = svds(M, k=dim, which=which, return_singular_vectors='u')
     if compact:
         if np.all(S):
