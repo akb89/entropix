@@ -6,14 +6,14 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.linalg import svds
 from scipy.linalg import svd
-from sklearn.decomposition import FastICA
+from sklearn.decomposition import FastICA, NMF
 
 import entropix.utils.data as dutils
 import entropix.utils.files as futils
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('apply_svd', 'reduce', 'apply_fast_ica')
+__all__ = ('apply_svd', 'reduce', 'apply_fast_ica', 'apply_nmf')
 
 
 def _get_reduced_rank(singvalues, energy_ratio):
@@ -167,6 +167,7 @@ def apply_svd(model_filepath, dim, sing_values_filepath,
 
 
 def apply_fast_ica(model_filepath, dataset, vocab_filepath):
+    """Apply ICA using sciki-learn FastICA implementation."""
     model = _get_reduced_sparse_matrix(model_filepath, dataset, vocab_filepath)
     X = model.todense()
     logger.info('Running FastICA on {} components...'.format(model.shape[0]))
@@ -176,3 +177,17 @@ def apply_fast_ica(model_filepath, dataset, vocab_filepath):
     ica_model_filepath = futils.get_ica_model_filepath(model_filepath, dataset)
     logger.info('Saving output ICA model to {}'.format(ica_model_filepath))
     joblib.dump(X_transformed, ica_model_filepath, compress=0)
+
+
+def apply_nmf(sparse_matrix_filepath, dataset, vocab_filepath):
+    """Non-Negative Matrix Factorization."""
+    # X = sparse.load_npz(sparse_matrix_filepath)
+    X = _get_reduced_sparse_matrix(sparse_matrix_filepath, dataset, vocab_filepath)
+    logger.info('Running NMF on {} components...'.format(X.shape[0]))
+    # TODO: try init='nndsvd'
+    model = NMF(init='random', random_state=0, verbose=True,
+                shuffle=True, max_iter=1000, beta_loss='frobenius')
+    W = model.fit_transform(X)
+    nmf_model_filepath = futils.get_nmf_model_filepath(sparse_matrix_filepath, dataset)
+    logger.info('Saving output NMF W matrix to {}'.format(nmf_model_filepath))
+    joblib.dump(W, nmf_model_filepath, compress=0)

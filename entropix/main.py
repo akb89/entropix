@@ -364,6 +364,10 @@ def _ica(args):
     reducer.apply_fast_ica(args.model, args.dataset, args.vocab)
 
 
+def _nmf(args):
+    reducer.apply_nmf(args.model, args.dataset, args.vocab)
+
+
 def _analyse_ppmi_rows_overlap(args):
     analyser.analyse_overlap(args.model, args.vocab, args.dataset)
 
@@ -543,6 +547,20 @@ def main():
                             help='perform ICA only on '
                                  'the words contained in the dataset')
     parser_ica.add_argument('-v', '--vocab', required=True,
+                            help='absolute path to vocabulary')
+    parser_nmf = subparsers.add_parser(
+        'nmf', formatter_class=argparse.RawTextHelpFormatter,
+        help='apply NMF to input sparse matrix')
+    parser_nmf.set_defaults(func=_nmf)
+    parser_nmf.add_argument('-m', '--model', required=True,
+                            help='absolute path to .npz matrix '
+                                 'corresponding to the ppmi '
+                                 'count matrix to apply ica to')
+    parser_nmf.add_argument('-d', '--dataset', required=True,
+                            choices=['men', 'simlex', 'simverb'],
+                            help='perform NMF only on '
+                                 'the words contained in the dataset')
+    parser_nmf.add_argument('-v', '--vocab', required=True,
                             help='absolute path to vocabulary')
     parser_weigh = subparsers.add_parser(
         'weigh', formatter_class=argparse.RawTextHelpFormatter,
