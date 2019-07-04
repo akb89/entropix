@@ -48,20 +48,13 @@ def similarity(left_vectors, right_vectors, distance):
         raise Exception(
             'Cannot compute similarity from numpy arrays of different shape: '
             '{} != {}'.format(left_vectors.shape(), right_vectors.shape()))
-    dim = left_vectors.shape[1]
     if distance == 'cosine':
         sim = 1 - spatial.distance.cdist(left_vectors, right_vectors, 'cosine')
         return np.diagonal(sim)
-    else:
-        # normalized_left = left_vectors / np.apply_along_axis(np.linalg.norm, 1, left_vectors).reshape(-1, 1)
-        # normalized_right = right_vectors / np.apply_along_axis(np.linalg.norm, 1, right_vectors).reshape(-1, 1)
-        # sim = 1 - spatial.distance.cdist(normalized_left,
-        #                                  normalized_right,
-        #                                  'euclidean') / dim
-        euc = spatial.distance.cdist(left_vectors, right_vectors, 'euclidean')
-        diag = np.diag(euc)
-        sim = (diag - np.min(diag)) / (np.max(diag) - np.min(diag))
-        return sim
+    euc = spatial.distance.cdist(left_vectors, right_vectors, 'euclidean')
+    diag = np.diag(euc)
+    sim = (diag - np.min(diag)) / (np.max(diag) - np.min(diag))
+    return sim
 
 
 def get_numpy_model_sim(model, left_idx, right_idx, dataset, distance):
