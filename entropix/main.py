@@ -361,7 +361,7 @@ def _select(args):
 
 
 def _ica(args):
-    reducer.apply_fast_ica(args.model, args.dataset, args.vocab)
+    reducer.apply_fast_ica(args.model, args.dataset, args.vocab, args.max_iter)
 
 
 def _nmf(args):
@@ -550,6 +550,8 @@ def main():
                                  'the words contained in the dataset')
     parser_ica.add_argument('-v', '--vocab', required=True,
                             help='absolute path to vocabulary')
+    parser_ica.add_argument('-a', '--max-iter', type=int, default=1000,
+                            help='maximum number of iterations before timing out')
     parser_nmf = subparsers.add_parser(
         'nmf', formatter_class=argparse.RawTextHelpFormatter,
         help='apply NMF to input sparse matrix')

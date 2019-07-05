@@ -166,13 +166,14 @@ def apply_svd(model_filepath, dim, sing_values_filepath,
                       compact)
 
 
-def apply_fast_ica(model_filepath, dataset, vocab_filepath):
+def apply_fast_ica(model_filepath, dataset, vocab_filepath, max_iter):
     """Apply ICA using sciki-learn FastICA implementation."""
     model = _get_reduced_sparse_matrix(model_filepath, dataset, vocab_filepath)
     X = model.todense()
     logger.info('Running FastICA on {} components...'.format(model.shape[0]))
     # X = sparse.load_npz(model_filepath)
-    transformer = FastICA(n_components=model.shape[0], max_iter=1000, whiten=True)
+    transformer = FastICA(n_components=model.shape[0], max_iter=max_iter,
+                          whiten=True)
     X_transformed = transformer.fit_transform(X)
     ica_model_filepath = futils.get_ica_model_filepath(model_filepath, dataset)
     logger.info('Saving output ICA model to {}'.format(ica_model_filepath))
