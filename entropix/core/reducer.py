@@ -185,8 +185,8 @@ def apply_nmf(sparse_matrix_filepath, dataset, vocab_filepath):
     X = _get_reduced_sparse_matrix(sparse_matrix_filepath, dataset, vocab_filepath)
     logger.info('Running NMF on {} components...'.format(X.shape[0]))
     # TODO: try init='nndsvd'
-    model = NMF(init='random', random_state=0, verbose=True,
-                shuffle=True, max_iter=1000, beta_loss='frobenius')
+    model = NMF(init='random', shuffle=True, max_iter=1000,
+                beta_loss='frobenius', verbose=True)
     W = model.fit_transform(X)
     nmf_model_filepath = futils.get_nmf_model_filepath(sparse_matrix_filepath, dataset)
     logger.info('Saving output NMF W matrix to {}'.format(nmf_model_filepath))
