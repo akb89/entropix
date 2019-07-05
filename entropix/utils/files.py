@@ -14,9 +14,19 @@ __all__ = ('get_input_filepaths', 'get_vocab_filepath', 'get_cosines_filepath',
            'get_nmf_model_filepath')
 
 
-def get_nmf_model_filepath(sparse_model_filepath, dataset):
+def get_nmf_model_filepath(sparse_model_filepath, dataset, n_components, init,
+                           shuffle):
     model_basename = _get_model_basename(sparse_model_filepath)
-    return '{}.{}.nmf'.format(model_basename, dataset)
+    if dataset:
+        if shuffle:
+            return '{}.{}.n-{}.init-{}.shuffled.nmf'.format(
+                model_basename, dataset, n_components, init)
+        return '{}.{}.n-{}.init-{}.nmf'.format(
+            model_basename, dataset, n_components, init)
+    if shuffle:
+        return '{}.n-{}.init-{}.shuffled.nmf'.format(
+            model_basename, n_components, init)
+    return '{}.n-{}.init-{}.nmf'.format(model_basename, n_components, init)
 
 
 def get_ica_model_filepath(sparse_model_filepath, dataset):

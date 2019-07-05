@@ -365,7 +365,9 @@ def _ica(args):
 
 
 def _nmf(args):
-    reducer.apply_nmf(args.model, args.dataset, args.vocab)
+    print(args.n_components)
+    reducer.apply_nmf(args.model, args.init, args.max_iter, args.shuffle,
+                      args.n_components, args.dataset, args.vocab)
 
 
 def _analyse_ppmi_rows_overlap(args):
@@ -556,12 +558,21 @@ def main():
                             help='absolute path to .npz matrix '
                                  'corresponding to the ppmi '
                                  'count matrix to apply ica to')
-    parser_nmf.add_argument('-d', '--dataset', required=True,
+    parser_nmf.add_argument('-d', '--dataset',
                             choices=['men', 'simlex', 'simverb'],
                             help='perform NMF only on '
                                  'the words contained in the dataset')
-    parser_nmf.add_argument('-v', '--vocab', required=True,
+    parser_nmf.add_argument('-v', '--vocab',
                             help='absolute path to vocabulary')
+    parser_nmf.add_argument('-n', '--n-components', type=int,
+                            help='number of components. If not set all features are kept')
+    parser_nmf.add_argument('-i', '--init', default='random',
+                            choices=['random', 'nndsvd', 'nndsvda', 'nndsvdar'],
+                            help='method used to initialize the procedure')
+    parser_nmf.add_argument('-a', '--max-iter', type=int, default=1000,
+                            help='maximum number of iterations before timing out')
+    parser_nmf.add_argument('--shuffle', action='store_true',
+                            help='randomize the order of coordinates in the CD solver')
     parser_weigh = subparsers.add_parser(
         'weigh', formatter_class=argparse.RawTextHelpFormatter,
         help='weigh sparse matrix according to weighing function')

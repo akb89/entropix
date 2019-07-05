@@ -179,15 +179,40 @@ def apply_fast_ica(model_filepath, dataset, vocab_filepath):
     joblib.dump(X_transformed, ica_model_filepath, compress=0)
 
 
-def apply_nmf(sparse_matrix_filepath, dataset, vocab_filepath):
+def apply_nmf(sparse_matrix_filepath, init, max_iter, shuffle,
+              n_components=None, dataset=None, vocab_filepath=None):
     """Non-Negative Matrix Factorization."""
-    # X = sparse.load_npz(sparse_matrix_filepath)
-    X = _get_reduced_sparse_matrix(sparse_matrix_filepath, dataset, vocab_filepath)
-    logger.info('Running NMF on {} components...'.format(X.shape[0]))
-    # TODO: try init='nndsvd'
-    model = NMF(init='random', n_components=X.shape[0], shuffle=True,
-                max_iter=1000, beta_loss='frobenius', verbose=True)
+    if dataset and not vocab_filepath or not dataset and vocab_filepath:
+        raise Exception('You need to specify either both --dataset and '
+                        '--vocab parameters, or none')
+    if dataset and vocab_filepath:
+        X = _get_reduced_sparse_matrix(sparse_matrix_filepath, dataset,
+                                       vocab_filepath)
+    else:
+        logger.info('Loading sparse matrix from {}'.format(
+            sparse_matrix_filepath))
+        X = sparse.load_npz(sparse_matrix_filepath)
+    if not n_components:
+        if X.shape[1] > X.shape[0]:
+            logger.warning('Cannot use all features as n-columns > n-rows. '
+                           'Setting n-components to {}'.format(X.shape[0]))
+            n_components = X.shape[0]
+        else:
+            n_components = X.shape[1]
+    elif n_components > X.shape[0]:
+        logger.warning(
+            'You specified n-components = {} but the loaded/reduced sparse '
+            'matrix only has {} rows. Resetting n-components to {}'
+            .format(n_components, X.shape[0], X.shape[0]))
+        n_components = X.shape[0]
+    logger.info('Running NMF with {} components on matrix of shape = {} '
+                'with init = {}, max-iter = {} and shuffle = {}...'.format(
+                    n_components, X.shape, init, max_iter, shuffle))
+    model = NMF(init=init, n_components=n_components, solver='cd',
+                shuffle=shuffle, max_iter=max_iter, beta_loss='frobenius',
+                verbose=True)
     W = model.fit_transform(X)
-    nmf_model_filepath = futils.get_nmf_model_filepath(sparse_matrix_filepath, dataset)
+    nmf_model_filepath = futils.get_nmf_model_filepath(
+        sparse_matrix_filepath, dataset, n_components, init, shuffle)
     logger.info('Saving output NMF W matrix to {}'.format(nmf_model_filepath))
     joblib.dump(W, nmf_model_filepath, compress=0)
