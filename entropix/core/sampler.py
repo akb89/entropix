@@ -379,7 +379,7 @@ class Sampler():
                                 self._metric, best_train_eval_metric, fold,
                                 len(keep_set), idx, dim_idx))
                 if self._debug:
-                    self.debug(list(keep), fold)
+                    self.debug(list(keep_set), fold)
                 if self._mode == 'mix' and added_counter % self._rate == 0:
                     keep, best_train_eval_metric, best_dev_eval_metric =\
                      self.reduce_dim(list(sorted(keep_set, key=alldims.index)),
