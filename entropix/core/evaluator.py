@@ -1,6 +1,5 @@
 """Evaluate a given Numpy distributional model against the MEN dataset."""
 import logging
-import numpy as np
 
 import entropix.utils.metrix as metrix
 import entropix.utils.data as dutils
@@ -12,24 +11,39 @@ logger = logging.getLogger(__name__)
 
 
 def is_degrading(metric_value, best_metric_value, metric):
-    if metric not in ['spr', 'rmse', 'combined']:
+    """Return true if metric value is degrading."""
+    if metric not in ['spr', 'rmse', 'combined', 'both']:
         raise Exception('Unsupported metric: {}'.format(metric))
+    if metric == 'both':
+        spr = float(metric_value.split('#')[0])
+        rmse = float(metric_value.split('#')[1])
+        best_spr = float(best_metric_value.split('#')[0])
+        best_rmse = float(best_metric_value.split('#')[1])
+        return spr < best_spr or rmse > best_rmse
     if metric in ['spr', 'combined']:
         return metric_value < best_metric_value
     return metric_value > best_metric_value
 
 
 def is_improving(metric_value, best_metric_value, metric):
-    if metric not in ['spr', 'rmse', 'combined']:
+    """Return true if metric value improving."""
+    if metric not in ['spr', 'rmse', 'combined', 'both']:
         raise Exception('Unsupported metric: {}'.format(metric))
+    if metric == 'both':
+        spr = float(metric_value.split('#')[0])
+        rmse = float(metric_value.split('#')[1])
+        best_spr = float(best_metric_value.split('#')[0])
+        best_rmse = float(best_metric_value.split('#')[1])
+        return spr > best_spr and rmse < best_rmse
     if metric in ['spr', 'combined']:
         return metric_value > best_metric_value
-    return metric_value < best_metric_value  # for rmse we want to lower the loss
+    # for rmse we want to lower the loss
+    return metric_value < best_metric_value
 
 
 def evaluate(model, splits, dataset, metric, distance, alpha=None):
     """Evaluate a given model against splits given a metric (spr or rmse)."""
-    if metric not in ['spr', 'rmse', 'combined']:
+    if metric not in ['spr', 'rmse', 'combined', 'both']:
         raise Exception('Unsupported metric: {}'.format(metric))
     if metric == 'spr':
         return metrix.get_spr_correlation(
@@ -38,9 +52,13 @@ def evaluate(model, splits, dataset, metric, distance, alpha=None):
     if metric == 'rmse':
         return metrix.get_rmse(model, splits['left_idx'], splits['right_idx'],
                                splits['sim'], dataset, distance)
-    return metrix.get_combined_spr_rmse(
-        model, splits['left_idx'], splits['right_idx'], splits['sim'], dataset,
-        alpha, distance)
+    if metrix == 'combined':
+        return metrix.get_combined_spr_rmse(
+            model, splits['left_idx'], splits['right_idx'], splits['sim'],
+            dataset, alpha, distance)
+    return metrix.get_both_spr_rmse(
+        model, splits['left_idx'], splits['right_idx'], splits['sim'],
+        dataset, distance)
 
 
 def evaluate_distributional_space(model, dataset, metric, model_type,
@@ -73,14 +91,14 @@ def evaluate_distributional_space(model, dataset, metric, model_type,
     #         _sim.append(z)
     #     model_sim = _get_gensim_model_sim(model, left, right)
     #     if metric == 'rmse':
-    #         if dataset == 'men':
-    #             _sim = [x/50 for x in _sim]  # men has sim in [0, 50]
-    #         else:
-    #             _sim = [x/10 for x in _sim]  # all other datasets have sim in [0, 10]
+    #         if dataset == 'men':  # men has sim in [0, 50]
+    #             _sim = [x/50 for x in _sim]
+    #         else:  # all other datasets have sim in [0, 10]
+    #             _sim = [x/10 for x in _sim]
     #         # for x, y in zip(_sim, model_sim):
     #         #     print(x, y)
     #         eval_metric = _rmse(np.array(_sim), np.array(model_sim))
     #     elif metric == 'spr':
     #         eval_metric = _spearman(_sim, model_sim)
-    logger.info('{} = {}'.format(metric, eval_metric))
+    # logger.info('{} = {}'.format(metric, eval_metric))
     return eval_metric

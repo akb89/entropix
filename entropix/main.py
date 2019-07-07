@@ -638,7 +638,7 @@ def main():
                                choices=['nodev', 'regular', 'balanced'],
                                help='which type of dev split to use')
     parser_sample.add_argument('-c', '--metric', required=True,
-                               choices=['spr', 'rmse', 'combined'],
+                               choices=['spr', 'rmse', 'combined', 'both'],
                                help='which eval metric to use')
     parser_sample.add_argument('-a', '--alpha', type=restricted_alpha,
                                help='how to weight combined spr and rmse eval '

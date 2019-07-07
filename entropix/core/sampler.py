@@ -44,8 +44,9 @@ class Sampler():
                  dev_type, debug, metric, alpha, logs_dirpath, distance,
                  singvalues_filepath, sing_alpha):
         #self._model = np.load(singvectors_filepath)
-        global model
-        model = _load_model(singvectors_filepath, singvalues_filepath, sing_alpha)
+        global model  # ugly hack to bypass pickling problem on forking
+        model = _load_model(singvectors_filepath, singvalues_filepath,
+                            sing_alpha)
         self._vocab = dutils.load_vocab(vocab_filepath)
         self._dataset = dataset
         self._output_basepath = output_basepath
