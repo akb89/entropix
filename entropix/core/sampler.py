@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 
 def _load_model(model_filepath, singvalues_filepath=None,
                 sing_alpha=None):
-    if not model_filepath.endswith('.npy') and not model_filepath.endswith('.ica'):
+    if not model_filepath.endswith('.npy') and not model_filepath.endswith('.ica') \
+     and not model_filepath.endswith('.nmf'):
         raise Exception('Unsupported model extension {}'.format(model_filepath))
     if model_filepath.endswith('.npy'):
         logger.info('Loading numpy model...')
@@ -32,7 +33,10 @@ def _load_model(model_filepath, singvalues_filepath=None,
         if sing_alpha == 1:
             return np.matmul(singvectors, np.diag(singvalues))
         return np.matmul(singvectors, np.diag(np.power(singvalues, sing_alpha)))
-    logger.info('Loading scikit-learn ICA model...')
+    if model_filepath.endswith('.ica'):
+        logger.info('Loading scikit-learn ICA model...')
+    else:
+        logger.info('Loading scikit-learn NMF model...')
     return joblib.load(model_filepath)
 
 
