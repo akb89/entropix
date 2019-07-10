@@ -256,18 +256,20 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
             model = None
             with open(model_filepath, 'r', encoding='latin1') as model_txt:
                 for idx, line in tqdm(enumerate(model_txt)):
-                    tokens = line.strip().split(' ')
+                    tokens = line.strip().split(' ', 1)
                     vocab[tokens[0]] = idx
                     if not np.any(model):
-                        model = np.array(np.fromstring(' '.join(tokens[1:]),
-                                                       sep=' ', dtype=np.float64))
+                        model = np.array(np.fromstring(tokens[1], sep=' ',
+                                                       dtype=np.float32))
                     else:
                         model = np.vstack(
-                            (model, np.fromstring(' '.join(tokens[1:]),
-                                                  sep=' ', dtype=np.float64)))
-            logger.info('Saving backup of vocab to {}.vocab'.format(model_filepath))
+                            (model, np.fromstring(tokens[1], sep=' ',
+                                                  dtype=np.float32)))
+            logger.info('Saving backup of vocab to {}.vocab'
+                        .format(model_filepath))
             futils.save_vocab(vocab, '{}.vocab'.format(model_filepath))
-            logger.info('Saving backup of model to numpy format at {}.npy'.format(model_filepath))
+            logger.info('Saving backup of model to numpy format at {}.npy'
+                        .format(model_filepath))
             np.save(model_filepath, model)
         else:
             vocab = _load_vocab_from_txt_file(vocab_filepath)
