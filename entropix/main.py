@@ -11,12 +11,11 @@ import logging.config
 
 import numpy as np
 import scipy
-import joblib
 from scipy import sparse
-from gensim.models import Word2Vec
 
 import entropix.utils.config as cutils
 import entropix.utils.files as futils
+import entropix.utils.data as dutils
 import entropix.core.counter as counter
 import entropix.core.calculator as calculator
 import entropix.core.evaluator as evaluator
@@ -38,31 +37,19 @@ logger = logging.getLogger(__name__)
 def _evaluate(args):
     logger.info('Evaluating model on {}'.format(args.dataset))
     logger.info('Loading distributional space from {}'.format(args.model))
-    if args.type == 'gensim':
-        model = Word2Vec.load(args.model).wv
-        logger.info('model size = {}'.format(model.vector_size))
-    elif args.type == 'numpy':
-        if not args.vocab:
-            raise Exception('Please specify the vocab parameter to evaluate'
-                            'a standard numpy model')
-        model = np.load(args.model)
-        if args.start is not None and args.end is not None:
-            model = model[:, args.start:args.end]
-        if args.dims:
-            dims = []
-            with open(args.dims, 'r', encoding='utf-8') as dims_stream:
-                for line in dims_stream:
-                    dims.append(int(line.strip()))
-            logger.info('Sampling model with {} dimensions = {}'
-                        .format(len(dims), dims))
-            model = model[:, dims]
-        logger.info('model size = {}'.format(model.shape))
-    elif args.type == 'ica':
-        model = joblib.load(args.model)
-        logger.info('model size = {}'.format(model.shape))
-    evaluator.evaluate_distributional_space(model, args.dataset,
-                                            args.metric, args.type, args.vocab,
-                                            args.distance)
+    dims = []
+    if args.dims:
+        with open(args.dims, 'r', encoding='utf-8') as dims_stream:
+            for line in dims_stream:
+                dims.append(int(line.strip()))
+        logger.info('Sampling model with {} dimensions = {}'
+                    .format(len(dims), dims))
+    model, vocab = dutils.load_model_and_vocab(
+        args.model, args.type, args.vocab, args.singvalues, args.singalpha,
+        args.start, args.end, args.dims)
+    evaluator.evaluate_distributional_space(model, vocab, args.dataset,
+                                            args.metric, args.type,
+                                            args.distance, args.kfold_size)
 
 
 def _compute_dimenergy(args):
@@ -477,8 +464,8 @@ def main():
                                  help='index of singvectors dim to start from')
     parser_evaluate.add_argument('-e', '--end', type=int,
                                  help='index of singvectors dim to end at')
-    parser_evaluate.add_argument('-t', '--type', choices=['numpy', 'gensim',
-                                                          'ica'],
+    parser_evaluate.add_argument('-t', '--type', choices=['svd', 'gensim',
+                                                          'ica', 'nmf', 'txt'],
                                  required=True,
                                  help='model type')
     parser_evaluate.add_argument('-c', '--metric', required=True,
@@ -487,6 +474,15 @@ def main():
     parser_evaluate.add_argument('-a', '--distance', required=True,
                                  choices=['cosine', 'euclidean'],
                                  help='which distance to use for similarity')
+    parser_evaluate.add_argument('-x', '--kfold-size',
+                                 type=restricted_kfold_size, default=0,
+                                 help='determine size of kfold. Should be in '
+                                      '[0, 0.5], that is, less than 50% of '
+                                      'total dataset size')
+    parser_evaluate.add_argument('--singvalues', default=None,
+                                 help='absolute path to singular values')
+    parser_evaluate.add_argument('--singalpha', type=float, default=0,
+                                 help='power alpha for singular values')
     parser_generate = subparsers.add_parser(
         'generate', formatter_class=argparse.RawTextHelpFormatter,
         help='generate raw frequency count based model')

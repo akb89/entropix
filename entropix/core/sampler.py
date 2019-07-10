@@ -7,7 +7,6 @@ import functools
 import multiprocessing
 from collections import defaultdict
 
-import joblib
 import numpy as np
 import entropix.core.evaluator as evaluator
 import entropix.utils.data as dutils
@@ -15,29 +14,6 @@ import entropix.utils.data as dutils
 __all__ = ('Sampler')
 
 logger = logging.getLogger(__name__)
-
-
-def _load_model(model_filepath, singvalues_filepath=None,
-                sing_alpha=None):
-    if not model_filepath.endswith('.npy') and not model_filepath.endswith('.ica') \
-     and not model_filepath.endswith('.nmf'):
-        raise Exception('Unsupported model extension {}'.format(model_filepath))
-    if model_filepath.endswith('.npy'):
-        logger.info('Loading numpy model...')
-        singvectors = np.load(model_filepath)
-        if sing_alpha == 0:
-            return singvectors
-        singvalues = np.load(singvalues_filepath)
-        logger.info('Loading model with singalpha = {} from singvalues {}'
-                    .format(sing_alpha, singvalues_filepath))
-        if sing_alpha == 1:
-            return np.matmul(singvectors, np.diag(singvalues))
-        return np.matmul(singvectors, np.diag(np.power(singvalues, sing_alpha)))
-    if model_filepath.endswith('.ica'):
-        logger.info('Loading scikit-learn ICA model...')
-    else:
-        logger.info('Loading scikit-learn NMF model...')
-    return joblib.load(model_filepath)
 
 
 class Sampler():
@@ -349,6 +325,8 @@ class Sampler():
         best_train_eval_metric = evaluator.evaluate(
             model[:, keep], self._splits[fold]['train'], dataset=self._dataset,
             metric=self._metric, alpha=self._alpha, distance=self._distance)
+        logger.debug('Initial train eval metric = {}'
+                     .format(best_train_eval_metric))
         added_counter = 0
         if self._dev_type == 'nodev':
             best_dev_eval_metric = 0

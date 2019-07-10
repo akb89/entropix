@@ -44,6 +44,8 @@ def get_gensim_model_sim(model, left_words, right_words):
 
 def similarity(left_vectors, right_vectors, distance):
     """Compute euclidian or cosine similarity between two matrices."""
+    # if np.isnan(left_vectors).any():
+    #     print(left_vectors)
     if distance not in ['cosine', 'euclidean']:
         raise Exception('Unsupported distance: {}'.format(distance))
     if left_vectors.shape != right_vectors.shape:
@@ -78,11 +80,6 @@ def get_numpy_model_sim(model, left_idx, right_idx, dataset, distance):
 def get_rmse(model, left_idx, right_idx, sim, dataset, distance):
     if dataset not in ['men', 'simlex', 'simverb', 'ws353']:
         raise Exception('Unsupported dataset: {}'.format(dataset))
-    # Normalize sim values between [0, 1]
-    if dataset == 'men':
-        sim = [x/50 for x in sim]  # men has sim in [0, 50]
-    else:
-        sim = [x/10 for x in sim]  # all other datasets have sim in [0, 10]
     model_sim = get_numpy_model_sim(model, left_idx, right_idx, dataset,
                                     distance)
     return root_mean_square_error(sim, model_sim)

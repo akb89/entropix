@@ -22,8 +22,14 @@
 
 \sisetup{detect-weight=true,detect-inline-weight=math}
 
-All experiments are reported for $win=2$, $mincount=300$, $k=\numprint{10000}$ and
-$k\_fold\_size=.20$ (20\%). Using euclidean distance instead of cosine.
+All experiments are reported for $mincount=300$, $k=\numprint{10000}$ and
+$k\_fold\_size=.20$ (20\%). All use singular values with $\alpha = 1$ to try
+and minimize the RMSE.
+
+
+\section{Summary}
+
+
 
 \section{Optimizing on SPR ($\alpha=1$)}
 
@@ -263,7 +269,7 @@ $k\_fold\_size=.20$ (20\%). Using euclidean distance instead of cosine.
    \end{minipage}
 \end{figure}
 
-\section{SPR-RMSE joint optimization ($\alpha=0.5$)}
+\section{SPR-RMSE joint optimization (both)}
 
 \begin{table}[H]
     \centering
@@ -279,7 +285,7 @@ $k\_fold\_size=.20$ (20\%). Using euclidean distance instead of cosine.
      \bottomrule
     \end{tabular}
     }
-    \caption{Optimizing jointly on SPR and RMSE with $\alpha=0.5$}
+    \caption{Optimizing jointly on SPR and RMSE with both}
 \end{table}
 
 \begin{figure}[H]
@@ -556,7 +562,7 @@ $k\_fold\_size=.20$ (20\%). Using euclidean distance instead of cosine.
    \end{minipage}
 \end{figure}
 
-\subsection{$\alpha=0.5$}
+\subsection{both}
 
 
 \section{Shuffling}
@@ -680,7 +686,7 @@ $k\_fold\_size=.20$ (20\%). Using euclidean distance instead of cosine.
    \end{minipage}
 \end{figure}
 
-\subsection{$\alpha=0.5$}
+\subsection{both}
 
 \begin{table}[H]
     \centering
