@@ -18,16 +18,17 @@ logger = logging.getLogger(__name__)
 
 class Sampler():
 
-    def __init__(self, singvectors_filepath, vocab_filepath, dataset,
-                 output_basepath, num_iter, shuffle, mode, rate, start, end,
-                 reduce, limit, rewind, kfolding, kfold_size, max_num_threads,
-                 dev_type, debug, metric, alpha, logs_dirpath, distance,
-                 singvalues_filepath, sing_alpha):
+    def __init__(self, singvectors_filepath, model_type, vocab_filepath,
+                 dataset, output_basepath, num_iter, shuffle, mode, rate,
+                 start, end, reduce, limit, rewind, kfolding, kfold_size,
+                 max_num_threads, dev_type, debug, metric, alpha, logs_dirpath,
+                 distance, singvalues_filepath, sing_alpha):
         #self._model = np.load(singvectors_filepath)
         global model  # ugly hack to bypass pickling problem on forking
-        model = _load_model(singvectors_filepath, singvalues_filepath,
-                            sing_alpha)
-        self._vocab = dutils.load_vocab(vocab_filepath)
+        model, vocab = dutils.load_model_and_vocab(
+            singvectors_filepath, model_type, vocab_filepath,
+            singvalues_filepath, sing_alpha)
+        self._vocab = vocab
         self._dataset = dataset
         self._output_basepath = output_basepath
         self._output_filepath = None

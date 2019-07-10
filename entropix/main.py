@@ -234,7 +234,7 @@ def _sample(args):
     if args.logs_dirpath:
         os.makedirs(args.logs_dirpath, exist_ok=True)
     logger.debug('Outputing logs to {}'.format(args.logs_dirpath))
-    sampler = Sampler(args.model, args.vocab, args.dataset,
+    sampler = Sampler(args.model, args.type, args.vocab, args.dataset,
                       keep_filepath_basename, args.iter, args.shuffle,
                       args.mode, args.rate, args.start, args.end,
                       args.reduce, args.limit, args.rewind,
@@ -656,6 +656,9 @@ def main():
     parser_sample.add_argument('--singalpha', type=float,
                                default=0,
                                help='power alpha for singular values')
+    parser_sample.add_argument('--type', required=True,
+                               choices=['svd', 'gensim', 'ica', 'nmf', 'txt'],
+                               help='model type')
     parser_convert = subparsers.add_parser(
         'convert', formatter_class=argparse.RawTextHelpFormatter,
         help='convert embeddings to and from text and numpy')
