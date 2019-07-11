@@ -206,21 +206,21 @@ def _sample(args):
     if args.mode == 'mix':
         keep_filepath_basename = os.path.join(
             dirname,
-            '{}.{}.sampledims.mode-{}.rate-{}.niter-{}.start-{}.end-{}'
-            .format(basename, args.dataset, args.mode, args.rate, args.iter,
-                    args.start, args.end))
+            '{}.{}.sampledims.metric-{}.mode-{}.rate-{}.niter-{}.start-{}.end-{}'
+            .format(basename, args.dataset, args.metric, args.args.mode,
+                    args.rate, args.iter, args.start, args.end))
     elif args.mode == 'seq':
         keep_filepath_basename = os.path.join(
             dirname,
-            '{}.{}.sampledims.mode-{}.niter-{}.start-{}.end-{}'
-            .format(basename, args.dataset, args.mode, args.iter,
+            '{}.{}.sampledims.metric-{}.mode-{}.niter-{}.start-{}.end-{}'
+            .format(basename, args.dataset, args.metric, args.mode, args.iter,
                     args.start, args.end))
     elif args.mode == 'limit':
         keep_filepath_basename = os.path.join(
             dirname,
-            '{}.{}.sampledims.mode-{}.d-{}.start-{}.end-{}'.format(
-                basename, args.dataset, args.mode, args.limit, args.start,
-                args.end))
+            '{}.{}.sampledims.metric-{}.mode-{}.d-{}.start-{}.end-{}'.format(
+                basename, args.dataset, args.metric, args.mode, args.limit,
+                args.start, args.end))
     if args.shuffle:
         keep_filepath_basename = '{}.shuffled.timestamp-{}'.format(
             keep_filepath_basename, datetime.datetime.now().timestamp())

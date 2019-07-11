@@ -254,17 +254,25 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
         if model_type == 'txt':
             vocab = {}
             model = None
+            num_rows = 0
+            vector_size = 0
+            logger.info('Counting number of lines in txt file...')
             with open(model_filepath, 'r', encoding='latin1') as model_txt:
-                for idx, line in tqdm(enumerate(model_txt)):
+                for idx, line in enumerate(model_txt):
+                    num_rows += 1
+                    if num_rows == 1:
+                        tokens = line.strip().split(' ', 1)
+                        vector_size = len(tokens[1].split(' '))
+            model = np.empty((num_rows, vector_size), dtype=np.float32)
+            logger.info('Initializing matrix of shape = {}'
+                        .format(model.shape))
+            logger.info('Filling in matrix entries...')
+            with open(model_filepath, 'r', encoding='latin1') as model_txt:
+                for idx, line in tqdm(enumerate(model_txt), total=num_rows):
                     tokens = line.strip().split(' ', 1)
                     vocab[tokens[0]] = idx
-                    if not np.any(model):
-                        model = np.array(np.fromstring(tokens[1], sep=' ',
-                                                       dtype=np.float32))
-                    else:
-                        model = np.vstack(
-                            (model, np.fromstring(tokens[1], sep=' ',
-                                                  dtype=np.float32)))
+                    model[idx] = np.fromstring(tokens[1], sep=' ',
+                                               dtype=np.float32)
             logger.info('Saving backup of vocab to {}.vocab'
                         .format(model_filepath))
             futils.save_vocab(vocab, '{}.vocab'.format(model_filepath))
