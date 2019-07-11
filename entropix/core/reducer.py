@@ -6,14 +6,14 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.linalg import svds
 from scipy.linalg import svd
-from sklearn.decomposition import FastICA
+from sklearn.decomposition import FastICA, NMF
 
 import entropix.utils.data as dutils
 import entropix.utils.files as futils
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('apply_svd', 'reduce', 'apply_fast_ica')
+__all__ = ('apply_svd', 'reduce', 'apply_fast_ica', 'apply_nmf')
 
 
 def _get_reduced_rank(singvalues, energy_ratio):
@@ -166,13 +166,54 @@ def apply_svd(model_filepath, dim, sing_values_filepath,
                       compact)
 
 
-def apply_fast_ica(model_filepath, dataset, vocab_filepath):
+def apply_fast_ica(model_filepath, dataset, vocab_filepath, max_iter):
+    """Apply ICA using sciki-learn FastICA implementation."""
     model = _get_reduced_sparse_matrix(model_filepath, dataset, vocab_filepath)
     X = model.todense()
     logger.info('Running FastICA on {} components...'.format(model.shape[0]))
     # X = sparse.load_npz(model_filepath)
-    transformer = FastICA(n_components=model.shape[0], max_iter=1000, whiten=True)
+    transformer = FastICA(n_components=model.shape[0], max_iter=max_iter,
+                          whiten=True)
     X_transformed = transformer.fit_transform(X)
     ica_model_filepath = futils.get_ica_model_filepath(model_filepath, dataset)
     logger.info('Saving output ICA model to {}'.format(ica_model_filepath))
     joblib.dump(X_transformed, ica_model_filepath, compress=0)
+
+
+def apply_nmf(sparse_matrix_filepath, init, max_iter, shuffle,
+              n_components=None, dataset=None, vocab_filepath=None):
+    """Non-Negative Matrix Factorization."""
+    if dataset and not vocab_filepath or not dataset and vocab_filepath:
+        raise Exception('You need to specify either both --dataset and '
+                        '--vocab parameters, or none')
+    if dataset and vocab_filepath:
+        X = _get_reduced_sparse_matrix(sparse_matrix_filepath, dataset,
+                                       vocab_filepath)
+    else:
+        logger.info('Loading sparse matrix from {}'.format(
+            sparse_matrix_filepath))
+        X = sparse.load_npz(sparse_matrix_filepath)
+    if not n_components:
+        if X.shape[1] > X.shape[0]:
+            logger.warning('Cannot use all features as n-columns > n-rows. '
+                           'Setting n-components to {}'.format(X.shape[0]))
+            n_components = X.shape[0]
+        else:
+            n_components = X.shape[1]
+    elif n_components > X.shape[0]:
+        logger.warning(
+            'You specified n-components = {} but the loaded/reduced sparse '
+            'matrix only has {} rows. Resetting n-components to {}'
+            .format(n_components, X.shape[0], X.shape[0]))
+        n_components = X.shape[0]
+    logger.info('Running NMF with {} components on matrix of shape = {} '
+                'with init = {}, max-iter = {} and shuffle = {}...'.format(
+                    n_components, X.shape, init, max_iter, shuffle))
+    model = NMF(init=init, n_components=n_components, solver='cd',
+                shuffle=shuffle, max_iter=max_iter, beta_loss='frobenius',
+                verbose=True)
+    W = model.fit_transform(X)
+    nmf_model_filepath = futils.get_nmf_model_filepath(
+        sparse_matrix_filepath, dataset, n_components, init, shuffle)
+    logger.info('Saving output NMF W matrix to {}'.format(nmf_model_filepath))
+    joblib.dump(W, nmf_model_filepath, compress=0)

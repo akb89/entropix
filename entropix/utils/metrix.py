@@ -8,7 +8,9 @@ import scipy.spatial as spatial
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('get_combined_spr_rmse', 'get_spr_correlation', 'get_rmse')
+__all__ = ('get_combined_spr_rmse', 'get_spr_correlation', 'get_rmse',
+           'get_both_spr_rmse')
+
 
 # Note: this is scipy's spearman, without tie adjustment
 def spearman(x, y):
@@ -42,6 +44,8 @@ def get_gensim_model_sim(model, left_words, right_words):
 
 def similarity(left_vectors, right_vectors, distance):
     """Compute euclidian or cosine similarity between two matrices."""
+    # if np.isnan(left_vectors).any():
+    #     print(left_vectors)
     if distance not in ['cosine', 'euclidean']:
         raise Exception('Unsupported distance: {}'.format(distance))
     if left_vectors.shape != right_vectors.shape:
@@ -76,24 +80,30 @@ def get_numpy_model_sim(model, left_idx, right_idx, dataset, distance):
 def get_rmse(model, left_idx, right_idx, sim, dataset, distance):
     if dataset not in ['men', 'simlex', 'simverb', 'ws353']:
         raise Exception('Unsupported dataset: {}'.format(dataset))
-    # Normalize sim values between [0, 1]
-    if dataset == 'men':
-        sim = [x/50 for x in sim]  # men has sim in [0, 50]
-    else:
-        sim = [x/10 for x in sim]  # all other datasets have sim in [0, 10]
-    model_sim = get_numpy_model_sim(model, left_idx, right_idx, dataset, distance)
+    model_sim = get_numpy_model_sim(model, left_idx, right_idx, dataset,
+                                    distance)
     return root_mean_square_error(sim, model_sim)
 
 
 def get_spr_correlation(model, left_idx, right_idx, sim, dataset, distance):
-    model_sim = get_numpy_model_sim(model, left_idx, right_idx, dataset, distance)
+    model_sim = get_numpy_model_sim(model, left_idx, right_idx, dataset,
+                                    distance)
     return spearman(sim, model_sim)
 
 
-def get_combined_spr_rmse(model, left_idx, right_idx, sim, dataset, alpha, distance):
+def get_combined_spr_rmse(model, left_idx, right_idx, sim, dataset, alpha,
+                          distance):
     if alpha < 0 or alpha > 1:
         raise Exception('Invalid alpha value = {}. Should be in [0, 1]'
                         .format(alpha))
-    spr = get_spr_correlation(model, left_idx, right_idx, sim, dataset, distance)
+    spr = get_spr_correlation(model, left_idx, right_idx, sim, dataset,
+                              distance)
     rmse = get_rmse(model, left_idx, right_idx, sim, dataset, distance)
     return alpha * spr - (1 - alpha) * rmse
+
+
+def get_both_spr_rmse(model, left_idx, right_idx, sim, dataset, distance):
+    return '{}#{}'.format(get_spr_correlation(model, left_idx, right_idx, sim,
+                                              dataset, distance),
+                          get_rmse(model, left_idx, right_idx, sim, dataset,
+                                   distance))

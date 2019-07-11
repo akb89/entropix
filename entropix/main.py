@@ -11,12 +11,11 @@ import logging.config
 
 import numpy as np
 import scipy
-import joblib
 from scipy import sparse
-from gensim.models import Word2Vec
 
 import entropix.utils.config as cutils
 import entropix.utils.files as futils
+import entropix.utils.data as dutils
 import entropix.core.counter as counter
 import entropix.core.calculator as calculator
 import entropix.core.evaluator as evaluator
@@ -38,31 +37,19 @@ logger = logging.getLogger(__name__)
 def _evaluate(args):
     logger.info('Evaluating model on {}'.format(args.dataset))
     logger.info('Loading distributional space from {}'.format(args.model))
-    if args.type == 'gensim':
-        model = Word2Vec.load(args.model).wv
-        logger.info('model size = {}'.format(model.vector_size))
-    elif args.type == 'numpy':
-        if not args.vocab:
-            raise Exception('Please specify the vocab parameter to evaluate'
-                            'a standard numpy model')
-        model = np.load(args.model)
-        if args.start is not None and args.end is not None:
-            model = model[:, args.start:args.end]
-        if args.dims:
-            dims = []
-            with open(args.dims, 'r', encoding='utf-8') as dims_stream:
-                for line in dims_stream:
-                    dims.append(int(line.strip()))
-            logger.info('Sampling model with {} dimensions = {}'
-                        .format(len(dims), dims))
-            model = model[:, dims]
-        logger.info('model size = {}'.format(model.shape))
-    elif args.type == 'ica':
-        model = joblib.load(args.model)
-        logger.info('model size = {}'.format(model.shape))
-    evaluator.evaluate_distributional_space(model, args.dataset,
-                                            args.metric, args.type, args.vocab,
-                                            args.distance)
+    dims = []
+    if args.dims:
+        with open(args.dims, 'r', encoding='utf-8') as dims_stream:
+            for line in dims_stream:
+                dims.append(int(line.strip()))
+        logger.info('Sampling model with {} dimensions = {}'
+                    .format(len(dims), dims))
+    model, vocab = dutils.load_model_and_vocab(
+        args.model, args.type, args.vocab, args.singvalues, args.singalpha,
+        args.start, args.end, args.dims)
+    evaluator.evaluate_distributional_space(model, vocab, args.dataset,
+                                            args.metric, args.type,
+                                            args.distance, args.kfold_size)
 
 
 def _compute_dimenergy(args):
@@ -219,21 +206,21 @@ def _sample(args):
     if args.mode == 'mix':
         keep_filepath_basename = os.path.join(
             dirname,
-            '{}.{}.sampledims.mode-{}.rate-{}.niter-{}.start-{}.end-{}'
-            .format(basename, args.dataset, args.mode, args.rate, args.iter,
-                    args.start, args.end))
+            '{}.{}.sampledims.metric-{}.mode-{}.rate-{}.niter-{}.start-{}.end-{}'
+            .format(basename, args.dataset, args.metric, args.args.mode,
+                    args.rate, args.iter, args.start, args.end))
     elif args.mode == 'seq':
         keep_filepath_basename = os.path.join(
             dirname,
-            '{}.{}.sampledims.mode-{}.niter-{}.start-{}.end-{}'
-            .format(basename, args.dataset, args.mode, args.iter,
+            '{}.{}.sampledims.metric-{}.mode-{}.niter-{}.start-{}.end-{}'
+            .format(basename, args.dataset, args.metric, args.mode, args.iter,
                     args.start, args.end))
     elif args.mode == 'limit':
         keep_filepath_basename = os.path.join(
             dirname,
-            '{}.{}.sampledims.mode-{}.d-{}.start-{}.end-{}'.format(
-                basename, args.dataset, args.mode, args.limit, args.start,
-                args.end))
+            '{}.{}.sampledims.metric-{}.mode-{}.d-{}.start-{}.end-{}'.format(
+                basename, args.dataset, args.metric, args.mode, args.limit,
+                args.start, args.end))
     if args.shuffle:
         keep_filepath_basename = '{}.shuffled.timestamp-{}'.format(
             keep_filepath_basename, datetime.datetime.now().timestamp())
@@ -247,7 +234,7 @@ def _sample(args):
     if args.logs_dirpath:
         os.makedirs(args.logs_dirpath, exist_ok=True)
     logger.debug('Outputing logs to {}'.format(args.logs_dirpath))
-    sampler = Sampler(args.model, args.vocab, args.dataset,
+    sampler = Sampler(args.model, args.type, args.vocab, args.dataset,
                       keep_filepath_basename, args.iter, args.shuffle,
                       args.mode, args.rate, args.start, args.end,
                       args.reduce, args.limit, args.rewind,
@@ -361,7 +348,13 @@ def _select(args):
 
 
 def _ica(args):
-    reducer.apply_fast_ica(args.model, args.dataset, args.vocab)
+    reducer.apply_fast_ica(args.model, args.dataset, args.vocab, args.max_iter)
+
+
+def _nmf(args):
+    print(args.n_components)
+    reducer.apply_nmf(args.model, args.init, args.max_iter, args.shuffle,
+                      args.n_components, args.dataset, args.vocab)
 
 
 def _analyse_ppmi_rows_overlap(args):
@@ -471,8 +464,8 @@ def main():
                                  help='index of singvectors dim to start from')
     parser_evaluate.add_argument('-e', '--end', type=int,
                                  help='index of singvectors dim to end at')
-    parser_evaluate.add_argument('-t', '--type', choices=['numpy', 'gensim',
-                                                          'ica'],
+    parser_evaluate.add_argument('-t', '--type', choices=['svd', 'gensim',
+                                                          'ica', 'nmf', 'txt'],
                                  required=True,
                                  help='model type')
     parser_evaluate.add_argument('-c', '--metric', required=True,
@@ -481,6 +474,15 @@ def main():
     parser_evaluate.add_argument('-a', '--distance', required=True,
                                  choices=['cosine', 'euclidean'],
                                  help='which distance to use for similarity')
+    parser_evaluate.add_argument('-x', '--kfold-size',
+                                 type=restricted_kfold_size, default=0,
+                                 help='determine size of kfold. Should be in '
+                                      '[0, 0.5], that is, less than 50% of '
+                                      'total dataset size')
+    parser_evaluate.add_argument('--singvalues', default=None,
+                                 help='absolute path to singular values')
+    parser_evaluate.add_argument('--singalpha', type=float, default=0,
+                                 help='power alpha for singular values')
     parser_generate = subparsers.add_parser(
         'generate', formatter_class=argparse.RawTextHelpFormatter,
         help='generate raw frequency count based model')
@@ -544,6 +546,31 @@ def main():
                                  'the words contained in the dataset')
     parser_ica.add_argument('-v', '--vocab', required=True,
                             help='absolute path to vocabulary')
+    parser_ica.add_argument('-a', '--max-iter', type=int, default=1000,
+                            help='maximum number of iterations before timing out')
+    parser_nmf = subparsers.add_parser(
+        'nmf', formatter_class=argparse.RawTextHelpFormatter,
+        help='apply NMF to input sparse matrix')
+    parser_nmf.set_defaults(func=_nmf)
+    parser_nmf.add_argument('-m', '--model', required=True,
+                            help='absolute path to .npz matrix '
+                                 'corresponding to the ppmi '
+                                 'count matrix to apply ica to')
+    parser_nmf.add_argument('-d', '--dataset',
+                            choices=['men', 'simlex', 'simverb'],
+                            help='perform NMF only on '
+                                 'the words contained in the dataset')
+    parser_nmf.add_argument('-v', '--vocab',
+                            help='absolute path to vocabulary')
+    parser_nmf.add_argument('-n', '--n-components', type=int,
+                            help='number of components. If not set all features are kept')
+    parser_nmf.add_argument('-i', '--init', default='random',
+                            choices=['random', 'nndsvd', 'nndsvda', 'nndsvdar'],
+                            help='method used to initialize the procedure')
+    parser_nmf.add_argument('-a', '--max-iter', type=int, default=1000,
+                            help='maximum number of iterations before timing out')
+    parser_nmf.add_argument('--shuffle', action='store_true',
+                            help='randomize the order of coordinates in the CD solver')
     parser_weigh = subparsers.add_parser(
         'weigh', formatter_class=argparse.RawTextHelpFormatter,
         help='weigh sparse matrix according to weighing function')
@@ -607,7 +634,7 @@ def main():
                                choices=['nodev', 'regular', 'balanced'],
                                help='which type of dev split to use')
     parser_sample.add_argument('-c', '--metric', required=True,
-                               choices=['spr', 'rmse', 'combined'],
+                               choices=['spr', 'rmse', 'combined', 'both'],
                                help='which eval metric to use')
     parser_sample.add_argument('-a', '--alpha', type=restricted_alpha,
                                help='how to weight combined spr and rmse eval '
@@ -629,6 +656,9 @@ def main():
     parser_sample.add_argument('--singalpha', type=float,
                                default=0,
                                help='power alpha for singular values')
+    parser_sample.add_argument('--type', required=True,
+                               choices=['svd', 'gensim', 'ica', 'nmf', 'txt'],
+                               help='model type')
     parser_convert = subparsers.add_parser(
         'convert', formatter_class=argparse.RawTextHelpFormatter,
         help='convert embeddings to and from text and numpy')
