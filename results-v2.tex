@@ -88,6 +88,7 @@ The model of \cite{mrkvsicetal2016} applied counter-fitting to the same paragram
         & \multicolumn{4}{c}{train-spr} & \multicolumn{4}{c}{test-spr} & \multicolumn{4}{c}{train-rmse} & \multicolumn{4}{c}{test-rmse} & \multicolumn{4}{c}{dim} \\
         Model & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} & \multicolumn{1}{c}{min} & \multicolumn{1}{c}{max} & \multicolumn{1}{c}{avg} & \multicolumn{1}{c}{std} \\
         \midrule
+        joint-alpha0-win2 & 0.819976432905278 & 0.8313620568240176 & 0.8265864269646059 & 0.004350463396164067 & 0.7596101794980868 & 0.7913175122627543 & \bfseries 0.7784513274002792 & 0.010681704381826333 & 0.31470798640523195 & 0.32313621186735964 & 0.31893209788821897 & 0.0034715941769283957 & 0.3244404788779072 & 0.33467188570849543 & \bfseries 0.32760660678666814 & 0.0036087725691976553 & 235 & 281 & 255 & 15.937377450509228 \\
         spr-alpha0-win2 & \\
         spr-alpha0-win5 & \\
         rmse-alpha1-win2 & 0.7315801322025937 & 0.7427850246979495 & 0.7381317063528383 & 0.003751915403730991 & 0.6752425848200806 & 0.729905418402421 & \bfseries 0.7020200804485953 & 0.019970394057058742 & 0.16747467953772957 & 0.17010795738434084 & 0.16863920951748726 & 0.0010307758744372375 & 0.17396969262835738 & 0.1815324559333741 & \bfseries 0.17716877526219182 & 0.0031868739526721168 & 361 & 390 & 378.2 & 10.225458424931373 \\
@@ -97,8 +98,108 @@ The model of \cite{mrkvsicetal2016} applied counter-fitting to the same paragram
      \bottomrule
     \end{tabular}
     }
-    \caption{Optimizing on MEN (with reduce and no shuffling)}
+    \caption{Optimizing on MEN (with reduce, niter-2 and no shuffling)}
 \end{table}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850384.360821.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850384.360821.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850384.360821.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850384.360821.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on MEN when optimizing on SPR with win-2}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850384.360821.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850384.360821.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850384.360821.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850384.360821.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on MEN when optimizing on SPR with win-2}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850450.031743.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850450.031743.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850450.031743.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850450.031743.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on MEN when optimizing on SPR with win-5}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850450.031743.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850450.031743.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850450.031743.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.men.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562850450.031743.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on MEN when optimizing on SPR with win-5}
+   \end{minipage}
+\end{figure}
 
 \begin{figure}[H]
   \begin{minipage}[t]{.48\linewidth}
@@ -172,7 +273,7 @@ The model of \cite{mrkvsicetal2016} applied counter-fitting to the same paragram
     \end{axis}
    \end{tikzpicture}
   }
-  \caption{Evolution of SPR on MEN when optimizing jointly on SPR and RMSE with win-2}
+  \caption{Evolution of SPR on MEN when optimizing on both SPR and RMSE with win-2}
    \end{minipage}
   \hspace{.04\linewidth}
   \begin{minipage}[t]{.48\linewidth}
@@ -196,7 +297,7 @@ The model of \cite{mrkvsicetal2016} applied counter-fitting to the same paragram
     \end{axis}
    \end{tikzpicture}
   }
-  \caption{Evolution of RMSE on MEN when optimizing jointly on SPR and RMSE with win-2}
+  \caption{Evolution of RMSE on MEN when optimizing on both SPR and RMSE with win-2}
    \end{minipage}
 \end{figure}
 

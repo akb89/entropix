@@ -260,7 +260,8 @@ class Sampler():
     def reduce_dim(self, keep, best_train_eval_metric,
                    best_dev_eval_metric, iterx, step, save, fold):
         logger.info('Reducing dimensions while maintaining highest score '
-                    'on eval metric {}. Step = {}'.format(self._metric, step))
+                    'on eval metric {}. Step = {}. Best train eval metric = {}'
+                    .format(self._metric, step, best_train_eval_metric))
         remove_set = set()
         keep_set = set(keep)
         for dim_idx in keep:
@@ -306,36 +307,19 @@ class Sampler():
         keep = list(sorted(keep_set, key=keep.index))
         if remove_set:
             step += 1
-            self.reduce_dim(keep, best_train_eval_metric,
-                            best_dev_eval_metric, iterx, step, save, fold)
+            keep, best_train_eval_metric, best_dev_eval_metric =\
+             self.reduce_dim(keep, best_train_eval_metric,
+                             best_dev_eval_metric, iterx, step, save, fold)
         return keep, best_train_eval_metric, best_dev_eval_metric
 
-    def increase_dim(self, keep, alldims, iterx, fold):
+    def increase_dim(self, keep, alldims, iterx, fold, best_train_eval_metric,
+                     best_dev_eval_metric):
         logger.info('Increasing dimensions to maximize score on eval metric '
-                    '{}. Iteration = {}'.format(self._metric, iterx))
-        if not keep:
-            # first iteration
-            if self._shuffle:
-                keep = np.random.choice(
-                    list(range(model.shape[1]))[self._start:self._end],
-                    size=2, replace=False)
-            else:
-                keep = [self._start, self._start+1]  # start at 2-dims
-        dims = [idx for idx in alldims if idx not in keep]
+                    '{}. Iteration = {}. Best train eval metric = {}'
+                    .format(self._metric, iterx, best_train_eval_metric))
         keep_set = set(keep)
-        best_train_eval_metric = evaluator.evaluate(
-            model[:, keep], self._splits[fold]['train'], dataset=self._dataset,
-            metric=self._metric, alpha=self._alpha, distance=self._distance)
-        logger.debug('Initial train eval metric = {}'
-                     .format(best_train_eval_metric))
+        dims = [idx for idx in alldims if idx not in keep_set]
         added_counter = 0
-        if self._dev_type == 'nodev':
-            best_dev_eval_metric = 0
-        elif self._dev_type == 'regular':
-            best_dev_eval_metric = evaluator.evaluate(
-                model[:, keep], self._splits[fold]['dev'],
-                dataset=self._dataset, metric=self._metric, alpha=self._alpha,
-                distance=self._distance)
         for idx, dim_idx in enumerate(dims):
             keep_set.add(dim_idx)
             train_eval_metric = evaluator.evaluate(
@@ -370,6 +354,7 @@ class Sampler():
                                      best_train_eval_metric,
                                      best_dev_eval_metric, iterx, step=1,
                                      save=False, fold=fold)
+                    keep_set = set(keep)
             else:
                 keep_set.remove(dim_idx)
         keep = list(sorted(keep_set, key=alldims.index))
@@ -380,11 +365,30 @@ class Sampler():
                     .format('ON' if self._shuffle else 'OFF'))
         logger.info('Iterating over {} dims starting at {} and ending at {}'
                     .format(model.shape[1], self._start, self._end))
+        if self._shuffle:  # first iteration
+            keep = np.random.choice(
+                list(range(model.shape[1]))[self._start:self._end],
+                size=2, replace=False)
+        else:
+            keep = [self._start, self._start+1]  # start at 2-dims
+        best_train_eval_metric = evaluator.evaluate(
+            model[:, keep], self._splits[fold]['train'], dataset=self._dataset,
+            metric=self._metric, alpha=self._alpha, distance=self._distance)
+        logger.debug('Initial train eval metric = {}'
+                     .format(best_train_eval_metric))
+        if self._dev_type == 'nodev':
+            best_dev_eval_metric = 0
+        elif self._dev_type == 'regular':
+            best_dev_eval_metric = evaluator.evaluate(
+                model[:, keep], self._splits[fold]['dev'],
+                dataset=self._dataset, metric=self._metric, alpha=self._alpha,
+                distance=self._distance)
         for iterx in range(1, self._num_iter+1):
             keep_filepath = '{}.keep.iter-{}.txt'.format(
                 self._output_filepath, iterx)
             keep, best_train_eval_metric, best_dev_eval_metric = self.increase_dim(
-                keep, alldims, iterx, fold)
+                keep, alldims, iterx, fold, best_train_eval_metric,
+                best_dev_eval_metric)
             logger.info('Finished dim increase. Saving list of keep idx to {}'
                         .format(keep_filepath))
             with open(keep_filepath, 'w', encoding='utf-8') as keep_stream:
