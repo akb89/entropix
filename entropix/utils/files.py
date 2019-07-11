@@ -10,7 +10,29 @@ __all__ = ('get_input_filepaths', 'get_vocab_filepath', 'get_cosines_filepath',
            'get_sparsematrix_filepath', 'get_singvalues_filepath',
            'get_singvectors_filepath', 'get_singvalues_filepaths',
            'get_models_filepaths', 'get_fit_vocab_filepath',
-           'get_dense_mtx_filepath', 'get_ica_model_filepath')
+           'get_dense_mtx_filepath', 'get_ica_model_filepath',
+           'get_nmf_model_filepath', 'save_vocab')
+
+
+def save_vocab(vocab, output_filepath):
+    with open(output_filepath, 'w', encoding='utf-8') as vocab_path:
+        for item, idx in vocab.items():
+            print('{}\t{}'.format(idx, item), file=vocab_path)
+
+
+def get_nmf_model_filepath(sparse_model_filepath, dataset, n_components, init,
+                           shuffle):
+    model_basename = _get_model_basename(sparse_model_filepath)
+    if dataset:
+        if shuffle:
+            return '{}.{}.n-{}.init-{}.shuffled.nmf'.format(
+                model_basename, dataset, n_components, init)
+        return '{}.{}.n-{}.init-{}.nmf'.format(
+            model_basename, dataset, n_components, init)
+    if shuffle:
+        return '{}.n-{}.init-{}.shuffled.nmf'.format(
+            model_basename, n_components, init)
+    return '{}.n-{}.init-{}.nmf'.format(model_basename, n_components, init)
 
 
 def get_ica_model_filepath(sparse_model_filepath, dataset):
