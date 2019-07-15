@@ -44,8 +44,6 @@ def get_gensim_model_sim(model, left_words, right_words):
 
 def similarity(left_vectors, right_vectors, distance):
     """Compute euclidian or cosine similarity between two matrices."""
-    # if np.isnan(left_vectors).any():
-    #     print(left_vectors)
     if distance not in ['cosine', 'euclidean']:
         raise Exception('Unsupported distance: {}'.format(distance))
     if left_vectors.shape != right_vectors.shape:
@@ -53,8 +51,10 @@ def similarity(left_vectors, right_vectors, distance):
             'Cannot compute similarity from numpy arrays of different shape: '
             '{} != {}'.format(left_vectors.shape(), right_vectors.shape()))
     if distance == 'cosine':
-        sim = 1 - spatial.distance.cdist(left_vectors, right_vectors, 'cosine')
-        return np.diagonal(sim)
+        dotprod = np.einsum('ij,ij->i', left_vectors, right_vectors)
+        norms = np.linalg.norm(left_vectors, axis=1) * np.linalg.norm(right_vectors, axis=1)
+        return dotprod / norms
+    # TODO: refactor below as above
     euc = spatial.distance.cdist(left_vectors, right_vectors, 'euclidean')
     diag = np.diag(euc)
     sim = (diag - np.min(diag)) / (np.max(diag) - np.min(diag))
