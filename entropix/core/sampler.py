@@ -257,15 +257,13 @@ class Sampler():
                     self._dataset, metric='rmse', distance=self._distance)
             }
 
-    def reduce_dim(self, keep, best_train_eval_metric,
+    def reduce_dim(self, dims, best_train_eval_metric,
                    best_dev_eval_metric, iterx, step, save, fold):
         logger.info('Reducing dimensions while maintaining highest score '
                     'on eval metric {}. Step = {}. Best train eval metric = {}'
                     .format(self._metric, step, best_train_eval_metric))
-        remove_set = set()
-        keep_set = set(keep)
-        for dim_idx in keep:
-            dims_set = keep_set.difference(remove_set)
+        dims_set = set(dims)
+        for dim_idx in dims:
             dims_set.remove(dim_idx)
             train_eval_metric = evaluator.evaluate(
                 model[:, list(dims_set)], self._splits[fold]['train'],
@@ -274,6 +272,7 @@ class Sampler():
             if evaluator.is_degrading(train_eval_metric,
                                       best_train_eval_metric,
                                       metric=self._metric):
+                dims_set.add(dim_idx)
                 continue
             if self._dev_type == 'regular':
                 dev_eval_metric = evaluator.evaluate(
@@ -283,8 +282,8 @@ class Sampler():
                 if evaluator.is_degrading(dev_eval_metric,
                                           best_dev_eval_metric,
                                           metric=self._metric):
+                    dims_set.add(dim_idx)
                     continue
-            remove_set.add(dim_idx)
             logger.info('Constant best train {} = {} for fold {} removing '
                         'dim_idx = {}. New ndim = {}'
                         .format(self._metric, train_eval_metric, fold,
@@ -297,15 +296,14 @@ class Sampler():
         reduce_filepath = '{}.keep.iter-{}.reduce.step-{}.txt'.format(
             self._output_filepath, iterx, step)
         logger.info('Finished reducing dims')
-        keep_set = keep_set.difference(remove_set)
+        keep = list(sorted(dims_set, key=dims.index))
         if save:
             logger.info('Saving list of reduced keep idx to {}'
                         .format(reduce_filepath))
             with open(reduce_filepath, 'w', encoding='utf-8') as reduced_stream:
                 print('\n'.join([str(idx) for idx in sorted(keep)]),
                       file=reduced_stream)
-        keep = list(sorted(keep_set, key=keep.index))
-        if remove_set:
+        if len(keep) != len(dims):
             step += 1
             keep, best_train_eval_metric, best_dev_eval_metric =\
              self.reduce_dim(keep, best_train_eval_metric,
@@ -317,13 +315,12 @@ class Sampler():
         logger.info('Increasing dimensions to maximize score on eval metric '
                     '{}. Iteration = {}. Best train eval metric = {}'
                     .format(self._metric, iterx, best_train_eval_metric))
-        keep_set = set(keep)
-        dims = [idx for idx in alldims if idx not in keep_set]
+        dims = [idx for idx in alldims if idx not in keep]
         added_counter = 0
         for idx, dim_idx in enumerate(dims):
-            keep_set.add(dim_idx)
+            keep.append(dim_idx)
             train_eval_metric = evaluator.evaluate(
-                model[:, list(keep_set)], self._splits[fold]['train'],
+                model[:, keep], self._splits[fold]['train'],
                 dataset=self._dataset, metric=self._metric, alpha=self._alpha,
                 distance=self._distance)
             if evaluator.is_improving(train_eval_metric,
@@ -331,13 +328,13 @@ class Sampler():
                                       metric=self._metric):
                 if self._dev_type == 'regular':
                     dev_eval_metric = evaluator.evaluate(
-                        model[:, list(keep_set)], self._splits[fold]['dev'],
+                        model[:, keep], self._splits[fold]['dev'],
                         dataset=self._dataset, metric=self._metric,
                         alpha=self._alpha, distance=self._distance)
                     if evaluator.is_degrading(dev_eval_metric,
                                               best_dev_eval_metric,
                                               metric=self._metric):
-                        keep_set.remove(dim_idx)
+                        keep.pop()
                         continue
                     best_dev_eval_metric = dev_eval_metric
                 added_counter += 1
@@ -345,19 +342,16 @@ class Sampler():
                 logger.info('New best train {} = {} on fold {} with ndim = {} '
                             'at idx = {} and dim_idx = {}'.format(
                                 self._metric, best_train_eval_metric, fold,
-                                len(keep_set), idx, dim_idx))
+                                len(keep), idx, dim_idx))
                 if self._debug:
-                    self.debug(list(keep_set), fold)
+                    self.debug(keep, fold)
                 if self._mode == 'mix' and added_counter % self._rate == 0:
                     keep, best_train_eval_metric, best_dev_eval_metric =\
-                     self.reduce_dim(list(sorted(keep_set, key=alldims.index)),
-                                     best_train_eval_metric,
+                     self.reduce_dim(keep, best_train_eval_metric,
                                      best_dev_eval_metric, iterx, step=1,
                                      save=False, fold=fold)
-                    keep_set = set(keep)
             else:
-                keep_set.remove(dim_idx)
-        keep = list(sorted(keep_set, key=alldims.index))
+                keep.pop()
         return keep, best_train_eval_metric, best_dev_eval_metric
 
     def sample_seq_mix(self, keep, alldims, fold):
