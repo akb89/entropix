@@ -645,6 +645,208 @@ pages = "1525--1534",
 	abstract = "We present the first exploration of meaning shift over short periods of time in online communities using distributional representations. We create a small annotated dataset and use it to assess the performance of a standard model for meaning shift detection on short-term meaning shift. We find that the model has problems distinguishing meaning shift from referential phenomena, and propose a measure of contextual variability to remedy this.",
 }
 
+@inproceedings{shekharetal2019a,
+    title = "Evaluating the Representational Hub of Language and Vision Models",
+    author = "Shekhar, Ravi  and
+      Takmaz, Ece  and
+      Fern{\'a}ndez, Raquel  and
+      Bernardi, Raffaella",
+    booktitle = "Proceedings of the 13th International Conference on Computational Semantics - Long Papers",
+    month = "23{--}27 " # may,
+    year = "2019",
+    address = "Gothenburg, Sweden",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/W19-0418",
+    pages = "211--222",
+    abstract = "The multimodal models used in the emerging field at the intersection of computational linguistics and computer vision implement the bottom-up processing of the {``}Hub and Spoke{''} architecture proposed in cognitive science to represent how the brain processes and combines multi-sensory inputs. In particular, the Hub is implemented as a neural network encoder. We investigate the effect on this encoder of various vision-and-language tasks proposed in the literature: visual question answering, visual reference resolution, and visually grounded dialogue. To measure the quality of the representations learned by the encoder, we use two kinds of analyses. First, we evaluate the encoder pre-trained on the different vision-and-language tasks on an existing {``}diagnostic task{''} designed to assess multimodal semantic understanding. Second, we carry out a battery of analyses aimed at studying how the encoder merges and exploits the two modalities.",
+}
+
+@inproceedings{shekharetal2019b,
+    title = "Beyond task success: A closer look at jointly learning to see, ask, and {G}uess{W}hat",
+    author = {Shekhar, Ravi  and
+      Venkatesh, Aashish  and
+      Baumg{\"a}rtner, Tim  and
+      Bruni, Elia  and
+      Plank, Barbara  and
+      Bernardi, Raffaella  and
+      Fern{\'a}ndez, Raquel},
+    booktitle = "Proceedings of the 2019 Conference of the North {A}merican Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers)",
+    month = jun,
+    year = "2019",
+    address = "Minneapolis, Minnesota",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/N19-1265",
+    pages = "2578--2587",
+    abstract = "We propose a grounded dialogue state encoder which addresses a foundational issue on how to integrate visual grounding with dialogue system components. As a test-bed, we focus on the GuessWhat?! game, a two-player game where the goal is to identify an object in a complex visual scene by asking a sequence of yes/no questions. Our visually-grounded encoder leverages synergies between guessing and asking questions, as it is trained jointly using multi-task learning. We further enrich our model via a cooperative learning regime. We show that the introduction of both the joint architecture and cooperative learning lead to accuracy improvements over the baseline system. We compare our approach to an alternative system which extends the baseline with reinforcement learning. Our in-depth analysis shows that the linguistic skills of the two models differ dramatically, despite approaching comparable performance levels. This points at the importance of analyzing the linguistic output of competing systems beyond numeric comparison solely based on task success.",
+}
+
+@inproceedings{haberetal2019,
+    title = "The {P}hoto{B}ook Dataset: Building Common Ground through Visually-Grounded Dialogue",
+    author = {Haber, Janosch  and
+      Baumg{\"a}rtner, Tim  and
+      Takmaz, Ece  and
+      Gelderloos, Lieke  and
+      Bruni, Elia  and
+      Fern{\'a}ndez, Raquel},
+    booktitle = "Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics",
+    month = jul,
+    year = "2019",
+    address = "Florence, Italy",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/P19-1184",
+    pages = "1895--1910",
+    abstract = "This paper introduces the PhotoBook dataset, a large-scale collection of visually-grounded, task-oriented dialogues in English designed to investigate shared dialogue history accumulating during conversation. Taking inspiration from seminal work on dialogue analysis, we propose a data-collection task formulated as a collaborative game prompting two online participants to refer to images utilising both their visual context as well as previously established referring expressions. We provide a detailed description of the task setup and a thorough analysis of the 2,500 dialogues collected. To further illustrate the novel features of the dataset, we propose a baseline model for reference resolution which uses a simple method to take into account shared information accumulated in a reference chain. Our results show that this information is particularly important to resolve later descriptions and underline the need to develop more sophisticated models of common ground in dialogue interaction.",
+}
+
+@inproceedings{hupkesetal2018,
+    title = "Analysing the potential of seq-to-seq models for incremental interpretation in task-oriented dialogue",
+    author = "Hupkes, Dieuwke  and
+      Bouwmeester, Sanne  and
+      Fern{\'a}ndez, Raquel",
+    booktitle = "Proceedings of the 2018 {EMNLP} Workshop {B}lackbox{NLP}: Analyzing and Interpreting Neural Networks for {NLP}",
+    month = nov,
+    year = "2018",
+    address = "Brussels, Belgium",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/W18-5419",
+    doi = "10.18653/v1/W18-5419",
+    pages = "165--174",
+    abstract = "We investigate how encoder-decoder models trained on a synthetic dataset of task-oriented dialogues process disfluencies, such as hesitations and self-corrections. We find that, contrary to earlier results, disfluencies have very little impact on the task success of seq-to-seq models with attention. Using visualisations and diagnostic classifiers, we analyse the representations that are incrementally built by the model, and discover that models develop little to no awareness of the structure of disfluencies. However, adding disfluencies to the data appears to help the model create clearer representations overall, as evidenced by the attention patterns the different models exhibit.",
+}
+
+@inproceedings{shekharetal2018,
+    title = "Ask No More: Deciding when to guess in referential visual dialogue",
+    author = {Shekhar, Ravi  and
+      Baumg{\"a}rtner, Tim  and
+      Venkatesh, Aashish  and
+      Bruni, Elia  and
+      Bernardi, Raffaella  and
+      Fernandez, Raquel},
+    booktitle = "Proceedings of the 27th International Conference on Computational Linguistics",
+    month = aug,
+    year = "2018",
+    address = "Santa Fe, New Mexico, USA",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/C18-1104",
+    pages = "1218--1233",
+    abstract = "Our goal is to explore how the abilities brought in by a dialogue manager can be included in end-to-end visually grounded conversational agents. We make initial steps towards this general goal by augmenting a task-oriented visual dialogue model with a decision-making component that decides whether to ask a follow-up question to identify a target referent in an image, or to stop the conversation to make a guess. Our analyses show that adding a decision making component produces dialogues that are less repetitive and that include fewer unnecessary questions, thus potentially leading to more efficient and less unnatural interactions.",
+}
+
+@inproceedings{xingandfernandez2018,
+    title = "Automatic Evaluation of Neural Personality-based Chatbots",
+    author = "Xing, Yujie  and
+      Fern{\'a}ndez, Raquel",
+    booktitle = "Proceedings of the 11th International Conference on Natural Language Generation",
+    month = nov,
+    year = "2018",
+    address = "Tilburg University, The Netherlands",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/W18-6524",
+    doi = "10.18653/v1/W18-6524",
+    pages = "189--194",
+    abstract = "Stylistic variation is critical to render the utterances generated by conversational agents natural and engaging. In this paper, we focus on sequence-to-sequence models for open-domain dialogue response generation and propose a new method to evaluate the extent to which such models are able to generate responses that reflect different personality traits.",
+}
+
+@inproceedings{bruniandfernandez2017,
+    title = "Adversarial evaluation for open-domain dialogue generation",
+    author = "Bruni, Elia  and
+      Fern{\'a}ndez, Raquel",
+    booktitle = "Proceedings of the 18th Annual {SIG}dial Meeting on Discourse and Dialogue",
+    month = aug,
+    year = "2017",
+    address = {Saarbr{\"u}cken, Germany},
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/W17-5534",
+    doi = "10.18653/v1/W17-5534",
+    pages = "284--288",
+    abstract = "We investigate the potential of adversarial evaluation methods for open-domain dialogue generation systems, comparing the performance of a discriminative agent to that of humans on the same task. Our results show that the task is hard, both for automated models and humans, but that a discriminative agent can learn patterns that lead to above-chance performance.",
+}
+
+@inproceedings{lazaridouetal2016b,
+    title = "Multimodal Semantic Learning from Child-Directed Input",
+    author = "Lazaridou, Angeliki  and
+      Chrupa{\l}a, Grzegorz  and
+      Fern{\'a}ndez, Raquel  and
+      Baroni, Marco",
+    booktitle = "Proceedings of the 2016 Conference of the North {A}merican Chapter of the Association for Computational Linguistics: Human Language Technologies",
+    month = jun,
+    year = "2016",
+    address = "San Diego, California",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/N16-1043",
+    doi = "10.18653/v1/N16-1043",
+    pages = "387--392",
+}
+
+@inproceedings{hillerandfernandez2016,
+    title = "A Data-driven Investigation of Corrective Feedback on Subject Omission Errors in First Language Acquisition",
+    author = "Hiller, Sarah  and
+      Fern{\'a}ndez, Raquel",
+    booktitle = "Proceedings of The 20th {SIGNLL} Conference on Computational Natural Language Learning",
+    month = aug,
+    year = "2016",
+    address = "Berlin, Germany",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/K16-1011",
+    doi = "10.18653/v1/K16-1011",
+    pages = "105--114",
+}
+
+@inproceedings{fernandez2003,
+    title = "A Dynamic Logic Formalisation of the Dialogue Gameboard",
+    author = "Fern{\'a}ndez, Raquel",
+    booktitle = "Student Research Workshop",
+    year = "2003",
+    url = "https://www.aclweb.org/anthology/E03-3005",
+}
+
+@inproceedings{ginzburgandfernandez2005,
+    title = "Scaling up from Dialogue to Multilogue: Some Principles and Benchmarks",
+    author = "Ginzburg, Jonathan  and
+      Fern{\'a}ndez, Raquel",
+    booktitle = "Proceedings of the 43rd Annual Meeting of the Association for Computational Linguistics ({ACL}{'}05)",
+    month = jun,
+    year = "2005",
+    address = "Ann Arbor, Michigan",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/P05-1029",
+    doi = "10.3115/1219840.1219869",
+    pages = "231--238",
+}
+
+@inproceedings{fernandezetal2008,
+    title = "Modelling and Detecting Decisions in Multi-party Dialogue",
+    author = "Fern{\'a}ndez, Raquel  and
+      Frampton, Matthew  and
+      Ehlen, Patrick  and
+      Purver, Matthew  and
+      Peters, Stanley",
+    booktitle = "Proceedings of the 9th {SIG}dial Workshop on Discourse and Dialogue",
+    month = jun,
+    year = "2008",
+    address = "Columbus, Ohio",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/W08-0125",
+    pages = "156--163",
+}
+
+@inproceedings{framptonetal2009,
+    title = "Who is {``}You{''}? Combining Linguistic and Gaze Features to Resolve Second-Person References in Dialogue",
+    author = "Frampton, Matthew  and
+      Fern{\'a}ndez, Raquel  and
+      Ehlen, Patrick  and
+      Christoudias, Mario  and
+      Darrell, Trevor  and
+      Peters, Stanley",
+    booktitle = "Proceedings of the 12th Conference of the {E}uropean Chapter of the {ACL} ({EACL} 2009)",
+    month = mar,
+    year = "2009",
+    address = "Athens, Greece",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/E09-1032",
+    pages = "273--281",
+}
+
 @inproceedings{deltrediciandfernandez2018,
 	title = "The Road to Success: Assessing the Fate of Linguistic Innovations in Online Communities",
 	author = "Del Tredici, Marco  and
