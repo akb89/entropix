@@ -23,7 +23,7 @@ class Sampler():
                  start, end, reduce, limit, rewind, kfolding, kfold_size,
                  max_num_threads, dev_type, debug, metric, alpha, logs_dirpath,
                  distance, singvalues_filepath, sing_alpha):
-        #self._model = np.load(singvectors_filepath)
+        # self._model = np.load(singvectors_filepath)
         global model  # ugly hack to bypass pickling problem on forking
         model, vocab = dutils.load_model_and_vocab(
             singvectors_filepath, model_type, vocab_filepath,
