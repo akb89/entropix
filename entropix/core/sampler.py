@@ -362,7 +362,7 @@ class Sampler():
         if self._shuffle:  # first iteration
             keep = np.random.choice(
                 list(range(model.shape[1]))[self._start:self._end],
-                size=2, replace=False)
+                size=2, replace=False).tolist()
         else:
             keep = [self._start, self._start+1]  # start at 2-dims
         best_train_eval_metric = evaluator.evaluate(
