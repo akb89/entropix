@@ -1,0 +1,900 @@
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.4, 0)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562868120.65187.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562868120.65187.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562868120.65187.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562868120.65187.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on SPR with win-2 and no singular values}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562868120.65187.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562868120.65187.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562868120.65187.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562868120.65187.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on SPR with win-2 and no singular values}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.2, 0)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562859120.877966.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562859120.877966.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562859120.877966.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562859120.877966.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on SPR with win-5 and no singular values}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562859120.877966.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562859120.877966.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562859120.877966.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.timestamp-1562859120.877966.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on SPR with win-5 and no singular values}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.35, 0)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868181.316872.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868181.316872.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868181.316872.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868181.316872.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on SPR with win-2 and no singular values with shuffling}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868181.316872.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868181.316872.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868181.316872.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868181.316872.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on SPR with win-2 and no singular values with shuffling}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.55, 0.45)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562859432.54782.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562859432.54782.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562859432.54782.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562859432.54782.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on SPR with win-5 and no singular values with shuffling}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562859432.54782.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562859432.54782.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562859432.54782.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-spr.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562859432.54782.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on SPR with win-5 and no singular values with shuffling}
+   \end{minipage}
+\end{figure}
+
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.05)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562868430.951903.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562868430.951903.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562868430.951903.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562868430.951903.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on RMSE with win-2 and singular values}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562868430.951903.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562868430.951903.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562868430.951903.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562868430.951903.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on RMSE with win-2 and singular values}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562859999.957132.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562859999.957132.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562859999.957132.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562859999.957132.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on RMSE with win-5 and singular values}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562859999.957132.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562859999.957132.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562859999.957132.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1562859999.957132.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on RMSE with win-5 and singular values}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868468.745234.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868468.745234.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868468.745234.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868468.745234.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on RMSE with win-2 and singular values with shuffling}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868468.745234.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868468.745234.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868468.745234.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562868468.745234.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on RMSE with win-2 and singular values with shuffling}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562860085.976484.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562860085.976484.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562860085.976484.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562860085.976484.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on RMSE with win-5 and singular values with shuffling}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562860085.976484.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562860085.976484.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562860085.976484.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.shuffled.timestamp-1562860085.976484.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on RMSE with win-5 and singular values with shuffling}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.05)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029361.093583.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029361.093583.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029361.093583.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029361.093583.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on combined with win-2 and no singular values}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029361.093583.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029361.093583.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029361.093583.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029361.093583.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on combined with win-2 and no singular values}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029434.715098.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029434.715098.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029434.715098.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029434.715098.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on combined with win-5 and no singular values}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029434.715098.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029434.715098.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029434.715098.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-rmse.mode-seq.niter-2.start-0.end-0.timestamp-1568029434.715098.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on combined with win-5 and no singular values}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.05)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032707.53023.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032707.53023.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032707.53023.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032707.53023.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on combined with win-2 with singular values}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032707.53023.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032707.53023.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032707.53023.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032707.53023.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on combined with win-2 with singular values}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032925.431224.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032925.431224.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032925.431224.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032925.431224.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on combined with win-5 with singular values}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032925.431224.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032925.431224.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032925.431224.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-combined.mode-seq.niter-2.start-0.end-0.timestamp-1568032925.431224.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on combined with win-5 with singular values}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965741.634937.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965741.634937.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965741.634937.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965741.634937.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on both with win-2 and no singular values}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965741.634937.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965741.634937.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965741.634937.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965741.634937.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on both with win-2 and no singular values}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965787.901387.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965787.901387.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965787.901387.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965787.901387.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on both with win-5 and no singular values}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965787.901387.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965787.901387.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965787.901387.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965787.901387.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on both with win-5 and no singular values}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965863.969309.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965863.969309.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965863.969309.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965863.969309.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on both with win-2 and no singular values with shuffling}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965863.969309.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965863.969309.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965863.969309.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965863.969309.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on both with win-2 and no singular values with shuffling}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965884.499234.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965884.499234.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965884.499234.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965884.499234.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on both with win-5 and no singular values with shuffling}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965884.499234.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965884.499234.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965884.499234.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965884.499234.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on both with win-5 and no singular values with shuffling}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965996.883131.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965996.883131.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965996.883131.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965996.883131.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on both with win-2 with singular values}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965996.883131.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965996.883131.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965996.883131.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-2.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567965996.883131.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on both with win-2 with singular values}
+   \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=SPR,
+     legend cell align={left},
+     legend style={at={(0.5, 0.1)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567964375.492535.kfold1-5.train.spr.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567964375.492535.kfold1-5.test.spr.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567964375.492535.kfold5-5.train.spr.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567964375.492535.kfold5-5.test.spr.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of SPR on SIMVERB when optimizing on both with win-5 with singular values}
+   \end{minipage}
+  \hspace{.04\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+  \centering
+  \resizebox{\linewidth}{!}{
+   \begin{tikzpicture}
+    \begin{axis}[
+     xlabel=Number of steps,
+     ylabel=RMSE,
+     legend cell align={left},
+     legend style={at={(0.5, 0.6)}, anchor= south west}
+     ]
+     \addplot [color=blue, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567964375.492535.kfold1-5.train.rmse.log};
+     \addlegendentry{fold1-train};
+     \addplot [color=red, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567964375.492535.kfold1-5.test.rmse.log};
+     \addlegendentry{fold1-test};
+     \addplot [color=green, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567964375.492535.kfold5-5.train.rmse.log};
+     \addlegendentry{fold5-train};
+     \addplot [color=orange, mark=none] table[x expr=\coordindex+1,y index=0] {logs/enwiki.20190120.mincount-300.win-5.ppmi.k10000.simverb.sampledims.metric-both.mode-seq.niter-2.start-0.end-0.timestamp-1567964375.492535.kfold5-5.test.rmse.log};
+     \addlegendentry{fold5-test};
+    \end{axis}
+   \end{tikzpicture}
+  }
+  \caption{Evolution of RMSE on SIMVERB when optimizing on both with win-5 with singular values}
+   \end{minipage}
+\end{figure}
