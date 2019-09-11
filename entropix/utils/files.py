@@ -151,12 +151,12 @@ def get_counts_filepath(corpus_filepath, min_count, output_dirpath):
     if corpus_filepath.endswith('.txt'):
         output_filepath = os.path.join(
             dirname, '{}.mincount-{}.counts'.format(
-                os.path.basename(corpus_filepath).split('.txt')[0]), min_count)
+                os.path.basename(corpus_filepath).split('.txt')[0], min_count))
     else:
         output_filepath = os.path.join(
             dirname,
             '{}.mincount-{}.counts'
-            .format(os.path.basename(corpus_filepath)), min_count)
+            .format(os.path.basename(corpus_filepath), min_count))
 
     return output_filepath
 

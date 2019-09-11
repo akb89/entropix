@@ -127,7 +127,9 @@ def _generate(args):
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
     generator.generate_distributional_model(output_dirpath, args.corpus,
-                                            args.min_count, args.win_size)
+                                            args.min_count, args.win_size,
+                                            args.with_info, args.info_model,
+                                            args.num_threads)
 
 
 def _svd(args):
@@ -497,6 +499,13 @@ def main():
                                  help='frequency threshold on vocabulary')
     parser_generate.add_argument('-w', '--win-size', default=2, type=int,
                                  help='size of context window')
+    parser_generate.add_argument('-i', '--with-info', action='store_true',
+                                 help='Whether or not to use informativeness')
+    parser_generate.add_argument('-f', '--info-model',
+                                 help='Absolute path to gensim cbow model')
+    parser_generate.add_argument('-n', '--num-threads', type=int, default=1,
+                                 help='number of threads to use for parallel '
+                                      'processing with informativeness only')
     parser_reduce = subparsers.add_parser(
         'reduce', formatter_class=argparse.RawTextHelpFormatter,
         help='reduce a sparse matrix to a dense one containing the rows of '
