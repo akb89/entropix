@@ -1,3 +1,7 @@
+*.pdf
+*.dpth
+*.dep
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -110,3 +114,4 @@ models/
 ppmi_test.py
 output/
 logs/
+decode.py

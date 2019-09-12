@@ -151,12 +151,12 @@ def get_counts_filepath(corpus_filepath, min_count, output_dirpath):
     if corpus_filepath.endswith('.txt'):
         output_filepath = os.path.join(
             dirname, '{}.mincount-{}.counts'.format(
-                os.path.basename(corpus_filepath).split('.txt')[0]), min_count)
+                os.path.basename(corpus_filepath).split('.txt')[0], min_count))
     else:
         output_filepath = os.path.join(
             dirname,
             '{}.mincount-{}.counts'
-            .format(os.path.basename(corpus_filepath)), min_count)
+            .format(os.path.basename(corpus_filepath), min_count))
 
     return output_filepath
 
@@ -167,22 +167,27 @@ def get_weightedmatrix_filepath(output_dirpath, model_filepath):
 
 
 def get_sparsematrix_filepath(output_dirpath, corpus_filepath,
-                              min_count, win_size):
+                              min_count, win_size, with_info):
     """
     Return the .mincount-[].win-[] filepath associated to the corpus filepath
     passed as a parameter, in the folder passed as a parameter.
     """
     if corpus_filepath.endswith('.txt'):
         output_filepath_matrix = os.path.join(
-            output_dirpath, '{}.mincount-{}.win-{}.npz'.format(
+            output_dirpath, '{}.mincount-{}.win-{}'.format(
                 os.path.basename(corpus_filepath).split('.txt')[0], min_count,
                 win_size))
     else:
         output_filepath_matrix = os.path.join(
             output_dirpath,
-            '{}.mincount-{}.win-{}.npz'.format(
+            '{}.mincount-{}.win-{}'.format(
                 os.path.basename(corpus_filepath), min_count, win_size))
+    if with_info:
+        output_filepath_matrix = '{}.info.npz'.format(output_filepath_matrix)
+    else:
+        output_filepath_matrix = '{}.raw.npz'.format(output_filepath_matrix)
     return output_filepath_matrix
+
 
 def _create_tmp_folder(output_dirpath):
     tmp_dirpath = os.path.join(output_dirpath, 'tmp')
@@ -190,6 +195,7 @@ def _create_tmp_folder(output_dirpath):
         logger.info('Creating directory {}'.format(tmp_dirpath))
         os.makedirs(tmp_dirpath)
     return tmp_dirpath
+
 
 def get_tmp_cosinedist_filepath(output_dirpath, idx):
     tmp_path = _create_tmp_folder(output_dirpath)
