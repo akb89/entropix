@@ -1,11 +1,12 @@
 """A basic count-based model using sparse matrices and no ppmi."""
 import logging
 import functools
-import multiprocess
 from collections import defaultdict
-from scipy import sparse
 
+import multiprocess
+from scipy import sparse
 from tqdm import tqdm
+
 import entropix.core.counter as counter
 import entropix.utils.files as futils
 
@@ -16,29 +17,36 @@ logger = logging.getLogger(__name__)
 __all__ = ('generate_distributional_model')
 
 
+def _count_lines_in_stream(corpus_filepath):
+    with open(corpus_filepath, 'r', encoding='utf-8') as input_stream:
+        return sum(1 for line in input_stream)
+
+
 def _count_with_info_filter(word_to_idx_dic, win_size, line):
     data_dic = defaultdict(lambda: defaultdict(int))
     tokens = line.strip().split()
     for token_pos, token in enumerate(tokens):
         if token not in word_to_idx_dic:
-            print('not in dic = {}'.format(token))
+            # print('not in dic = {}'.format(token))
             continue
-        token_idx = word_to_idx_dic[token]
         context = tokens[max(0, token_pos-win_size): token_pos] + tokens[token_pos+1: min(len(tokens), token_pos+win_size+1)]
-        context = tuple([w for w in context if w in info._model.wv.vocab and w in word_to_idx_dic])
+        context = tuple([w for w in context if w in info.model.wv.vocab and w in word_to_idx_dic])
         filtered_context = info.filter_context_words(context)
-        print('tokens = {}'.format(tokens))
-        print('target = {}'.format(tokens[token_pos]))
-        print('context = {}'.format(context))
-        print('filtered = {}'.format(filtered_context))
-        for ctx in context:
+        # print('tokens = {}'.format(tokens))
+        # print('target = {}'.format(tokens[token_pos]))
+        # print('context = {}'.format(context))
+        # print('filtered = {}'.format(filtered_context))
+        # print('----------------------------------------')
+        token_idx = word_to_idx_dic[token]
+        for ctx in filtered_context:
             ctx_idx = word_to_idx_dic[ctx]
             data_dic[token_idx][ctx_idx] += 1
     return data_dic
 
 
-def _count_raw_no_filter(input_stream, data_dic, win_size, word_to_idx_dic):
-    for line in tqdm(input_stream):
+def _count_raw_no_filter(input_stream, data_dic, win_size, word_to_idx_dic,
+                         total_num_lines):
+    for line in tqdm(input_stream, total=total_num_lines):
         tokens = line.strip().split()
         for token_pos, token in enumerate(tokens):  # raw count with symmetric matrix
             start = 0 if win_size == 0 else max(0, token_pos-win_size)
@@ -65,7 +73,7 @@ def generate_distributional_model(output_dirpath, corpus_filepath,
         global info  # hack to avoid RAM explosion on multiprocessing
         info = Informativeness(info_model_path)
     output_filepath_matrix = futils.get_sparsematrix_filepath(
-        output_dirpath, corpus_filepath, min_count, win_size)
+        output_dirpath, corpus_filepath, min_count, win_size, with_info)
     output_filepath_map = futils.get_vocab_filepath(output_filepath_matrix)
 
     word_to_count_dic = counter.count_words(corpus_filepath=corpus_filepath,
@@ -73,15 +81,18 @@ def generate_distributional_model(output_dirpath, corpus_filepath,
     word_to_idx_dic = {word: idx for idx, word
                        in enumerate(word_to_count_dic.keys())}
     data_dic = defaultdict(lambda: defaultdict(int))
+    logger.info('Counting lines in corpus...')
+    total_num_lines = _count_lines_in_stream(corpus_filepath)
+    logger.info('Total number of lines = {}'.format(total_num_lines))
     with open(corpus_filepath, 'r', encoding='utf-8') as input_stream:
         if not with_info:
             data_dic = _count_raw_no_filter(input_stream, data_dic, win_size,
-                                            word_to_idx_dic)
+                                            word_to_idx_dic, total_num_lines)
         else:  # TODO: make info model global otherwise RAM explodes
             with multiprocess.Pool(num_threads) as pool:
                 _process = functools.partial(_count_with_info_filter,
                                              word_to_idx_dic, win_size)
-                for _data_dic in pool.imap_unordered(_process, input_stream):
+                for _data_dic in tqdm(pool.imap_unordered(_process, input_stream), total=total_num_lines):
                     for row, columns in _data_dic.items():
                         for col, count in columns.items():
                             data_dic[row][col] += count

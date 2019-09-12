@@ -23,6 +23,11 @@ class Informativeness():
         logger.info('Loading gensim W2V CBOW model...')
         self._model = Word2Vec.load(model_path)
 
+    @property
+    def model(self):
+        """Return model attribute."""
+        return self._model
+
     @lru_cache(maxsize=50)
     def _get_prob_distribution(self, context):
         words_and_probs = self._model.predict_output_word(
