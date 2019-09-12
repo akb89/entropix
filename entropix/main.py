@@ -467,7 +467,8 @@ def main():
     parser_evaluate.add_argument('-e', '--end', type=int,
                                  help='index of singvectors dim to end at')
     parser_evaluate.add_argument('-t', '--type', choices=['svd', 'gensim',
-                                                          'ica', 'nmf', 'txt'],
+                                                          'ica', 'nmf', 'txt',
+                                                          'raw'],
                                  required=True,
                                  help='model type')
     parser_evaluate.add_argument('-c', '--metric', required=True,
@@ -529,6 +530,7 @@ def main():
     parser_svd.add_argument('-k', '--dim', default=0, type=int,
                             help='number of dimensions in final model')
     parser_svd.add_argument('-w', '--which', choices=['LM', 'SM'],
+                            default='LM',
                             help='Which k singular values to find:'
                                  'LM : largest singular values'
                                  'SM : smallest singular values')
