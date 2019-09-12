@@ -127,7 +127,9 @@ def _generate(args):
     else:
         logger.info('Saving to directory {}'.format(output_dirpath))
     generator.generate_distributional_model(output_dirpath, args.corpus,
-                                            args.min_count, args.win_size)
+                                            args.min_count, args.win_size,
+                                            args.with_info, args.info_model,
+                                            args.num_threads)
 
 
 def _svd(args):
@@ -465,7 +467,8 @@ def main():
     parser_evaluate.add_argument('-e', '--end', type=int,
                                  help='index of singvectors dim to end at')
     parser_evaluate.add_argument('-t', '--type', choices=['svd', 'gensim',
-                                                          'ica', 'nmf', 'txt'],
+                                                          'ica', 'nmf', 'txt',
+                                                          'raw'],
                                  required=True,
                                  help='model type')
     parser_evaluate.add_argument('-c', '--metric', required=True,
@@ -497,6 +500,13 @@ def main():
                                  help='frequency threshold on vocabulary')
     parser_generate.add_argument('-w', '--win-size', default=2, type=int,
                                  help='size of context window')
+    parser_generate.add_argument('-i', '--with-info', action='store_true',
+                                 help='Whether or not to use informativeness')
+    parser_generate.add_argument('-f', '--info-model',
+                                 help='Absolute path to gensim cbow model')
+    parser_generate.add_argument('-n', '--num-threads', type=int, default=1,
+                                 help='number of threads to use for parallel '
+                                      'processing with informativeness only')
     parser_reduce = subparsers.add_parser(
         'reduce', formatter_class=argparse.RawTextHelpFormatter,
         help='reduce a sparse matrix to a dense one containing the rows of '
@@ -520,6 +530,7 @@ def main():
     parser_svd.add_argument('-k', '--dim', default=0, type=int,
                             help='number of dimensions in final model')
     parser_svd.add_argument('-w', '--which', choices=['LM', 'SM'],
+                            default='LM',
                             help='Which k singular values to find:'
                                  'LM : largest singular values'
                                  'SM : smallest singular values')
