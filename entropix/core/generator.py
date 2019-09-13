@@ -32,11 +32,11 @@ def _count_with_info_filter(word_to_idx_dic, win_size, line):
         context = tokens[max(0, token_pos-win_size): token_pos] + tokens[token_pos+1: min(len(tokens), token_pos+win_size+1)]
         context = tuple([w for w in context if w in info.model.wv.vocab and w in word_to_idx_dic])
         filtered_context = info.filter_context_words(context)
-        # print('tokens = {}'.format(tokens))
-        # print('target = {}'.format(tokens[token_pos]))
-        # print('context = {}'.format(context))
-        # print('filtered = {}'.format(filtered_context))
-        # print('----------------------------------------')
+        print('tokens = {}'.format(tokens))
+        print('target = {}'.format(tokens[token_pos]))
+        print('context = {}'.format(context))
+        print('filtered = {}'.format(filtered_context))
+        print('----------------------------------------')
         token_idx = word_to_idx_dic[token]
         for ctx in filtered_context:
             ctx_idx = word_to_idx_dic[ctx]
@@ -76,6 +76,8 @@ def generate_distributional_model(output_dirpath, corpus_filepath,
     if with_info and not info_model_path:
         raise Exception('You need to specify --info_model if --with-info is set to true')
     if with_info:
+        logger.info('Generating DS model with informativeness on {} threads'
+                    .format(num_threads))
         global info  # hack to avoid RAM explosion on multiprocessing
         info = Informativeness(info_model_path)
     output_filepath_matrix = futils.get_sparsematrix_filepath(
@@ -95,7 +97,7 @@ def generate_distributional_model(output_dirpath, corpus_filepath,
             data_dic = _count_raw_no_filter(input_stream, data_dic, win_size,
                                             word_to_idx_dic, total_num_lines)
         else:  # TODO: make info model global otherwise RAM explodes
-            with multiprocessing.Pool(num_threads) as pool:
+            with multiprocessing.Pool(processes=num_threads) as pool:
                 _process = functools.partial(_count_with_info_filter,
                                              word_to_idx_dic, win_size)
                 for _data_dic in tqdm(pool.imap_unordered(_process, input_stream), total=total_num_lines):
