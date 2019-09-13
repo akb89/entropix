@@ -3,7 +3,7 @@ import logging
 import functools
 from collections import defaultdict
 
-import multiprocess
+import multiprocessing
 from scipy import sparse
 from tqdm import tqdm
 
@@ -23,7 +23,7 @@ def _count_lines_in_stream(corpus_filepath):
 
 
 def _count_with_info_filter(word_to_idx_dic, win_size, line):
-    data_dic = defaultdict(lambda: defaultdict(int))
+    data_dic = {}
     tokens = line.strip().split()
     for token_pos, token in enumerate(tokens):
         if token not in word_to_idx_dic:
@@ -40,7 +40,13 @@ def _count_with_info_filter(word_to_idx_dic, win_size, line):
         token_idx = word_to_idx_dic[token]
         for ctx in filtered_context:
             ctx_idx = word_to_idx_dic[ctx]
-            data_dic[token_idx][ctx_idx] += 1
+            if token_idx not in data_dic:
+                data_dic[token_idx] = {}
+                data_dic[token_idx][ctx_idx] = 1
+            elif ctx_idx not in data_dic[token_idx]:
+                data_dic[token_idx][ctx_idx] = 1
+            else:
+                data_dic[token_idx][ctx_idx] += 1
     return data_dic
 
 
@@ -89,7 +95,7 @@ def generate_distributional_model(output_dirpath, corpus_filepath,
             data_dic = _count_raw_no_filter(input_stream, data_dic, win_size,
                                             word_to_idx_dic, total_num_lines)
         else:  # TODO: make info model global otherwise RAM explodes
-            with multiprocess.Pool(num_threads) as pool:
+            with multiprocessing.Pool(num_threads) as pool:
                 _process = functools.partial(_count_with_info_filter,
                                              word_to_idx_dic, win_size)
                 for _data_dic in tqdm(pool.imap_unordered(_process, input_stream), total=total_num_lines):

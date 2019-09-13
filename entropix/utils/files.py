@@ -185,7 +185,7 @@ def get_sparsematrix_filepath(output_dirpath, corpus_filepath,
     if with_info:
         output_filepath_matrix = '{}.info.npz'.format(output_filepath_matrix)
     else:
-        output_filepath_matrix = '{}.raw.npz'.format(output_filepath_matrix)
+        output_filepath_matrix = '{}.npz'.format(output_filepath_matrix)
     return output_filepath_matrix
 
 
