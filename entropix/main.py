@@ -37,13 +37,6 @@ logger = logging.getLogger(__name__)
 def _evaluate(args):
     logger.info('Evaluating model on {}'.format(args.dataset))
     logger.info('Loading distributional space from {}'.format(args.model))
-    dims = []
-    if args.dims:
-        with open(args.dims, 'r', encoding='utf-8') as dims_stream:
-            for line in dims_stream:
-                dims.append(int(line.strip()))
-        logger.info('Sampling model with {} dimensions = {}'
-                    .format(len(dims), dims))
     model, vocab = dutils.load_model_and_vocab(
         args.model, args.type, args.vocab, args.singvalues, args.singalpha,
         args.start, args.end, args.dims)
@@ -363,6 +356,22 @@ def _analyse_ppmi_rows_overlap(args):
     analyser.analyse_overlap(args.model, args.vocab, args.dataset)
 
 
+def _export(args):
+    logger.info('Exporting file {} to {}.npy'
+                .format(args.model, args.output))
+    if args.type == 'numpy' and not args.vocab:
+        raise Exception('--vocab is required with --format numpy')
+    if args.dims and args.start or args.dims and args.end:
+        raise Exception('Cannot specify both --dims and --start or --end params')
+    if args.start is not None and args.end is None or args.end is not None and args.start is None:
+        raise Exception('Both --start and --end params should be specified')
+    model, vocab = dutils.load_model_and_vocab(
+        args.model, args.type, args.vocab, args.singvalues, args.singalpha,
+        args.start, args.end, args.dims)
+    np.save(args.output, model)
+    dutils.save_vocab(vocab, '{}.vocab'.format(args.output))
+
+
 def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
@@ -466,9 +475,9 @@ def main():
                                  help='index of singvectors dim to start from')
     parser_evaluate.add_argument('-e', '--end', type=int,
                                  help='index of singvectors dim to end at')
-    parser_evaluate.add_argument('-t', '--type', choices=['svd', 'gensim',
+    parser_evaluate.add_argument('-t', '--type', choices=['numpy', 'gensim',
                                                           'ica', 'nmf', 'txt',
-                                                          'raw'],
+                                                          'scipy'],
                                  required=True,
                                  help='model type')
     parser_evaluate.add_argument('-c', '--metric', required=True,
@@ -668,7 +677,8 @@ def main():
                                default=0,
                                help='power alpha for singular values')
     parser_sample.add_argument('--type', required=True,
-                               choices=['svd', 'gensim', 'ica', 'nmf', 'txt'],
+                               choices=['numpy', 'gensim', 'ica', 'nmf', 'txt',
+                                        'scipy'],
                                help='model type')
     parser_convert = subparsers.add_parser(
         'convert', formatter_class=argparse.RawTextHelpFormatter,
@@ -716,5 +726,30 @@ def main():
     parser_analyse_ppmi_rows_overlap.add_argument('-d', '--dataset', required=True,
                                                   choices=['men', 'simlex', 'simverb'],
                                                   help='which dataset to consider')
+    parser_export = subparsers.add_parser(
+        'export', formatter_class=argparse.RawTextHelpFormatter,
+        help='export model to a standardized numpy format')
+    parser_export.set_defaults(func=_export)
+    parser_export.add_argument('-m', '--model', required=True,
+                               help='absolute path to input embedding model')
+    parser_export.add_argument('-o', '--output', required=True,
+                               help='absolute path to output numpy model')
+    parser_export.add_argument('-t', '--type', required=True,
+                               choices=['numpy', 'gensim'],
+                               help='input embedding format type')
+    parser_export.add_argument('-v', '--vocab',
+                               help='vocabulary mapping for dsm')
+    parser_export.add_argument('-d', '--dims',
+                               help='absolute path to .txt file containing'
+                                    'a shortlist of dimensions, one per line'
+                                    'to select from')
+    parser_export.add_argument('-s', '--start', type=int,
+                               help='index of singvectors dim to start from')
+    parser_export.add_argument('-e', '--end', type=int,
+                               help='index of singvectors dim to end at')
+    parser_export.add_argument('--singvalues',
+                               help='absolute path to singular values')
+    parser_export.add_argument('--singalpha', type=float,
+                               help='power alpha for singular values')
     args = parser.parse_args()
     args.func(args)
