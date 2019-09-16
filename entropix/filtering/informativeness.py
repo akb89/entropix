@@ -22,6 +22,7 @@ class Informativeness():
         """Initialize class as a gensim W2V model."""
         logger.info('Loading gensim W2V CBOW model...')
         self._model = Word2Vec.load(model_path)
+        self._model.workers = 1
 
     @property
     def model(self):
