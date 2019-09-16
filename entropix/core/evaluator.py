@@ -67,13 +67,13 @@ def evaluate_distributional_space(model, vocab, dataset, metric, model_type,
     """Evaluate a numpy model against the MEN/Simlex/Simverb datasets."""
     logger.info('Evaluating distributional space...')
     results = []
-    if model_type not in ['raw', 'svd', 'gensim', 'ica', 'nmf', 'txt']:
+    if model_type not in ['scipy', 'numpy', 'gensim', 'ica', 'nmf', 'txt']:
         raise Exception('Unsupporteed model-type: {}'.format(model_type))
     if metric not in ['spr', 'rmse']:
         raise Exception('Unsupported metric: {}'.format(metric))
-    if model_type == 'raw':
+    if model_type == 'scipy':
         model = model.todense()
-    if model_type in ['raw', 'svd', 'ica', 'nmf', 'txt']:
+    if model_type in ['scipy', 'numpy', 'ica', 'nmf', 'txt']:
         dim = model.shape[1]
         splits = dutils.load_kfold_splits(vocab, dataset, kfold_size,
                                           dev_type='nodev',
