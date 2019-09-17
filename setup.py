@@ -23,7 +23,8 @@ setup(
     keywords=['entropy', 'distributional semantics'],
     platforms=['any'],
     packages=['entropix', 'entropix.logging', 'entropix.exceptions',
-              'entropix.utils', 'entropix.core', 'entropix.resources'],
+              'entropix.utils', 'entropix.core', 'entropix.resources',
+              'entropix.filtering'],
     package_data={'entropix': ['logging/*.yml', 'resources/*']},
     include_package_data=True,
     entry_points={
