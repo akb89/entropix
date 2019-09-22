@@ -23,19 +23,20 @@ class Informativeness():
         logger.info('Loading gensim W2V CBOW model...')
         self._model = Word2Vec.load(model_path)
         self._model.workers = 1
+        print(self._model.workers)
 
     @property
     def model(self):
         """Return model attribute."""
         return self._model
 
-    @lru_cache(maxsize=50)
+    @lru_cache(maxsize=5)
     def _get_prob_distribution(self, context):
         words_and_probs = self._model.predict_output_word(
             context, topn=len(self._model.wv.vocab))
         return [item[1] for item in words_and_probs]
 
-    @lru_cache(maxsize=50)
+    @lru_cache(maxsize=5)
     def context_informativeness(self, context):
         """Get context informativeness (CI)."""
         probs = self._get_prob_distribution(context)
@@ -43,7 +44,7 @@ class Informativeness():
         ctx_ent = 1 - (shannon_entropy / np.log(len(probs)))
         return ctx_ent
 
-    @lru_cache(maxsize=50)
+    @lru_cache(maxsize=10)
     def context_word_informativeness(self, context, word_index):
         """Get context word informativeness (CWI).
 

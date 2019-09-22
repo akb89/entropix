@@ -37,6 +37,7 @@ def save_vocab(vocab, output_vocab_filepath):
         for word, idx in vocab.items():
             print('{}\t{}'.format(idx, word), file=output_stream)
 
+
 def save_fit_vocab(dataset_idx, vocab, fit_vocab_filepath):
     logger.info('Saving fit vocab to {}'.format(fit_vocab_filepath))
     reverse_vocab = {value: key for key, value in vocab.items()}
@@ -138,7 +139,6 @@ def _load_idx_and_sim(left, right, sim, vocab, dataset, shuffle):
         random.shuffle(shuffled_zip)
         unz_shuffle = list(zip(*shuffled_zip))
         return list(unz_shuffle[0]), list(unz_shuffle[1]), list(unz_shuffle[2])
-    print(f_sim)
     return left_idx, right_idx, f_sim
 
 
@@ -253,8 +253,13 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
     if model_type not in ['gensim', 'numpy', 'ica', 'nmf', 'txt', 'scipy']:
         raise Exception('Unsupported model model-type {}'.format(model_type))
     if model_type == 'gensim':
-        model = Word2Vec.load(model_filepath).wv
-        logger.info('model size = {}'.format(model.vector_size))
+        wv = Word2Vec.load(model_filepath).wv
+        logger.info('model size = {}'.format(wv.vector_size))
+        vocab = {word: idx for idx, word in enumerate(wv.wv.vocab.keys())}
+        logger.info('vocab size = {}'.format(len(vocab)))
+        model = np.empty(shape=(len(vocab), wv.vector_size))
+        for word, idx in vocab.items():
+            model[idx] = wv[word]
     else:
         if model_type == 'scipy':
             logger.info('Loading raw count-based model from .npz file...')
@@ -293,6 +298,14 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
             if model_type == 'numpy':
                 logger.info('Loading numpy model...')
                 singvectors = np.load(model_filepath)
+                if dims_filepath:
+                    dims = []
+                    with open(dims_filepath, 'r', encoding='utf-8') as dims_stream:
+                        for line in dims_stream:
+                            dims.append(int(line.strip()))
+                    logger.info('Sampling model with {} dimensions = {}'
+                                .format(len(dims), dims))
+                    logger.info('Reducing model to {} dims'.format(len(dims)))
                 if sing_alpha is not None and sing_alpha != 0:
                     logger.info(
                         'Loading model with singalpha = {} from singvalues {}'
@@ -304,6 +317,10 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
                     singvectors = singvectors[:, start:end]
                     if sing_alpha is not None and sing_alpha != 0:
                         singvalues = singvalues[start:end]
+                if dims_filepath and dims:
+                    singvectors = singvectors[:, dims]
+                    if sing_alpha is not None and sing_alpha != 0:
+                        singvalues = singvalues[dims]
                 if sing_alpha is None or sing_alpha == 0:
                     model = singvectors
                 elif sing_alpha == 1:
@@ -317,14 +334,5 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
                 else:
                     logger.info('Loading scikit-learn NMF model...')
                 model = joblib.load(model_filepath)
-            if dims_filepath:
-                dims = []
-                with open(dims_filepath, 'r', encoding='utf-8') as dims_stream:
-                    for line in dims_stream:
-                        dims.append(int(line.strip()))
-                logger.info('Sampling model with {} dimensions = {}'
-                            .format(len(dims), dims))
-                logger.info('Reducing model to {} dims'.format(len(dims)))
-                model = model[:, dims]
         logger.info('model size = {}'.format(model.shape))
     return model, vocab
