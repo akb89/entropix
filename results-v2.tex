@@ -81,8 +81,8 @@ In absolute, the combination of PPMI + SVD-top (or any other SGNS equivalent wit
         Model & \multicolumn{1}{c}{spr} & \multicolumn{1}{c}{rmse} & \multicolumn{1}{c}{spr} & \multicolumn{1}{c}{rmse} & \multicolumn{1}{c}{spr} & \multicolumn{1}{c}{rmse} \\
         \midrule
         SVD-k400-alpha0-win2 & 0.75	& 0.33	& 0.41	& 0.31	& 0.27	& 0.35\\
-        SVD-k400-alpha1-win2 & 0.68&0.20&0.33&0.28&0.19&\textbf{0.28}\\
         SVD-k400-alpha0-win5 & 0.77&0.32&0.38&0.32&0.25&0.36\\
+        SVD-k400-alpha1-win2 & 0.68&0.20&0.33&0.28&0.19&\textbf{0.28}\\
         SVD-k400-alpha1-win5 & 0.69&\textbf{0.18}&0.28&0.29&0.16&0.29\\
         W2V-SG-d400 & 0.7&0.26&0.39&0.26&0.28&\textbf{0.28}\\
         Paragram~\citep{wietingetal2015} & 0.78&0.36&0.68&\textbf{0.24}&0.54&\textbf{0.28}\\
@@ -97,6 +97,59 @@ In absolute, the combination of PPMI + SVD-top (or any other SGNS equivalent wit
 SOTA on \simlex\ is the system of \cite{recskietal2016}. SOTA on \simverb\ is the system of \cite{mrkvsicetal2016} as reported in \simverb\ supplementary materials.
 The model of \cite{recskietal2016} is an extension of the paragram embeddings of \cite{wietingetal2015}.
 The model of \cite{mrkvsicetal2016} applied counter-fitting to the same paragram embeddings.
+
+\begin{table}[H]
+    \centering
+    \resizebox{\linewidth}{!}{
+    \begin{tabular}{l*{9}{S[table-auto-round, table-format=1.2]}}
+     \toprule
+        & \multicolumn{2}{c}{MEN} & \multicolumn{2}{c}{SIMLEX} & \multicolumn{2}{c}{SIMVERB} & \text CoNLL00 & \text CoNLL03 & PTB \\
+        Model & \multicolumn{1}{c}{spr} & \multicolumn{1}{c}{rmse} & \multicolumn{1}{c}{spr} & \multicolumn{1}{c}{rmse} & \multicolumn{1}{c}{spr} & \multicolumn{1}{c}{rmse} & \multicolumn{1}{c}{F_1} & \multicolumn{1}{c}{F_1} & \multicolumn{1}{c}{Acc} \\
+        \midrule
+        SVD-k400-alpha0-win2 & 0.75	& 0.33	& 0.41	& 0.31	& 0.27	& 0.35 & 85.18 & 79.60 & 96.38 \\
+        SVD-k400-alpha0-win5 & 0.77&0.32&0.38&0.32&0.25&0.36 & 81.34 & 78.59 & 95.68 \\
+        SVD-k400-alpha1-win2 & 0.68&0.20&0.33&0.28&0.19&\textbf{0.28} & 81.95 & 72.08 & 93.11 \\
+        SVD-k400-alpha1-win5 & 0.69&\textbf{0.18}&0.28&0.29&0.16&0.29 & 80.70 & 73.90 & 92.67 \\
+        W2V-SG-d400 & 0.7&0.26&0.39&0.26&0.28&\textbf{0.28}\\
+        W2V-SG-d400-win2 \\
+        W2V-SG-d400-win5 & 0.7379695107929769 & 0.26117024120303706 & 0.39380601373653845 & 0.2586407329204742 & 0.28873959174164987 & 0.28564919065520195 \\
+        Paragram & 0.78&0.36&0.68&\textbf{0.24}&0.54&\textbf{0.28} & 87.63 & 80.23 & 96.39 \\
+        CN & \textbf{0.84}&0.28&0.49&0.26&0.36&0.30 & \\
+        men-spr-alpha0-win2 \\
+        men-spr-alpha0-win5 \\
+        men-rmse-alpha0-win2 \\
+        men-rmse-alpha0-win5 \\
+        men-rmse-alpha1-win2 \\
+        men-rmse-alpha1-win5 \\
+        men-both-alpha0-win2 \\
+        men-both-alpha0-win5 \\
+        men-both-alpha0-win2-shuffle \\
+        men-both-alpha0-win5-shuffle \\
+        simlex-spr-alpha0-win2 \\
+        simlex-spr-alpha0-win5 \\
+        simlex-rmse-alpha0-win2 \\
+        simlex-rmse-alpha0-win5 \\
+        simlex-rmse-alpha1-win2 \\
+        simlex-rmse-alpha1-win5 \\
+        simlex-both-alpha0-win2 \\
+        simlex-both-alpha0-win5 \\
+        simlex-both-alpha0-win2-shuffle \\
+        simlex-both-alpha0-win5-shuffle \\
+        simverb-spr-alpha0-win2 \\
+        simverb-spr-alpha0-win5 \\
+        simverb-rmse-alpha0-win2 \\
+        simverb-rmse-alpha0-win5 \\
+        simverb-rmse-alpha1-win2 \\
+        simverb-rmse-alpha1-win5 \\
+        simverb-both-alpha0-win2 \\
+        simverb-both-alpha0-win5 \\
+        simverb-both-alpha0-win2-shuffle \\
+        simverb-both-alpha0-win5-shuffle \\
+     \bottomrule
+    \end{tabular}
+    }
+    \caption{Baseline and SOTA with downstream scores}
+\end{table}
 
 \section{MEN}
 \input{results.men.table}
@@ -177,7 +230,7 @@ Just putting it here for future reference as sparse coding\footnote{\url{https:/
 looking for primitives to me...
 It has also been tried for word embeddings: \citep{faruquietal2015,berend2017}.
 
-\bibliography{results}
 \bibliographystyle{acl_natbib}
+\bibliography{biblio/biblio}
 
 \end{document}
