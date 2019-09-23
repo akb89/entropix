@@ -32,7 +32,7 @@ class Informativeness():
     #@lru_cache(maxsize=5)
     def _get_prob_distribution(self, context):
         word2_indices = [self._model.wv.vocab[w].index for w in context if w in self._model.wv.vocab]
-        # l1 = np.sum(self._model.wv.vectors[word2_indices], axis=0)
+        l1 = np.sum(self._model.wv.vectors[word2_indices], axis=0)
         # if word2_indices and self._model.cbow_mean:
         #     l1 /= len(word2_indices)
         # # propagate hidden -> output and take softmax to get probabilities
