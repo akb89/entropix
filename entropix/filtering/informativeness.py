@@ -23,7 +23,6 @@ class Informativeness():
         logger.info('Loading gensim W2V CBOW model...')
         self._model = Word2Vec.load(model_path)
         self._model.workers = 1
-        print(self._model.workers)
 
     @property
     def model(self):
@@ -32,9 +31,12 @@ class Informativeness():
 
     @lru_cache(maxsize=5)
     def _get_prob_distribution(self, context):
-        words_and_probs = self._model.predict_output_word(
-            context, topn=len(self._model.wv.vocab))
-        return [item[1] for item in words_and_probs]
+        import numpy as np
+        distrib = np.random.dirichlet(np.ones(151166), size=1)[0]
+        return distrib
+        # words_and_probs = self._model.predict_output_word(
+        #     context, topn=len(self._model.wv.vocab))
+        # return [item[1] for item in words_and_probs]
 
     @lru_cache(maxsize=5)
     def context_informativeness(self, context):
