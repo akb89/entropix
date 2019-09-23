@@ -24,31 +24,32 @@ def _count_lines_in_stream(corpus_filepath):
 
 def _count_with_info_filter(word_to_idx_dic, win_size, line):
     data_dic = {}
-    test_list = [idx for idx in range(90000000)]
-    # tokens = line.strip().split()
-    # for token_pos, token in enumerate(tokens):
-    #     if token not in word_to_idx_dic:
-    #         # print('not in dic = {}'.format(token))
-    #         continue
-    #     context = tokens[max(0, token_pos-win_size): token_pos] + tokens[token_pos+1: min(len(tokens), token_pos+win_size+1)]
-    #     context = tuple([w for w in context if w in info.model.wv.vocab and w in word_to_idx_dic])
-    #     filtered_context = info.filter_context_words(context)
-    #     # print('tokens = {}'.format(tokens))
-    #     # print('target = {}'.format(tokens[token_pos]))
-    #     # print('context = {}'.format(context))
-    #     # print('filtered = {}'.format(filtered_context))
-    #     # print('----------------------------------------')
-    #     token_idx = word_to_idx_dic[token]
-    #     for ctx in filtered_context:
-    #         ctx_idx = word_to_idx_dic[ctx]
-    #         if token_idx not in data_dic:
-    #             data_dic[token_idx] = {}
-    #             data_dic[token_idx][ctx_idx] = 1
-    #         elif ctx_idx not in data_dic[token_idx]:
-    #             data_dic[token_idx][ctx_idx] = 1
-    #         else:
-    #             data_dic[token_idx][ctx_idx] += 1
-    return data_dic
+    # test_list = [idx for idx in range(90000000)]
+    tokens = line.strip().split()
+    for token_pos, token in enumerate(tokens):
+        if token not in word_to_idx_dic:
+            # print('not in dic = {}'.format(token))
+            continue
+        context = tokens[max(0, token_pos-win_size): token_pos] + tokens[token_pos+1: min(len(tokens), token_pos+win_size+1)]
+        context = tuple([w for w in context if w in info.model.wv.vocab and w in word_to_idx_dic])
+        filtered_context = info.filter_context_words(context)
+        # print('tokens = {}'.format(tokens))
+        # print('target = {}'.format(tokens[token_pos]))
+        # print('context = {}'.format(context))
+        # print('filtered = {}'.format(filtered_context))
+        # print('----------------------------------------')
+        token_idx = word_to_idx_dic[token]
+        for ctx in filtered_context:
+            ctx_idx = word_to_idx_dic[ctx]
+            if token_idx not in data_dic:
+                data_dic[token_idx] = {}
+                data_dic[token_idx][ctx_idx] = 1
+            elif ctx_idx not in data_dic[token_idx]:
+                data_dic[token_idx][ctx_idx] = 1
+            else:
+                data_dic[token_idx][ctx_idx] += 1
+    #return data_dic
+    return {}
 
 
 def _count_raw_no_filter(input_stream, data_dic, win_size, word_to_idx_dic,
