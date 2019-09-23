@@ -79,8 +79,8 @@ def generate_distributional_model(output_dirpath, corpus_filepath,
     if with_info:
         logger.info('Generating DS model with informativeness on {} threads'
                     .format(num_threads))
-        #global info  # hack to avoid RAM explosion on multiprocessing
-        #info = Informativeness(info_model_path)
+        global info  # hack to avoid RAM explosion on multiprocessing
+        info = Informativeness(info_model_path)
     output_filepath_matrix = futils.get_sparsematrix_filepath(
         output_dirpath, corpus_filepath, min_count, win_size, with_info)
     output_filepath_map = futils.get_vocab_filepath(output_filepath_matrix)
