@@ -31,6 +31,7 @@ class Informativeness():
 
     #@lru_cache(maxsize=5)
     def _get_prob_distribution(self, context):
+        print(np.__config__.show())
         word2_indices = [self._model.wv.vocab[w].index for w in context if w in self._model.wv.vocab]
         l1 = np.sum(self._model.wv.vectors[word2_indices], axis=0)
         if word2_indices and self._model.cbow_mean:
