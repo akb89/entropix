@@ -35,8 +35,8 @@ class Informativeness():
         l1 = np.sum(self._model.wv.vectors[word2_indices], axis=0)
         if word2_indices and self._model.cbow_mean:
             l1 /= len(word2_indices)
-        # # propagate hidden -> output and take softmax to get probabilities
-        # prob_values = np.exp(np.dot(l1, self._model.trainables.syn1neg.T))
+        # propagate hidden -> output and take softmax to get probabilities
+        prob_values = np.exp(np.dot(l1, self._model.trainables.syn1neg.T))
         # prob_values /= sum(prob_values)
         prob_values = np.random.dirichlet(np.ones(151166), size=1)[0]
         return prob_values
