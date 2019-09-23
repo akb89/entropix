@@ -25,7 +25,7 @@ def _count_lines_in_stream(corpus_filepath):
 def _count_with_info_filter(word_to_idx_dic, win_size, line):
     data_dic = {}
     import time
-    time.sleep(5)
+    time.sleep(60)
     # tokens = line.strip().split()
     # for token_pos, token in enumerate(tokens):
     #     if token not in word_to_idx_dic:
