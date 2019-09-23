@@ -2,7 +2,6 @@
 
 Entropy is computed from a gensim W2V CBOW language model.
 """
-import os
 
 from functools import lru_cache
 
@@ -14,7 +13,6 @@ from gensim.models import Word2Vec
 __all__ = ('Informativeness')
 
 logger = logging.getLogger(__name__)
-os.environ['OMP_NUM_THREADS'] = '1'
 
 
 class Informativeness():
@@ -31,7 +29,7 @@ class Informativeness():
         """Return model attribute."""
         return self._model
 
-    #@lru_cache(maxsize=5)
+    @lru_cache(maxsize=5)
     def _get_prob_distribution(self, context):
         word2_indices = [self._model.wv.vocab[w].index for w in context if w in self._model.wv.vocab]
         l1 = np.sum(self._model.wv.vectors[word2_indices], axis=0)
@@ -39,11 +37,10 @@ class Informativeness():
             l1 /= len(word2_indices)
         # propagate hidden -> output and take softmax to get probabilities
         prob_values = np.exp(np.dot(l1, self._model.trainables.syn1neg.T))
-        # prob_values /= sum(prob_values)
-        prob_values = np.random.dirichlet(np.ones(151166), size=1)[0]
+        prob_values /= sum(prob_values)
         return prob_values
 
-    #@lru_cache(maxsize=5)
+    @lru_cache(maxsize=5)
     def context_informativeness(self, context):
         """Get context informativeness (CI)."""
         probs = self._get_prob_distribution(context)
@@ -51,7 +48,7 @@ class Informativeness():
         ctx_ent = 1 - (shannon_entropy / np.log(len(probs)))
         return ctx_ent
 
-    #@lru_cache(maxsize=10)
+    @lru_cache(maxsize=10)
     def context_word_informativeness(self, context, word_index):
         """Get context word informativeness (CWI).
 
