@@ -2,6 +2,7 @@
 
 Entropy is computed from a gensim W2V CBOW language model.
 """
+import os
 
 from functools import lru_cache
 
@@ -13,6 +14,7 @@ from gensim.models import Word2Vec
 __all__ = ('Informativeness')
 
 logger = logging.getLogger(__name__)
+os.environ['OMP_NUM_THREADS'] = '1'
 
 
 class Informativeness():
