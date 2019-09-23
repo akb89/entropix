@@ -347,7 +347,6 @@ def _ica(args):
 
 
 def _nmf(args):
-    print(args.n_components)
     reducer.apply_nmf(args.model, args.init, args.max_iter, args.shuffle,
                       args.n_components, args.dataset, args.vocab)
 
