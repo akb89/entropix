@@ -29,7 +29,7 @@ class Informativeness():
         """Return model attribute."""
         return self._model
 
-    @lru_cache(maxsize=5)
+    @lru_cache(maxsize=50)
     def _get_prob_distribution(self, context):
         word2_indices = [self._model.wv.vocab[w].index for w in context if w in self._model.wv.vocab]
         l1 = np.sum(self._model.wv.vectors[word2_indices], axis=0)
@@ -40,7 +40,7 @@ class Informativeness():
         prob_values /= sum(prob_values)
         return prob_values
 
-    @lru_cache(maxsize=5)
+    @lru_cache(maxsize=10)
     def context_informativeness(self, context):
         """Get context informativeness (CI)."""
         probs = self._get_prob_distribution(context)
