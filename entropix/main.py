@@ -271,6 +271,7 @@ def _remove_mean(args):
 
 
 def _convert(args):
+    """deprecated."""
     logger.info('Converting file {}'.format(args.input))
     logger.info('Converting from {} to {}...'.format(args.source, args.to))
     dirname = os.path.dirname(args.input)
@@ -282,7 +283,7 @@ def _convert(args):
     if args.to == 'text':
         model_filepath = '{}.txt'.format(output_basename)
         model = np.load(args.input)
-        model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
+        # model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
         if args.dims:
             dims = []
             with open(args.dims, 'r', encoding='utf-8') as dims_stream:
@@ -460,11 +461,12 @@ def main():
                                  help='absolute path to .npz matrix '
                                       'corresponding to the distributional '
                                       'space to evaluate')
-    parser_evaluate.add_argument('-v', '--vocab',
+    parser_evaluate.add_argument('-v', '--vocab', required=True,
                                  help='absolute path to .map vocabulary file')
     parser_evaluate.add_argument('-d', '--dataset', required=True,
-                                 choices=['men', 'simlex', 'simverb',
-                                          'sts2012', 'ws353'],
+                                 choices=['ap', 'battig', 'essli', 'men',
+                                          'simlex', 'simverb', 'sts2012',
+                                          'ws353'],
                                  help='which dataset to evaluate on')
     parser_evaluate.add_argument('-i', '--dims',
                                  help='absolute path to .txt file containing'
@@ -477,12 +479,11 @@ def main():
     parser_evaluate.add_argument('-t', '--type', choices=['numpy', 'gensim',
                                                           'ica', 'nmf', 'txt',
                                                           'scipy'],
-                                 required=True,
                                  help='model type')
-    parser_evaluate.add_argument('-c', '--metric', required=True,
+    parser_evaluate.add_argument('-c', '--metric',
                                  choices=['spr', 'rmse'],
                                  help='which eval metric to use')
-    parser_evaluate.add_argument('-a', '--distance', required=True,
+    parser_evaluate.add_argument('-a', '--distance',
                                  choices=['cosine', 'euclidean'],
                                  help='which distance to use for similarity')
     parser_evaluate.add_argument('-x', '--kfold-size',

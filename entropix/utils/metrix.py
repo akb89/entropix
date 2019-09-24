@@ -9,7 +9,32 @@ import scipy.spatial as spatial
 logger = logging.getLogger(__name__)
 
 __all__ = ('get_combined_spr_rmse', 'get_spr_correlation', 'get_rmse',
-           'get_both_spr_rmse')
+           'get_both_spr_rmse', 'purity')
+
+
+def purity(y_true, y_pred):
+    """
+    Calculate purity for given true and predicted cluster labels.
+    Parameters
+    ----------
+    y_true: array, shape: (n_samples, 1)
+      True cluster labels
+    y_pred: array, shape: (n_samples, 1)
+      Cluster assingment.
+    Returns
+    -------
+    purity: float
+      Calculated purity.
+    """
+    assert len(y_true) == len(y_pred)
+    true_clusters = np.zeros(shape=(len(set(y_true)), len(y_true)))
+    pred_clusters = np.zeros_like(true_clusters)
+    for id, cl in enumerate(set(y_true)):
+        true_clusters[id] = (y_true == cl).astype("int")
+    for id, cl in enumerate(set(y_pred)):
+        pred_clusters[id] = (y_pred == cl).astype("int")
+    M = pred_clusters.dot(true_clusters.T)
+    return 1. / len(y_true) * np.sum(np.max(M, axis=1))
 
 
 # Note: this is scipy's spearman, without tie adjustment
