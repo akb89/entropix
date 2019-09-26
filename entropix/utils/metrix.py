@@ -9,7 +9,7 @@ import scipy.spatial as spatial
 logger = logging.getLogger(__name__)
 
 __all__ = ('get_combined_spr_rmse', 'get_spr_correlation', 'get_rmse',
-           'get_both_spr_rmse', 'purity')
+           'get_both_spr_rmse', 'purity', 'init_eval_metrix')
 
 
 def purity(y_true, y_pred):
@@ -132,3 +132,15 @@ def get_both_spr_rmse(model, left_idx, right_idx, sim, dataset, distance):
                                               dataset, distance),
                           get_rmse(model, left_idx, right_idx, sim, dataset,
                                    distance))
+
+
+def init_eval_metrix(metric, alpha=None):
+    if metric not in ['spr', 'rmse', 'combined', 'both']:
+        raise Exception('Unsupported metric: {}'.format(metric))
+    if metric == 'spr':
+        return -1.
+    if metric == 'rmse':
+        return 1.
+    if metric == 'combined':
+        return alpha * -1. - (1. - alpha) * 1.
+    return '{}#{}'.format(-1, 1)

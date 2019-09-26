@@ -189,9 +189,6 @@ def _reduce(args):
 
 
 def _sample(args):
-    if args.kfolding and args.mode not in ['seq', 'mix']:
-        raise Exception(
-            'kfolding is currently only supported in seq and mix modes')
     if args.output:
         dirname = args.output
         os.makedirs(dirname, exist_ok=True)
