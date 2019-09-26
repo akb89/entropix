@@ -1,6 +1,8 @@
 import os
 import datetime
 
+from tqdm import tqdm
+
 import entropix.utils.data as dutils
 import entropix.core.evaluator as evaluator
 
@@ -10,8 +12,8 @@ if __name__ == '__main__':
     models_filepaths = [os.path.join(MODELS_DIRPATH, filename) for filename in
                         os.listdir(MODELS_DIRPATH) if filename.endswith('.npy')]
     with open(output_filename, 'w', encoding='utf-8') as output_stream:
-        print('NAME\tMEN-SPR\tMEN-RMSE\tSIMLEX-SPR\tSIMLEX-RMSE\tSIMVERB-SPR\tSIMVERB-RMSE\tAP\tBATTIG\tESSLI\tDIM')
-        for model_filepath in sorted(models_filepaths):
+        print('NAME\tMEN-SPR\tMEN-RMSE\tSIMLEX-SPR\tSIMLEX-RMSE\tSIMVERB-SPR\tSIMVERB-RMSE\tAP\tBATTIG\tESSLI\tDIM', file=output_stream)
+        for model_filepath in tqdm(sorted(models_filepaths)):
             vocab_filepath = '{}.vocab'.format(model_filepath.split('.npy')[0])
             model, vocab = dutils.load_model_and_vocab(
                 model_filepath, 'numpy', vocab_filepath)
@@ -43,7 +45,7 @@ if __name__ == '__main__':
             essli = evaluator.evaluate_distributional_space(
                 model, vocab, dataset='essli', metric=None, model_type='numpy',
                 distance=None, kfold_size=None)
-            dim = 0
+            dim = model.shape[1]
             print('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(
                 name, men_spr, men_rmse, simlex_spr, simlex_rmse, simverb_spr,
-                simverb_rmse, ap, battig, essli, dim))
+                simverb_rmse, ap, battig, essli, dim), file=output_stream)
