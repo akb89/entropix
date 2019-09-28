@@ -128,106 +128,82 @@ class Sampler():
                 print('Fold {}/{} test rmse = {}'.format(
                     fold, num_folds, values['test']['rmse']), file=out_res)
             logger.info('-----------------------------------------')
-            logger.info('Min train spr = {}'.format(
-                np.min([x['train']['spr'] for x in self._results.values()])))
-            print('Min train spr = {}'.format(
-                np.min([x['train']['spr'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Max train spr = {}'.format(
-                np.max([x['train']['spr'] for x in self._results.values()])))
-            print('Max train spr = {}'.format(
-                np.max([x['train']['spr'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Average train spr = {}'.format(
-                np.mean([x['train']['spr'] for x in self._results.values()])))
-            print('Average train spr = {}'.format(
-                np.mean([x['train']['spr'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Std train spr = {}'.format(
-                np.std([x['train']['spr'] for x in self._results.values()])))
-            print('Std train spr = {}'.format(
-                np.std([x['train']['spr'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Min test spr = {}'.format(
-                np.min([x['test']['spr'] for x in self._results.values()])))
-            print('Min test spr = {}'.format(
-                np.min([x['test']['spr'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Max test spr = {}'.format(
-                np.max([x['test']['spr'] for x in self._results.values()])))
-            print('Max test spr = {}'.format(
-                np.max([x['test']['spr'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Average test spr = {}'.format(
-                np.mean([x['test']['spr'] for x in self._results.values()])))
-            print('Average test spr = {}'.format(
-                np.mean([x['test']['spr'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Std test spr = {}'.format(
-                np.std([x['test']['spr'] for x in self._results.values()])))
-            print('Std test spr = {}'.format(
-                np.std([x['test']['spr'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Min train rmse = {}'.format(
-                np.min([x['train']['rmse'] for x in self._results.values()])))
-            print('Min train rmse = {}'.format(
-                np.min([x['train']['rmse'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Max train rmse = {}'.format(
-                np.max([x['train']['rmse'] for x in self._results.values()])))
-            print('Max train rmse = {}'.format(
-                np.max([x['train']['rmse'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Average train rmse = {}'.format(
-                np.mean([x['train']['rmse'] for x in self._results.values()])))
-            print('Average train rmse = {}'.format(
-                np.mean([x['train']['rmse'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Std train rmse = {}'.format(
-                np.std([x['train']['rmse'] for x in self._results.values()])))
-            print('Std train rmse = {}'.format(
-                np.std([x['train']['rmse'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Min test rmse = {}'.format(
-                np.min([x['test']['rmse'] for x in self._results.values()])))
-            print('Min test rmse = {}'.format(
-                np.min([x['test']['rmse'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Max test rmse = {}'.format(
-                np.max([x['test']['rmse'] for x in self._results.values()])))
-            print('Max test rmse = {}'.format(
-                np.max([x['test']['rmse'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Average test rmse = {}'.format(
-                np.mean([x['test']['rmse'] for x in self._results.values()])))
-            print('Average test rmse = {}'.format(
-                np.mean([x['test']['rmse'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Std test rmse = {}'.format(
-                np.std([x['test']['rmse'] for x in self._results.values()])))
-            print('Std test rmse = {}'.format(
-                np.std([x['test']['rmse'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Min dim = {}'.format(
-                np.min([x['dim'] for x in self._results.values()])))
-            print('Min dim = {}'.format(
-                np.min([x['dim'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Max dim = {}'.format(
-                np.max([x['dim'] for x in self._results.values()])))
-            print('Max dim = {}'.format(
-                np.max([x['dim'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Average dim = {}'.format(
-                np.mean([x['dim'] for x in self._results.values()])))
-            print('Average dim = {}'.format(
-                np.mean([x['dim'] for x in self._results.values()])),
-                  file=out_res)
-            logger.info('Std dim = {}'.format(
-                np.std([x['dim'] for x in self._results.values()])))
-            print('Std dim = {}'.format(
-                np.std([x['dim'] for x in self._results.values()])),
-                  file=out_res)
+            min_train_spr = np.min([x['train']['spr'] for x in self._results.values()])
+            max_train_spr = np.max([x['train']['spr'] for x in self._results.values()])
+            avg_train_spr = np.mean([x['train']['spr'] for x in self._results.values()])
+            std_train_spr = np.std([x['train']['spr'] for x in self._results.values()])
+            min_test_spr = np.min([x['test']['spr'] for x in self._results.values()])
+            max_test_spr = np.max([x['test']['spr'] for x in self._results.values()])
+            avg_test_spr = np.mean([x['test']['spr'] for x in self._results.values()])
+            std_test_spr = np.std([x['test']['spr'] for x in self._results.values()])
+            min_train_rmse = np.min([x['train']['rmse'] for x in self._results.values()])
+            max_train_rmse = np.max([x['train']['rmse'] for x in self._results.values()])
+            avg_train_rmse = np.mean([x['train']['rmse'] for x in self._results.values()])
+            std_train_rmse = np.std([x['train']['rmse'] for x in self._results.values()])
+            min_test_rmse = np.min([x['test']['rmse'] for x in self._results.values()])
+            max_test_rmse = np.max([x['test']['rmse'] for x in self._results.values()])
+            avg_test_rmse = np.mean([x['test']['rmse'] for x in self._results.values()])
+            std_test_rmse = np.std([x['test']['rmse'] for x in self._results.values()])
+            min_dim = np.min([x['dim'] for x in self._results.values()])
+            max_dim = np.max([x['dim'] for x in self._results.values()])
+            avg_dim = np.mean([x['dim'] for x in self._results.values()])
+            std_dim = np.std([x['dim'] for x in self._results.values()])
+            logger.info('Min train spr = {}'.format(min_train_spr))
+            print('Min train spr = {}'.format(min_train_spr), file=out_res)
+            logger.info('Max train spr = {}'.format(max_train_spr))
+            print('Max train spr = {}'.format(max_train_spr), file=out_res)
+            logger.info('Average train spr = {}'.format(avg_train_spr))
+            print('Average train spr = {}'.format(avg_train_spr), file=out_res)
+            logger.info('Std train spr = {}'.format(std_train_spr))
+            print('Std train spr = {}'.format(std_train_spr), file=out_res)
+            logger.info('Min test spr = {}'.format(min_test_spr))
+            print('Min test spr = {}'.format(min_test_spr), file=out_res)
+            logger.info('Max test spr = {}'.format(max_test_spr))
+            print('Max test spr = {}'.format(max_test_spr), file=out_res)
+            logger.info('Average test spr = {}'.format(avg_test_spr))
+            print('Average test spr = {}'.format(avg_test_spr), file=out_res)
+            logger.info('Std test spr = {}'.format(std_test_spr))
+            print('Std test spr = {}'.format(std_test_spr), file=out_res)
+            logger.info('Min train rmse = {}'.format(min_train_rmse))
+            print('Min train rmse = {}'.format(min_train_rmse), file=out_res)
+            logger.info('Max train rmse = {}'.format(max_train_rmse))
+            print('Max train rmse = {}'.format(max_train_rmse), file=out_res)
+            logger.info('Average train rmse = {}'.format(avg_train_rmse))
+            print('Average train rmse = {}'.format(avg_train_rmse), file=out_res)
+            logger.info('Std train rmse = {}'.format(std_train_rmse))
+            print('Std train rmse = {}'.format(std_train_rmse), file=out_res)
+            logger.info('Min test rmse = {}'.format(min_test_rmse))
+            print('Min test rmse = {}'.format(min_test_rmse), file=out_res)
+            logger.info('Max test rmse = {}'.format(max_test_rmse))
+            print('Max test rmse = {}'.format(max_test_rmse), file=out_res)
+            logger.info('Average test rmse = {}'.format(avg_test_rmse))
+            print('Average test rmse = {}'.format(avg_test_rmse), file=out_res)
+            logger.info('Std test rmse = {}'.format(std_test_rmse))
+            print('Std test rmse = {}'.format(std_test_rmse), file=out_res)
+            logger.info('Min dim = {}'.format(min_dim))
+            print('Min dim = {}'.format(min_dim), file=out_res)
+            logger.info('Max dim = {}'.format(max_dim))
+            print('Max dim = {}'.format(max_dim), file=out_res)
+            logger.info('Average dim = {}'.format(avg_dim))
+            print('Average dim = {}'.format(avg_dim), file=out_res)
+            logger.info('Std dim = {}'.format(std_dim))
+            print('Std dim = {}'.format(std_dim), file=out_res)
+            logger.info('One-liner: {} & {} & {} & {} & {} & {} & {} & {} & '
+                        '{} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} '
+                        '& {}'.format(
+                    min_train_spr, max_train_spr, avg_train_spr, std_train_spr,
+                    min_test_spr, max_test_spr, avg_test_spr, std_test_spr,
+                    min_train_rmse, max_train_rmse, avg_train_rmse, std_train_rmse,
+                    min_test_rmse, max_test_rmse, avg_test_rmse, std_test_rmse,
+                    min_dim, max_dim, avg_dim, std_dim))
+            print('One-liner: {} & {} & {} & {} & {} & {} & {} & {} & '
+                        '{} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} '
+                        '& {}'.format(
+                    min_train_spr, max_train_spr, avg_train_spr, std_train_spr,
+                    min_test_spr, max_test_spr, avg_test_spr, std_test_spr,
+                    min_train_rmse, max_train_rmse, avg_train_rmse, std_train_rmse,
+                    min_test_rmse, max_test_rmse, avg_test_rmse, std_test_rmse,
+                    min_dim, max_dim, avg_dim, std_dim), file=out_res)
 
     def compute_scores(self, keep, fold):
         self._results[fold] = {
