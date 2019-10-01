@@ -34,4 +34,4 @@ entropix svd \
 ```
 
 ## Warning
-For informativeness, np.dot in `prob_values = np.exp(np.dot(l1, self._model.trainables.syn1neg.T))` using multithreading by default with openblas. Need to run the code with `venv OMP_NUM_THREADS=1 entropix generate...`
+For informativeness, np.dot in `prob_values = np.exp(np.dot(l1, self._model.trainables.syn1neg.T))` using multithreading by default with openblas. Need to run the code with `env OMP_NUM_THREADS=1 entropix generate...`

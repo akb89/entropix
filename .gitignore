@@ -2,6 +2,9 @@ results-*.txt
 *.pdf
 *.dpth
 *.dep
+*.md5
+*.aux
+*.auxlock
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
