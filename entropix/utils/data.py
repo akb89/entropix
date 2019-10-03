@@ -312,12 +312,6 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
                     vocab[tokens[0]] = idx
                     model[idx] = np.fromstring(tokens[1], sep=' ',
                                                dtype=np.float32)
-            logger.info('Saving backup of vocab to {}.vocab'
-                        .format(model_filepath))
-            futils.save_vocab(vocab, '{}.vocab'.format(model_filepath))
-            logger.info('Saving backup of model to numpy format at {}.npy'
-                        .format(model_filepath))
-            np.save(model_filepath, model)
         else:
             vocab = _load_vocab_from_txt_file(vocab_filepath)
             if model_type == 'numpy':

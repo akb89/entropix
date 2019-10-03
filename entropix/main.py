@@ -45,69 +45,6 @@ def _evaluate(args):
                                             args.distance, args.kfold_size)
 
 
-def _compute_dimenergy(args):
-    energy = calculator.compute_energy(args.model, args.dimensions)
-    logger.info('Energy = {}'.format(energy))
-
-
-def _compute_energy(args):
-    if args.model.endswith('.npz'):
-        logger.info('Computing energy of matrix {}'.format(args.model))
-        model = sparse.load_npz(args.model)
-        energy = model.power(2).sum()
-    elif args.model.endswith('.npy'):
-        logger.info('Computing energy of singular values {}'
-                    .format(args.model))
-        model = np.load(args.model)
-        energy = np.sum(model**2)
-    else:
-        raise Exception('Unsupported model extension. Should be of .npz or '
-                        '.npy {}'.format(args.model))
-    logger.info('Energy = {}'.format(energy))
-
-
-def _compute_sentropy(args):
-    logger.info('Computing entropy of singular values from {}'
-                .format(args.model))
-    model = np.load(args.model)
-    entropy = scipy.stats.entropy(model, base=2)
-    logger.info('Rank = {}'.format(len(model)))
-    logger.info(model)
-    logger.info('Entropy = {}'.format(entropy))
-
-
-def _compute_lentropy(args):
-    logger.info('Computing entropy from file {}'.format(args.counts))
-    counts = {}
-    with open(args.counts, 'r', encoding='utf-8') as input_stream:
-        for line in input_stream:
-            line = line.strip()
-            word_count = line.split('\t')
-            counts[word_count[0]] = int(word_count[1])
-    calculator.compute_entropy(counts)
-
-
-def _count(args):
-    if args.save:
-        if not args.output:
-            output_dirpath = os.path.dirname(args.corpus)
-        else:
-            output_dirpath = args.output
-        if not os.path.exists(output_dirpath):
-            logger.info('Creating directory {}'.format(output_dirpath))
-            os.makedirs(output_dirpath)
-        else:
-            logger.info('Saving to directory {}'.format(output_dirpath))
-        counts = counter.count_words(corpus_filepath=args.corpus,
-                                     min_count=args.min_count,
-                                     output_dirpath=output_dirpath)
-    else:
-        counts = counter.count_words(corpus_filepath=args.corpus,
-                                     min_count=args.min_count)
-    logger.info('Corpus size = {}'.format(sum(counts.values())))
-    logger.info('Vocab size = {}'.format(len(counts)))
-
-
 def _generate(args):
     logger.info('Generating distributional model from {}'.format(args.corpus))
     if not args.output:
@@ -315,31 +252,6 @@ def _convert(args):
         logger.info('Done')
 
 
-def _cut(args):
-    logger.info('Cutting singular vectors from {} to {}'
-                .format(args.start, args.end))
-    basename = '{}.start-{}.end-{}.singvectors'.format(
-        args.model.split('.singvectors.npy')[0], args.start, args.end)
-    logger.info('Saving output to {}'.format(basename))
-    model = np.load(args.model)
-    model = model[:, model.shape[1]-args.end:model.shape[1]-args.start]
-    logger.info('New model shape = {}'.format(model.shape))
-    np.save(basename, model)
-
-
-def _select(args):
-    logger.info('Saving model with dims from {}'.format(args.dims))
-    dims = []
-    with open(args.dims, 'r', encoding='utf-8') as dim_stream:
-        for line in dim_stream:
-            line = line.strip()
-            dims.append(int(line))
-    model = np.load(args.model)
-    model = model[:, ::-1]
-    model = model[:, dims]
-    np.save(args.dims, model)
-
-
 def _ica(args):
     reducer.apply_fast_ica(args.model, args.dataset, args.vocab, args.max_iter)
 
@@ -373,83 +285,6 @@ def main():
     """Launch entropix."""
     parser = argparse.ArgumentParser(prog='entropix')
     subparsers = parser.add_subparsers()
-    parser_count = subparsers.add_parser(
-        'count', formatter_class=argparse.RawTextHelpFormatter,
-        help='count words in input corpus')
-    parser_count.add_argument('-c', '--corpus', required=True,
-                              help='an input .txt corpus to compute counts on')
-    parser_count.add_argument('-o', '--output',
-                              help='absolute path to output directory. '
-                                   'If not set, will default to corpus dir')
-    parser_count.add_argument('-m', '--min-count', default=0, type=int,
-                              help='omit words below this count in output'
-                                   'vocabulary')
-    parser_count.add_argument('-s', '--save', action='store_true',
-                              help='save counts to output')
-    parser_count.set_defaults(func=_count)
-    parser_compute = subparsers.add_parser(
-        'compute', formatter_class=argparse.RawTextHelpFormatter,
-        help='compute entropy or pairwise cosine similarity metrics')
-    compute_sub = parser_compute.add_subparsers()
-    parser_compute_dimenergy = compute_sub.add_parser(
-        'dim-energy', formatter_class=argparse.RawTextHelpFormatter,
-        help='compute energy of list of dimensions')
-    parser_compute_dimenergy.set_defaults(func=_compute_dimenergy)
-    parser_compute_dimenergy.add_argument(
-        '-m', '--model', required=True,
-        help='absolute path the .singvalues.npy')
-    parser_compute_dimenergy.add_argument(
-        '-d', '--dimensions', required=True,
-        help='absolute path to file with list of dimensions')
-    parser_compute_energy = compute_sub.add_parser(
-        'energy', formatter_class=argparse.RawTextHelpFormatter,
-        help='compute energy of .npz or .npy model')
-    parser_compute_energy.set_defaults(func=_compute_energy)
-    parser_compute_energy.add_argument(
-        '-m', '--model', required=True,
-        help='absolute path the .singvalues.npy or .npz file')
-    parser_compute_sentropy = compute_sub.add_parser(
-        'sentropy', formatter_class=argparse.RawTextHelpFormatter,
-        help='compute entropy of input singular values')
-    parser_compute_sentropy.set_defaults(func=_compute_sentropy)
-    parser_compute_sentropy.add_argument(
-        '-m', '--model', required=True,
-        help='absolute path the .singvalues.npy file')
-    parser_compute_lentropy = compute_sub.add_parser(
-        'lentropy', formatter_class=argparse.RawTextHelpFormatter,
-        help='compute language entropy from input .counts file')
-    parser_compute_lentropy.set_defaults(func=_compute_lentropy)
-    parser_compute_lentropy.add_argument(
-        '-c', '--counts', required=True,
-        help='input .counts counts file to compute entropy from')
-    parser_compute_cosine = compute_sub.add_parser(
-        'cosine', formatter_class=argparse.RawTextHelpFormatter,
-        help='compute pairwise cosine similarity between vocabulary items')
-    parser_compute_cosine.set_defaults(func=_compute_pairwise_cosines)
-    parser_compute_cosine.add_argument('-m', '--model', required=True,
-                                       help='distributional space')
-    parser_compute_cosine.add_argument('-v', '--vocab', required=True,
-                                       help='vocabulary mapping for dsm')
-    parser_compute_cosine.add_argument(
-        '-o', '--output', help='absolute path to output directory. If not '
-                               'set, will default to space dir')
-    parser_compute_cosine.add_argument('-n', '--num-threads', default=1,
-                                       type=int, help='number of threads')
-    parser_compute_cosine.add_argument('-b', '--bin-size', default=0.1,
-                                       type=float, help='bin size for the '
-                                                        'distribution output')
-    parser_compute_ipr = compute_sub.add_parser(
-        'ipr', formatter_class=argparse.RawTextHelpFormatter,
-        help='compute ipr from input singular vectors matrix')
-    parser_compute_ipr.set_defaults(func=_compute_singvectors_distribution)
-    parser_compute_ipr.add_argument('-m', '--model', required=True,
-                                    help='absolute path to .npz matrix '
-                                         'corresponding to the dsm.')
-    parser_compute_ipr.add_argument('-o', '--output',
-                                    help='absolute path to output directory.'
-                                    'If not set, will default to matrix dir.')
-    parser_compute_ipr.add_argument('-s', '--save', action='store_true',
-                                    help='save plots to output')
     parser_evaluate = subparsers.add_parser(
         'evaluate', formatter_class=argparse.RawTextHelpFormatter,
         help='evaluate a given distributional space against the MEN dataset')
@@ -677,41 +512,6 @@ def main():
                                choices=['numpy', 'gensim', 'ica', 'nmf', 'txt',
                                         'scipy'],
                                help='model type')
-    parser_convert = subparsers.add_parser(
-        'convert', formatter_class=argparse.RawTextHelpFormatter,
-        help='convert embeddings to and from text and numpy')
-    parser_convert.set_defaults(func=_convert)
-    parser_convert.add_argument('-f', '--from', dest='source',
-                                choices=['numpy', 'text'],
-                                help='which format to convert from')
-    parser_convert.add_argument('-t', '--to', choices=['numpy', 'text'],
-                                help='which format to convert to')
-    parser_convert.add_argument('-i', '--input', required=True,
-                                help='absolute path to input data to convert')
-    parser_convert.add_argument('-v', '--vocab',
-                                help='absolute path to input vocab file')
-    parser_convert.add_argument('-d', '--dims',
-                                help='absolute path to .txt file containing'
-                                     'a shortlist of dimensions, one per line'
-                                     'to select from')
-    parser_cut = subparsers.add_parser(
-        'cut', formatter_class=argparse.RawTextHelpFormatter,
-        help='cut a set of singular vectors')
-    parser_cut.set_defaults(func=_cut)
-    parser_cut.add_argument('-m', '--model', required=True,
-                            help='absolute path to .singvectors.npy')
-    parser_cut.add_argument('-s', '--start', type=int, required=True,
-                            help='index of singvectors dim to start from')
-    parser_cut.add_argument('-e', '--end', type=int, required=True,
-                            help='index of singvectors dim to end at')
-    parser_select = subparsers.add_parser(
-        'select', formatter_class=argparse.RawTextHelpFormatter,
-        help='save a model from a list of dims')
-    parser_select.set_defaults(func=_select)
-    parser_select.add_argument('-m', '--model', required=True,
-                               help='absolute path to .singvectors.npy')
-    parser_select.add_argument('-d', '--dims', required=True,
-                               help='absolute path to list of dimensions')
     parser_analyse_ppmi_rows_overlap = subparsers.add_parser(
         'analyse-overlap', formatter_class=argparse.RawTextHelpFormatter,
         help='provides qualitative data on features overlap in a provided dataset')
@@ -725,14 +525,14 @@ def main():
                                                   help='which dataset to consider')
     parser_export = subparsers.add_parser(
         'export', formatter_class=argparse.RawTextHelpFormatter,
-        help='export model to a standardized numpy format')
+        help='export different model types to a standardized numpy format')
     parser_export.set_defaults(func=_export)
     parser_export.add_argument('-m', '--model', required=True,
                                help='absolute path to input embedding model')
     parser_export.add_argument('-o', '--output', required=True,
                                help='absolute path to output numpy model')
     parser_export.add_argument('-t', '--type', required=True,
-                               choices=['numpy', 'gensim'],
+                               choices=['numpy', 'gensim', 'txt'],
                                help='input embedding format type')
     parser_export.add_argument('-v', '--vocab',
                                help='vocabulary mapping for dsm')

@@ -7,8 +7,8 @@ import entropix.utils.data as dutils
 import entropix.core.evaluator as evaluator
 
 if __name__ == '__main__':
-    MODELS_DIRPATH = '/Users/akb/Github/entropix/models/all/'
-    output_filename = 'results-{}.txt'.format(datetime.datetime.now().timestamp())
+    MODELS_DIRPATH = '/Users/akb/Github/entropix/models/exported/sota/'
+    output_filename = 'results-sota-{}.txt'.format(datetime.datetime.now().timestamp())
     models_filepaths = [os.path.join(MODELS_DIRPATH, filename) for filename in
                         os.listdir(MODELS_DIRPATH) if filename.endswith('.npy')]
     with open(output_filename, 'w', encoding='utf-8') as output_stream:
