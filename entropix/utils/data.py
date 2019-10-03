@@ -3,6 +3,7 @@ import os
 import logging
 import random
 import math
+import csv
 from collections import defaultdict
 
 import joblib
@@ -19,6 +20,12 @@ __all__ = ('load_model_from_npz', 'load_kfold_splits',
            'load_dataset', 'save_fit_vocab', 'load_model_and_vocab')
 
 DATASETS = {
+    'ap': os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                       'resources', 'ap.csv'),
+    'battig': os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                           'resources', 'battig.csv'),
+    'essli': os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                          'resources', 'essli-2008.csv'),
     'men': os.path.join(os.path.dirname(os.path.dirname(__file__)),
                         'resources', 'MEN_dataset_natural_form_full'),
     'simlex': os.path.join(os.path.dirname(os.path.dirname(__file__)),
@@ -142,12 +149,30 @@ def _load_idx_and_sim(left, right, sim, vocab, dataset, shuffle):
     return left_idx, right_idx, f_sim
 
 
+def _load_categories_to_words_dict(dataset, vocab):
+    if dataset not in ['ap', 'battig', 'essli']:
+        raise Exception('Invalid concept categorization dataset: {}'
+                        .format(dataset))
+    categories_to_words = defaultdict(list)
+    with open(DATASETS[dataset], newline='') as csv_stream:
+        next(csv_stream)
+        reader = csv.reader(csv_stream, quotechar='|')
+        for row in reader:
+            if row[2] and row[2] in vocab:
+                categories_to_words[row[1]].append(row[2])
+    return categories_to_words
+
+
 def load_dataset(dataset, vocab):
-    """Load left and right word idx + sim from dataset with vocab."""
-    if dataset not in ['men', 'simlex', 'simverb', 'ws353']:
+    """Load dataset for concept categorization or word similarity."""
+    if dataset not in ['ap', 'battig', 'essli', 'men', 'simlex', 'simverb',
+                       'ws353']:
         raise Exception('Unsupported dataset: {}'.format(dataset))
-    left, right, sim = _load_word_pairs_and_sim(dataset)
-    return _load_idx_and_sim(left, right, sim, vocab, dataset, shuffle=False)
+    if dataset in ['men', 'simlex', 'simverb', 'ws353']:
+        left, right, sim = _load_word_pairs_and_sim(dataset)
+        return _load_idx_and_sim(left, right, sim, vocab, dataset,
+                                 shuffle=False)
+    return _load_categories_to_words_dict(dataset, vocab)
 
 
 def _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size, dev_type,
@@ -287,12 +312,6 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
                     vocab[tokens[0]] = idx
                     model[idx] = np.fromstring(tokens[1], sep=' ',
                                                dtype=np.float32)
-            logger.info('Saving backup of vocab to {}.vocab'
-                        .format(model_filepath))
-            futils.save_vocab(vocab, '{}.vocab'.format(model_filepath))
-            logger.info('Saving backup of model to numpy format at {}.npy'
-                        .format(model_filepath))
-            np.save(model_filepath, model)
         else:
             vocab = _load_vocab_from_txt_file(vocab_filepath)
             if model_type == 'numpy':

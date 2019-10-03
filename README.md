@@ -30,5 +30,8 @@ To apply SVD on a PPMI-weighed model, with k=10000, run:
 entropix svd \
   --model /abs/path/to/ppmi/npz/model \
   --dim 10000 \
-  --which LM  # largest singular values 
+  --which LM  # largest singular values
 ```
+
+## Warning
+For informativeness, np.dot in `prob_values = np.exp(np.dot(l1, self._model.trainables.syn1neg.T))` using multithreading by default with openblas. Need to run the code with `env OMP_NUM_THREADS=1 entropix generate...`

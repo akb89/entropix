@@ -2,6 +2,8 @@
 import logging
 import numpy as np
 
+from sklearn.cluster import KMeans
+
 import entropix.utils.metrix as metrix
 import entropix.utils.data as dutils
 
@@ -62,17 +64,39 @@ def evaluate(model, splits, dataset, metric, distance, alpha=None):
         dataset, distance)
 
 
-def evaluate_distributional_space(model, vocab, dataset, metric, model_type,
-                                  distance, kfold_size):
-    """Evaluate a numpy model against the MEN/Simlex/Simverb datasets."""
-    logger.info('Evaluating distributional space...')
+def _evaluate_concept_categorization(model, vocab, dataset):
+    if dataset not in ['ap', 'battig', 'essli']:
+        raise Exception('Invalid concept categorization dataset: {}'
+                        .format(dataset))
+    logger.info('Evaluating concept categorization on {}'.format(dataset))
+    categories_to_words = dutils.load_dataset(dataset, vocab)
+    categories = categories_to_words.keys()
+    centroids = np.empty(shape=(len(categories), model.shape[1]))
+    for idx, (_, words) in enumerate(categories_to_words.items()):
+        word_idxx = [vocab[word] for word in words]
+        centroids[idx] = np.mean(model[word_idxx, :], axis=0)
+    category_words = [word for words in categories_to_words.values() for word in words]
+    category_words_idx = [vocab[word] for word in category_words]
+    pred_clusters = KMeans(init=centroids,
+                           n_clusters=len(categories)).fit_predict(model[category_words_idx, :])
+    true_clusters = np.array([idx for idx, words in enumerate(categories_to_words.values()) for _ in words])
+    purity = metrix.purity(true_clusters, pred_clusters)
+    logger.info('Cluster purity = {}'.format(purity))
+    return purity
+
+
+def _evaluate_word_similarity(model, vocab, dataset, metric, model_type,
+                              distance, kfold_size):
     results = []
+    if dataset not in ['men', 'simlex', 'simverb']:
+        raise Exception('Invalid similarity dataset: {}'.format(dataset))
     if model_type not in ['scipy', 'numpy', 'ica', 'nmf', 'txt']:
-        raise Exception('Unsupporteed model-type: {}'.format(model_type))
+        raise Exception('Unsupported model-type: {}'.format(model_type))
     if metric not in ['spr', 'rmse']:
         raise Exception('Unsupported metric: {}'.format(metric))
+    logger.info('Evaluating word similarity on {}'.format(dataset))
     if model_type == 'scipy':
-        model = model.todense()
+        model = model.todense()  # FIXME: this does not work for large models. Need to calculate cosine with sparse matrix
     dim = model.shape[1]
     splits = dutils.load_kfold_splits(vocab, dataset, kfold_size,
                                       dev_type='nodev',
@@ -83,8 +107,24 @@ def evaluate_distributional_space(model, vocab, dataset, metric, model_type,
         results.append(evaluate(model, splits[fold]['test'], dataset,
                                 metric, distance))
     if kfold_size == 0:
-        logger.info('{} = {}'.format(metric, results[0]))
+        result = results[0]
+        logger.info('{} = {}'.format(metric, result))
     else:
-        logger.info('avg test {} = {}'.format(metric, np.mean(results)))
+        result = np.mean(results)
+        logger.info('avg test {} = {}'.format(metric, result))
         logger.info('std test {} = {}'.format(metric, np.std(results)))
     logger.info('dim = {}'.format(dim))
+    return result
+
+
+def evaluate_distributional_space(model, vocab, dataset, metric, model_type,
+                                  distance, kfold_size):
+    """Evaluate a numpy model against the MEN/Simlex/Simverb datasets."""
+    logger.info('Evaluating distributional space...')
+    if dataset not in ['ap', 'battig', 'essli', 'men', 'simlex', 'simverb']:
+        raise Exception('Unsupported dataset: {}'.format(dataset))
+    if dataset in ['men', 'simlex', 'simverb']:
+        return _evaluate_word_similarity(model, vocab, dataset, metric,
+                                         model_type, distance, kfold_size)
+    elif dataset in ['ap', 'battig', 'essli']:
+        return _evaluate_concept_categorization(model, vocab, dataset)
