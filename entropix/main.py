@@ -530,7 +530,7 @@ def main():
                                 help='absolute path to input embedding model1')
     parser_compare.add_argument('-m2', '--model2', required=True,
                                 help='absolute path to input embedding model2')
-    parser_compare.add_argument('-n', '--num-neighbors', default=5,
+    parser_compare.add_argument('-n', '--num-neighbors', type=int, default=5,
                                 help='number of neighbors to consider')
     args = parser.parse_args()
     args.func(args)
