@@ -10,14 +10,12 @@ import logging
 import logging.config
 
 import numpy as np
-import scipy
-from scipy import sparse
 
 import entropix.utils.config as cutils
 import entropix.utils.files as futils
 import entropix.utils.data as dutils
-import entropix.core.counter as counter
 import entropix.core.calculator as calculator
+import entropix.core.comparator as comparator
 import entropix.core.evaluator as evaluator
 import entropix.core.generator as generator
 import entropix.core.reducer as reducer
@@ -231,6 +229,25 @@ def _export(args):
         args.start, args.end, args.dims, args.shuffle, args.randomize)
     np.save(args.output, model)
     dutils.save_vocab(vocab, '{}.vocab'.format(args.output))
+
+
+def _compare(args):
+    basename1 = os.path.basename(args.model1)
+    basename2 = os.path.basename(args.model2)
+    logger.info('Comparing DS models {} and {}'.format(basename1, basename2))
+    VOCAB1_FILEPATH = '{}.vocab'.format(args.model1.split('.npy')[0])
+    VOCAB2_FILEPATH = '{}.vocab'.format(args.model2.split('.npy')[0])
+    model1, vocab1 = dutils.load_model_and_vocab(
+        model_filepath=args.model1, model_type='numpy',
+        vocab_filepath=VOCAB1_FILEPATH)
+    model2, vocab2 = dutils.load_model_and_vocab(
+        model_filepath=args.model2, model_type='numpy',
+        vocab_filepath=VOCAB2_FILEPATH)
+    variance = comparator.compare(model1, model2, vocab1, vocab2,
+                                  args.num_neighbors)
+    logger.info('Variance = {}'.format(variance))
+    logger.info('avg = {}'.format(np.mean(variance)))
+    logger.info('std = {}'.format(np.std(variance)))
 
 
 def main():
@@ -505,5 +522,15 @@ def main():
     parser_export.add_argument('--randomize', action='store_true',
                                help='if true, will replace vectors values '
                                     'with random numbers')
+    parser_compare = subparsers.add_parser(
+        'compare', formatter_class=argparse.RawTextHelpFormatter,
+        help='compare the nearest neighbors of two numpy models')
+    parser_compare.set_defaults(func=_compare)
+    parser_compare.add_argument('-m1', '--model1', required=True,
+                                help='absolute path to input embedding model1')
+    parser_compare.add_argument('-m2', '--model2', required=True,
+                                help='absolute path to input embedding model2')
+    parser_compare.add_argument('-n', '--num-neighbors', default=5,
+                                help='number of neighbors to consider')
     args = parser.parse_args()
     args.func(args)
