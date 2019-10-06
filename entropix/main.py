@@ -204,54 +204,6 @@ def _remove_mean(args):
     remover.remove_mean(model, output_filepath)
 
 
-def _convert(args):
-    """deprecated."""
-    logger.info('Converting file {}'.format(args.input))
-    logger.info('Converting from {} to {}...'.format(args.source, args.to))
-    dirname = os.path.dirname(args.input)
-    if args.source == 'numpy':
-        basename = os.path.basename(args.input).split('.npy')[0]
-    elif args.source == 'text':
-        basename = os.path.basename(args.input).split('.txt')[0]
-    output_basename = os.path.join(dirname, basename)
-    if args.to == 'text':
-        model_filepath = '{}.txt'.format(output_basename)
-        model = np.load(args.input)
-        # model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
-        if args.dims:
-            dims = []
-            with open(args.dims, 'r', encoding='utf-8') as dims_stream:
-                for line in dims_stream:
-                    dims.append(int(line.strip()))
-            logger.info('Sampling model with {} dimensions = {}'
-                        .format(len(dims), dims))
-            model = model[:, dims]
-        with open(model_filepath, 'w', encoding='utf-8') as model_stream:
-            with open(args.vocab, 'r', encoding='utf-8') as vocab_stream:
-                for line in vocab_stream:
-                    word = line.strip().split('\t')[1]
-                    idx = int(line.strip().split('\t')[0])
-                    vector = ' '.join([str(coord) for coord in model[idx]])
-                    print('{} {}'.format(word, vector), file=model_stream)
-        logger.info('Saving to {}'.format(model_filepath))
-    elif args.to == 'numpy':
-        vocab_filepath = '{}.vocab'.format(output_basename)
-        model = None
-        with open(args.input, 'r', encoding='utf-8') as input_stream:
-            with open(vocab_filepath, 'w', encoding='utf-8') as vocab_stream:
-                for idx, line in enumerate(input_stream):
-                    items = line.strip().split(' ')
-                    embed = np.array([items[1:]], dtype=np.float64)
-                    if model is None:
-                        model = np.array([items[1:]], dtype=np.float64)
-                    else:
-                        model = np.append(model, embed, axis=0)
-                    print('{}\t{}'.format(idx, items[0]), file=vocab_stream)
-        logger.info('Saving to {}.npy'.format(output_basename))
-        np.save(output_basename, model)
-        logger.info('Done')
-
-
 def _ica(args):
     reducer.apply_fast_ica(args.model, args.dataset, args.vocab, args.max_iter)
 
@@ -276,7 +228,7 @@ def _export(args):
         raise Exception('Both --start and --end params should be specified')
     model, vocab = dutils.load_model_and_vocab(
         args.model, args.type, args.vocab, args.singvalues, args.singalpha,
-        args.start, args.end, args.dims)
+        args.start, args.end, args.dims, args.shuffle, args.randomize)
     np.save(args.output, model)
     dutils.save_vocab(vocab, '{}.vocab'.format(args.output))
 
@@ -548,5 +500,10 @@ def main():
                                help='absolute path to singular values')
     parser_export.add_argument('--singalpha', type=float,
                                help='power alpha for singular values')
+    parser_export.add_argument('--shuffle', action='store_true',
+                               help='if true, will shuffle svd dims')
+    parser_export.add_argument('--randomize', action='store_true',
+                               help='if true, will replace vectors values '
+                                    'with random numbers')
     args = parser.parse_args()
     args.func(args)

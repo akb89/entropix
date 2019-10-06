@@ -102,7 +102,6 @@ class Sampler():
             with open(test_spr_log_name, 'a', encoding='utf-8') as test_spr_log:
                 print(test_spr, file=test_spr_log)
 
-
     def display_scores(self):
         num_folds = len(self._results.keys())
         with open('{}.results'.format(self._logs_basepath), 'w', encoding='utf-8') as out_res:
@@ -506,7 +505,6 @@ class Sampler():
         if self._kfolding:
             # sample dimensons multi-threaded on all kfolds
             num_folds = len(self._splits.keys())
-            print(num_folds)
             logger.info('Applying kfolding on k={} folds where each test '
                         'fold is of size {} and accounts for {}% of '
                         'the data'.format(
