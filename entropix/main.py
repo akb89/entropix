@@ -243,11 +243,10 @@ def _compare(args):
     model2, vocab2 = dutils.load_model_and_vocab(
         model_filepath=args.model2, model_type='numpy',
         vocab_filepath=VOCAB2_FILEPATH)
-    variance = comparator.compare(model1, model2, vocab1, vocab2,
+    avg, std = comparator.compare(model1, model2, vocab1, vocab2,
                                   args.num_neighbors)
-    logger.info('Variance = {}'.format(variance))
-    logger.info('avg = {}'.format(np.mean(variance)))
-    logger.info('std = {}'.format(np.std(variance)))
+    logger.info('avg = {}'.format(avg))
+    logger.info('std = {}'.format(std))
 
 
 def main():
