@@ -27,19 +27,30 @@ def _compare(model1, model2, n):
     return 1 - np.count_nonzero(idx1 == idx2, axis=1) / n
 
 
-def align_vocab(vocab1, vocab2):
+def _align_model_vocab(model1, model2, vocab1, vocab2):
+    # align model1 with model2's vocab
+    vocab1_to_vocab2_idx = {idx: vocab2[word] for word, idx in vocab1.items()
+                            if word in vocab2}
+    _model1 = np.empty(shape=(len(vocab1_to_vocab2_idx), model1.shape[1]))
+    _model2 = model2[list(vocab1_to_vocab2_idx.values()), :]
+    for idx1, idx2 in vocab1_to_vocab2_idx.items():
+        _model1[idx2] = model1[idx1]
+    return _model1, _model2
+
+
+def align_vocab(model1, model2, vocab1, vocab2):
     if len(vocab1) != len(vocab2):
-        raise Exception('Cannot process unidentical vocabularies')
+        return _align_model_vocab(model1, model2, vocab1, vocab2)
     for word, idx in vocab1.items():
         if word not in vocab2:
-            raise Exception('Cannot process unidentical vocabularies')
+            return _align_model_vocab(model1, model2, vocab1, vocab2)
         if vocab2[word] != idx:
-            raise Exception('Cannot process unidentical vocabularies')
-    return vocab1
+            return _align_model_vocab(model1, model2, vocab1, vocab2)
+    return model1, model2
 
 
 def compare(model1, model2, vocab1, vocab2, n):
-    _ = align_vocab(vocab1, vocab2)
+    model1, model2 = align_vocab(model1, model2, vocab1, vocab2)
     variance = _compare(model1, model2, n)
     # take the average and std
     avg = np.mean(variance)
