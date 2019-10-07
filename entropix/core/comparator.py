@@ -29,14 +29,14 @@ def _compare(model1, model2, n):
 
 def _align_model_vocab(model1, model2, vocab1, vocab2):
     # align model1 with model2's vocab
-    vocab1_to_vocab2_idx = {idx: vocab2[word] for word, idx in vocab1.items()
-                            if word in vocab2}
-    _model1 = np.empty(shape=(len(vocab1_to_vocab2_idx), model1.shape[1]))
+    vocab_2_to_vocab1 = {idx: vocab1[word] for word, idx in vocab2.items()
+                         if word in vocab1}
+    _model1 = np.empty(shape=(len(vocab_2_to_vocab1), model1.shape[1]))
     idx2 = [idx for word, idx in vocab2.items() if word in vocab1]
-    assert len(idx2) == len(vocab1_to_vocab2_idx)
+    assert len(idx2) == len(vocab_2_to_vocab1)
     _model2 = model2[idx2, :]
     for idx, item in enumerate(sorted(idx2)):
-        _model1[idx] = model1[vocab1_to_vocab2_idx[item]]
+        _model1[idx] = model1[vocab_2_to_vocab1[item]]
     return _model1, _model2
 
 
