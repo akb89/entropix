@@ -1,11 +1,11 @@
 """Measure nearest neighbor overlap between two numpy models."""
 import logging
-
+import multiprocessing
+import functools
 import numpy as np
 import scipy.spatial as spatial
-import entropix.utils.metrix as metrix
-
 from tqdm import tqdm
+import entropix.utils.metrix as metrix
 
 logger = logging.getLogger(__name__)
 
@@ -23,17 +23,28 @@ def _get_n_nearest_neighbors(idx, model, n):
     return set(np.argsort(sim)[::-1][:n])
 
 
-def _compare_low_ram(model1, model2, n):
+def _process(model1, model2, n, idx):
+    neighb1 = _get_n_nearest_neighbors(idx, model1, n)
+    neighb2 = _get_n_nearest_neighbors(idx, model2, n)
+    return 1 - len(neighb1.intersection(neighb2))/n
+
+
+def _compare_low_ram(model1, model2, n, num_threads):
     variance = []
     assert model1.shape[0] == model2.shape[0]
-    for idx in tqdm(range(model1.shape[0])):
-        neighb1 = _get_n_nearest_neighbors(idx, model1, n)
-        neighb2 = _get_n_nearest_neighbors(idx, model2, n)
-        variance.append(1 - len(neighb1.intersection(neighb2))/n)
+    with multiprocessing.Pool(num_threads) as pool:
+        process = functools.partial(model1, model2, n)
+        for _var in tqdm(pool.imap(process, range(model1.shape[0]))):
+            variance.append(_var)
     return variance
+    # for idx in tqdm(range(model1.shape[0])):
+    #     neighb1 = _get_n_nearest_neighbors(idx, model1, n)
+    #     neighb2 = _get_n_nearest_neighbors(idx, model2, n)
+    #     variance.append(1 - len(neighb1.intersection(neighb2))/n)
+    # return variance
 
 
-def _compare(model1, model2, n):
+def _compare(model1, model2, n, num_threads):
     try:
         # compute cosine similarities
         logger.info('Computing cosine similarities...')
@@ -53,7 +64,7 @@ def _compare(model1, model2, n):
         # compute the variance following Pierrejean and Tanguy 2018
         return 1 - np.count_nonzero(idx1 == idx2, axis=1) / n
     except MemoryError:
-        return _compare_low_ram(model1, model2, n)
+        return _compare_low_ram(model1, model2, n, num_threads)
 
 
 def _align_model_vocab(model1, model2, vocab1, vocab2):
@@ -81,9 +92,9 @@ def align_vocab(model1, model2, vocab1, vocab2):
     return model1, model2
 
 
-def compare(model1, model2, vocab1, vocab2, n):
+def compare(model1, model2, vocab1, vocab2, n, num_threads):
     model1, model2 = align_vocab(model1, model2, vocab1, vocab2)
-    variance = _compare(model1, model2, n)
+    variance = _compare(model1, model2, n, num_threads)
     # take the average and std
     avg = np.mean(variance)
     std = np.std(variance)
