@@ -10,6 +10,12 @@ import entropix.utils.metrix as metrix
 logger = logging.getLogger(__name__)
 
 
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
+
+
 def _get_n_nearest_neighbors(idx, model, n):
     vector = model[idx]
     sim = []
@@ -23,19 +29,24 @@ def _get_n_nearest_neighbors(idx, model, n):
     return set(np.argsort(sim)[::-1][:n])
 
 
-def _process(model1, model2, n, idx):
+def _get_variance(model1, model2, n, idx):
     neighb1 = _get_n_nearest_neighbors(idx, model1, n)
     neighb2 = _get_n_nearest_neighbors(idx, model2, n)
     return 1 - len(neighb1.intersection(neighb2))/n
 
 
+def _process(model1, model2, n, batchidx):
+    return [_get_variance(model1, model2, n, idx) for idx in batchidx]
+
+
 def _compare_low_ram(model1, model2, n, num_threads):
     variance = []
     assert model1.shape[0] == model2.shape[0]
+    batchidx = chunks(range(model1.shape[0]), num_threads)
     with multiprocessing.Pool(num_threads) as pool:
         process = functools.partial(_process, model1, model2, n)
-        for _var in tqdm(pool.imap(process, range(model1.shape[0])), total=model1.shape[0]):
-            variance.append(_var)
+        for _var in pool.imap_unordered(process, batchidx):
+            variance.extend(_var)
     return variance
     # for idx in tqdm(range(model1.shape[0])):
     #     neighb1 = _get_n_nearest_neighbors(idx, model1, n)
