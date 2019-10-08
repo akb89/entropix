@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def _get_n_nearest_neighbors(idx, model, n):
     vector = model[idx]
     sim = []
-    for i in tqdm(range(model.shape[0])):
+    for i in range(model.shape[0]):
         if i == idx:
             sim.append(0)
         else:
@@ -26,7 +26,7 @@ def _get_n_nearest_neighbors(idx, model, n):
 def _compare_low_ram(model1, model2, n):
     variance = []
     assert model1.shape[0] == model2.shape[0]
-    for idx in range(model1.shape[0]):
+    for idx in tqdm(range(model1.shape[0])):
         neighb1 = _get_n_nearest_neighbors(idx, model1, n)
         neighb2 = _get_n_nearest_neighbors(idx, model2, n)
         variance.append(1 - len(neighb1.intersection(neighb2))/n)
