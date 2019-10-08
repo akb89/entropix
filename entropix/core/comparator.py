@@ -36,13 +36,14 @@ def _get_variance(model1, model2, n, idx):
 
 
 def _process(model1, model2, n, batchidx):
-    return [_get_variance(model1, model2, n, idx) for idx in batchidx]
+    return [_get_variance(model1, model2, n, idx) for idx in tqdm(batchidx)]
 
 
 def _compare_low_ram(model1, model2, n, num_threads):
     variance = []
     assert model1.shape[0] == model2.shape[0]
-    batchidx = chunks(range(model1.shape[0]), num_threads)
+    n_chunks = round(model1.shape[0] / num_threads)
+    batchidx = chunks(range(model1.shape[0]), n_chunks)
     with multiprocessing.Pool(num_threads) as pool:
         process = functools.partial(_process, model1, model2, n)
         for _var in pool.imap_unordered(process, batchidx):
