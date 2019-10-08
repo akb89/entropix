@@ -5,13 +5,15 @@ import numpy as np
 import scipy.spatial as spatial
 import entropix.utils.metrix as metrix
 
+from tqdm import tqdm
+
 logger = logging.getLogger(__name__)
 
 
 def _get_n_nearest_neighbors(idx, model, n):
     vector = model[idx]
     sim = []
-    for i in range(model.shape[0]):
+    for i in tqdm(range(model.shape[0])):
         if i == idx:
             sim.append(0)
         else:
