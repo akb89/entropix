@@ -34,7 +34,7 @@ def _compare_low_ram(model1, model2, n, num_threads):
     assert model1.shape[0] == model2.shape[0]
     with multiprocessing.Pool(num_threads) as pool:
         process = functools.partial(_process, model1, model2, n)
-        for _var in tqdm(pool.imap(process, range(model1.shape[0]))):
+        for _var in tqdm(pool.imap(process, range(model1.shape[0])), total=model1.shape[0]):
             variance.append(_var)
     return variance
     # for idx in tqdm(range(model1.shape[0])):
