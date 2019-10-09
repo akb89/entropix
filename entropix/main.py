@@ -124,6 +124,8 @@ def _reduce(args):
 
 
 def _sample(args):
+    if args.kfolding and args.dump:
+        raise Exception('Dumping kfold models is not supported')
     if args.output:
         dirname = args.output
         os.makedirs(dirname, exist_ok=True)
@@ -168,8 +170,9 @@ def _sample(args):
                       args.kfolding, args.kfold_size, args.num_threads,
                       args.dev_type, args.debug, args.metric, args.alpha,
                       args.logs_dirpath, args.distance, args.singvalues,
-                      args.singalpha)
+                      args.singalpha, args.dump)
     sampler.sample_dimensions()
+
 
 def restricted_kfold_size(x):
     x = float(x)
@@ -480,6 +483,10 @@ def main():
                                choices=['numpy', 'gensim', 'ica', 'nmf', 'txt',
                                         'scipy'],
                                help='model type')
+    parser_sample.add_argument('--dump',
+                               help='absolute filepath with model name where '
+                                    'to save .npy and .vocab files of final '
+                                    'sampled model')
     parser_analyse_ppmi_rows_overlap = subparsers.add_parser(
         'analyse-overlap', formatter_class=argparse.RawTextHelpFormatter,
         help='provides qualitative data on features overlap in a provided dataset')

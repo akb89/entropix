@@ -11,6 +11,7 @@ import numpy as np
 import entropix.core.evaluator as evaluator
 import entropix.utils.data as dutils
 import entropix.utils.metrix as metrix
+import entropix.utils.files as futils
 
 __all__ = ('Sampler')
 
@@ -23,14 +24,14 @@ class Sampler():
                  dataset, output_basepath, num_iter, shuffle, mode, rate,
                  start, end, reduce, limit, rewind, kfolding, kfold_size,
                  max_num_threads, dev_type, debug, metric, alpha, logs_dirpath,
-                 distance, singvalues_filepath, sing_alpha):
+                 distance, singvalues_filepath, sing_alpha, dump):
         # self._model = np.load(singvectors_filepath)
-        global model  # ugly hack to bypass pickling problem on forking
+        # ugly hack to bypass pickling problem on forking
+        global model
         global vocab
         model, vocab = dutils.load_model_and_vocab(
             singvectors_filepath, model_type, vocab_filepath,
             singvalues_filepath, sing_alpha)
-        self._vocab = vocab
         self._dataset = dataset
         self._output_basepath = output_basepath
         self._output_filepath = None
@@ -59,8 +60,15 @@ class Sampler():
             self._logs_basepath = output_basepath
         self._logs_filepath = None
         self._splits = dutils.load_kfold_splits(
-            self._vocab, self._dataset, self._kfold_size,
+            vocab, self._dataset, self._kfold_size,
             self._dev_type, self._logs_basepath)
+        if dump:
+            self._dump = True
+            os.makedirs(os.path.dirname(dump), exist_ok=True)
+            self._model_dump_filepath = dump
+            self._vocab_dump_filepath = '{}.vocab'.format(dump)
+        else:
+            self._dump = False
 
     def debug(self, keep, fold):
         train_rmse = evaluator.evaluate(
@@ -472,25 +480,30 @@ class Sampler():
                   file=final_stream)
         return fold, dims
 
-    def sample_with_kfold(self, keep, dims, fold):
-        self._output_filepath = '{}.kfold{}-{}'.format(
-            self._output_basepath, fold, len(self._splits.keys()))
-        if self._debug:
-            self._logs_filepath = '{}.kfold{}-{}'.format(
-                self._logs_basepath, fold, len(self._splits.keys()))
+    def sample(self, keep, dims, fold):
+        if self._kfolding:
+            self._output_filepath = '{}.kfold{}-{}'.format(
+                self._output_basepath, fold, len(self._splits.keys()))
+            if self._debug:
+                self._logs_filepath = '{}.kfold{}-{}'.format(
+                    self._logs_basepath, fold, len(self._splits.keys()))
+        else:
+            self._output_filepath = self._output_basepath
+            if self._debug:
+                self._logs_filepath = self._logs_basepath
         if self._mode == 'limit':
             return self.sample_limit(dims, fold)
         return self.sample_seq_mix(keep, dims, fold)
 
-
     def sample_dimensions(self):
+        global model
         logger.info('Sampling dimensions over a total of {} dims, optimizing '
                     'on {} using {} mode...'
                     .format(model.shape[1], self._dataset, self._mode))
         if self._mode not in ['seq', 'mix', 'limit']:
             raise Exception('Unsupported mode {}'.format(self._mode))
-        if not self._kfolding:
-            raise Exception('Non-kfold mode needs reimplementation')
+        # if not self._kfolding:
+        #     raise Exception('Non-kfold mode needs reimplementation')
         if self._end > model.shape[1]:
             raise Exception('End parameter is > model.shape[1]: {} > {}'
                             .format(self._end, model.shape[1]))
@@ -514,10 +527,19 @@ class Sampler():
             num_threads = num_folds if num_folds <= self._max_num_threads \
                 else self._max_num_threads
             with multiprocessing.Pool(num_threads) as pool:
-                _sample_with_kfold = functools.partial(
-                    self.sample_with_kfold, [], alldims)
-                for fold, keep in pool.imap_unordered(_sample_with_kfold,
+                _sample = functools.partial(
+                    self.sample, [], alldims)
+                for fold, keep in pool.imap_unordered(_sample,
                                                       range(1,
                                                             num_folds+1)):
                     self.compute_scores(keep, fold)
                 self.display_scores()
+        else:
+            logger.info('Sampling on whole {} dataset'.format(self._dataset))
+            _, dims = self.sample(keep=[], dims=alldims, fold=1)
+            model = model[:, dims]
+        if self._dump:
+            logger.info('Dumping model to {}'.format(self._model_dump_filepath))
+            np.save(self._model_dump_filepath, model)
+            logger.info('Dumping vocab to {}'.format(self._vocab_dump_filepath))
+            futils.save_vocab(vocab, self._vocab_dump_filepath)
