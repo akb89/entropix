@@ -229,7 +229,8 @@ def _export(args):
         raise Exception('Both --start and --end params should be specified')
     model, vocab = dutils.load_model_and_vocab(
         args.model, args.type, args.vocab, args.singvalues, args.singalpha,
-        args.start, args.end, args.dims, args.shuffle, args.randomize)
+        args.start, args.end, args.dims, args.shuffle, args.randomize,
+        args.randtype, args.normloc, args.normscale)
     np.save(args.output, model)
     dutils.save_vocab(vocab, '{}.vocab'.format(args.output))
 
@@ -502,7 +503,7 @@ def main():
         'export', formatter_class=argparse.RawTextHelpFormatter,
         help='export different model types to a standardized numpy format')
     parser_export.set_defaults(func=_export)
-    parser_export.add_argument('-m', '--model', required=True,
+    parser_export.add_argument('-m', '--model',
                                help='absolute path to input embedding model')
     parser_export.add_argument('-o', '--output', required=True,
                                help='absolute path to output numpy model')
@@ -528,6 +529,14 @@ def main():
     parser_export.add_argument('--randomize', action='store_true',
                                help='if true, will replace vectors values '
                                     'with random numbers')
+    parser_export.add_argument('--randtype', choices=['uniform', 'normal'],
+                               help='distribution to use with --randomize')
+    parser_export.add_argument('--normloc', type=float,
+                               help='mean of --randtype normal distribution. '
+                                    'Should be in [-1, 1]')
+    parser_export.add_argument('--normscale', type=float,
+                               help='std of --randtype normal distribution. '
+                                    'Should be > 0')
     parser_compare = subparsers.add_parser(
         'compare', formatter_class=argparse.RawTextHelpFormatter,
         help='compare the nearest neighbors of two numpy models')
