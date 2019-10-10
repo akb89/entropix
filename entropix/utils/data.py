@@ -340,7 +340,7 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
                     elif randtype == 'normal':
                         distrib = get_truncated_normal(
                             mean=normloc, sd=normscale, low=-1, upp=1)
-                        model = distrib.rvs(len(vocab), size)
+                        model = distrib.rvs((len(vocab), size))
                     return model, vocab
                 logger.info('Loading numpy model...')
                 singvectors = np.load(model_filepath)
