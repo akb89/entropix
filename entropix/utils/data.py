@@ -286,10 +286,9 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
         raise Exception('--shuffle or --randomize only supported with --type numpy')
     if (shuffle or randomize) and dims_filepath:
         raise Exception('Cannot specify both --dims and --shuffle')
-    if randomize and not randtype:
-        raise Exception('You need  to specify --randtype with --randomize')
-    if randtype not in ['uniform', 'normal']:
-        raise Exception('Unsupported --randtype {}'.format(randtype))
+    if randomize and randtype not in ['uniform', 'normal']:
+        raise Exception('Unsupported --randtype {}. You need  to specify '
+                        '--randtype with --randomize'.format(randtype))
     if randtype == 'normal' and (normloc is None or normscale is None):
         raise Exception('You need to specify --normloc and --normscale with '
                         '--randtype normal')
