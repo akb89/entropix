@@ -48,6 +48,8 @@ class Informativeness():
         probs = self._get_prob_distribution(context)
         shannon_entropy = scipy.stats.entropy(probs)
         ctx_ent = 1 - (shannon_entropy / np.log(len(probs)))
+        if np.isnan(ctx_ent):
+            return 0
         return ctx_ent
 
     @lru_cache(maxsize=10)
