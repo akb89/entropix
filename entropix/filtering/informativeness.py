@@ -13,7 +13,7 @@ from gensim.models import Word2Vec
 __all__ = ('Informativeness')
 
 logger = logging.getLogger(__name__)
-np.seterr(over='ignore')  # raise numpy errors
+np.seterr(over='ignore', divide='ignore', under='ignore', invalid='ignore')
 
 
 class Informativeness():
