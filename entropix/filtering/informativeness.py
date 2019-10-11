@@ -50,7 +50,7 @@ class Informativeness():
             shannon_entropy = scipy.stats.entropy(probs)
             ctx_ent = 1 - (shannon_entropy / np.log(len(probs)))
             return ctx_ent
-        except RuntimeWarning:
+        except FloatingPointError:
             # catch overflow exceptions
             return 0
 
