@@ -13,7 +13,7 @@ from gensim.models import Word2Vec
 __all__ = ('Informativeness')
 
 logger = logging.getLogger(__name__)
-np.seterr(over='raise')  # raise numpy errors
+np.seterr(over='ignore')  # raise numpy errors
 
 
 class Informativeness():
@@ -45,14 +45,10 @@ class Informativeness():
     @lru_cache(maxsize=10)
     def context_informativeness(self, context):
         """Get context informativeness (CI)."""
-        try:
-            probs = self._get_prob_distribution(context)
-            shannon_entropy = scipy.stats.entropy(probs)
-            ctx_ent = 1 - (shannon_entropy / np.log(len(probs)))
-            return ctx_ent
-        except FloatingPointError:
-            # catch overflow exceptions
-            return 0
+        probs = self._get_prob_distribution(context)
+        shannon_entropy = scipy.stats.entropy(probs)
+        ctx_ent = 1 - (shannon_entropy / np.log(len(probs)))
+        return ctx_ent
 
     @lru_cache(maxsize=10)
     def context_word_informativeness(self, context, word_index):
