@@ -39,7 +39,7 @@ def _process(model1, model2, n, batchidx):
     return [_get_variance(model1, model2, n, idx) for idx in tqdm(batchidx)]
 
 
-def _compare_low_ram(model1, model2, n, num_threads):
+def _compare_low_ram(model1, model2, n, num_threads=1):
     variance = []
     assert model1.shape[0] == model2.shape[0]
     n_chunks = round(model1.shape[0] / num_threads)

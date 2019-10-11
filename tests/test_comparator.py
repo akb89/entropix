@@ -7,11 +7,21 @@ import entropix.core.comparator as comparator
 def test_compare():
     A = np.array([[0,1,2,3], [0,1,2,3], [0,1,2,3], [0,1,2,3]])
     B = np.array([[0,1,2,3], [0,1,2,3], [0,1,2,3], [0,1,2,3]])
-    variance = comparator.compare(A, B, {}, {}, n=2)
+    variance = comparator.compare(A, B, {}, {}, n=2, num_threads=1)
 
 
 def test_align_vocab():
-    pass
+    A = np.array([[0], [1], [2], [3], [4], [5]])
+    B = np.array([[3], [1], [2], [0], [4]])
+    vocabA = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'X': 4, 'Z': 5}
+    vocabB = {'D': 0, 'C': 1, 'B': 2, 'A': 3, 'Y': 4}
+    C, D = comparator._align_model_vocab(A, B, vocabA, vocabB)
+    assert C.shape == D.shape
+    assert C.shape[0] == 4
+    assert C.shape[1] == 1
+    assert C[0] == D[0]
+    assert C[3] == D[3]
+    assert C[1] == D[2]
 
 
 def test_get_n_nearest_neighbors():
