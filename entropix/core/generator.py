@@ -32,11 +32,11 @@ def _count_with_info_filter(word_to_idx_dic, win_size, line):
         context = tokens[max(0, token_pos-win_size): token_pos] + tokens[token_pos+1: min(len(tokens), token_pos+win_size+1)]
         context = tuple([w for w in context if w in word_to_idx_dic])
         filtered_context = info.filter_context_words(context)
-        print('tokens = {}'.format(tokens))
-        print('target = {}'.format(tokens[token_pos]))
-        print('context = {}'.format(context))
-        print('filtered = {}'.format(filtered_context))
-        print('----------------------------------------')
+        # print('tokens = {}'.format(tokens))
+        # print('target = {}'.format(tokens[token_pos]))
+        # print('context = {}'.format(context))
+        # print('filtered = {}'.format(filtered_context))
+        # print('----------------------------------------')
         token_idx = word_to_idx_dic[token]
         for ctx in filtered_context:
             ctx_idx = word_to_idx_dic[ctx]
