@@ -8,44 +8,66 @@ import entropix.utils.metrix as metrix
 import entropix.utils.data as dutils
 
 __all__ = ('evaluate_distributional_space', 'evaluate', 'is_improving',
-           'is_degrading')
+           'is_degrading', 'evaluate_single_dataset')
 
 logger = logging.getLogger(__name__)
 
 
-def is_degrading(metric_value, best_metric_value, metric):
-    """Return true if metric value is degrading."""
-    if metric not in ['spr', 'rmse', 'combined', 'both']:
-        raise Exception('Unsupported metric: {}'.format(metric))
+def _is_degrading_single(metric_value, best_metric_value, metric):
     if metric == 'both':
-        spr = float(metric_value.split('#')[0])
-        rmse = float(metric_value.split('#')[1])
-        best_spr = float(best_metric_value.split('#')[0])
-        best_rmse = float(best_metric_value.split('#')[1])
+        spr = metric_value[0]
+        rmse = metric_value[1]
+        best_spr = best_metric_value[0]
+        best_rmse = best_metric_value[1]
         return spr < best_spr or rmse > best_rmse
     if metric in ['spr', 'combined']:
         return metric_value < best_metric_value
     return metric_value > best_metric_value
 
 
-def is_improving(metric_value, best_metric_value, metric):
-    """Return true if metric value improving."""
+def is_degrading(metric_values, best_metric_values, metric):
+    """Return true if metric value is degrading."""
     if metric not in ['spr', 'rmse', 'combined', 'both']:
         raise Exception('Unsupported metric: {}'.format(metric))
+    for metric_value, best_metric_value in zip(metric_values,
+                                               best_metric_values):
+        if _is_degrading_single(metric_value, best_metric_value, metric):
+            return True
+    return False
+
+
+def _is_improving_single(metric_value, best_metric_value, metric):
     if metric == 'both':
-        spr = float(metric_value.split('#')[0])
-        rmse = float(metric_value.split('#')[1])
-        best_spr = float(best_metric_value.split('#')[0])
-        best_rmse = float(best_metric_value.split('#')[1])
+        # spr = float(metric_value.split('#')[0])
+        # rmse = float(metric_value.split('#')[1])
+        # best_spr = float(best_metric_value.split('#')[0])
+        # best_rmse = float(best_metric_value.split('#')[1])
+        spr = metric_value[0]
+        rmse = metric_value[1]
+        best_spr = best_metric_value[0]
+        best_rmse = best_metric_value[1]
         return spr > best_spr and rmse < best_rmse
     if metric in ['spr', 'combined']:
+        # return float(metric_value) > float(best_metric_value)
         return metric_value > best_metric_value
     # for rmse we want to lower the loss
+    # return float(metric_value) < float(best_metric_value)
     return metric_value < best_metric_value
 
 
-def evaluate(model, splits, dataset, metric, distance, alpha=None):
-    """Evaluate a given model against splits given a metric (spr or rmse)."""
+def is_improving(metric_values, best_metric_values, metric):
+    """Return true if metric value improving."""
+    if metric not in ['spr', 'rmse', 'combined', 'both']:
+        raise Exception('Unsupported metric: {}'.format(metric))
+    for metric_value, best_metric_value in zip(metric_values,
+                                               best_metric_values):
+        if not _is_improving_single(metric_value, best_metric_value, metric):
+            return False
+    return True
+
+
+def evaluate_single_dataset(model, splits, dataset, metric, distance,
+                            alpha=None):
     if metric not in ['spr', 'rmse', 'combined', 'both']:
         raise Exception('Unsupported metric: {}'.format(metric))
     if metric == 'spr':
@@ -62,6 +84,13 @@ def evaluate(model, splits, dataset, metric, distance, alpha=None):
     return metrix.get_both_spr_rmse(
         model, splits['left_idx'], splits['right_idx'], splits['sim'],
         dataset, distance)
+
+
+def evaluate(model, splits, datasets, metric, distance, alpha=None):
+    """Evaluate a given model against splits given a metric (spr or rmse)."""
+    return [evaluate_single_dataset(model, splits[dataset], dataset, metric,
+                                    distance, alpha)
+            for dataset in datasets]
 
 
 def _evaluate_concept_categorization(model, vocab, dataset):
@@ -99,7 +128,6 @@ def _evaluate_word_similarity(model, vocab, dataset, metric, model_type,
         model = model.todense()  # FIXME: this does not work for large models. Need to calculate cosine with sparse matrix
     dim = model.shape[1]
     splits = dutils.load_kfold_splits(vocab, dataset, kfold_size,
-                                      dev_type='nodev',
                                       output_logpath=None)
     for fold in splits.keys():
         logger.info('Evaluating on {} word pairs'

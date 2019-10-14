@@ -8,11 +8,9 @@ from collections import defaultdict
 
 import joblib
 import numpy as np
-from scipy import sparse
+from scipy import sparse, stats
 from tqdm import tqdm
 from gensim.models import Word2Vec
-
-import entropix.utils.files as futils
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +35,11 @@ DATASETS = {
     'ws353': os.path.join(os.path.dirname(os.path.dirname(__file__)),
                           'resources', 'WS353.combined.txt')
 }
+
+
+def get_truncated_normal(mean=0, sd=1, low=0, upp=10):
+    return stats.truncnorm(
+        (low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
 
 
 def save_vocab(vocab, output_vocab_filepath):
@@ -175,15 +178,14 @@ def load_dataset(dataset, vocab):
     return _load_categories_to_words_dict(dataset, vocab)
 
 
-def _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size, dev_type,
-                            dataset, output_logpath):
-    if dev_type not in ['nodev', 'regular']:
-        raise Exception('Unsupported dev_type = {}'.format(dev_type))
+def _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size, dataset,
+                            output_logpath):
     kfold_dict = defaultdict(defaultdict)
     len_test_set = max(math.floor(len(sim)*kfold_size), 1)
     fold = 1
     max_num_fold = math.floor(len(sim) / len_test_set)
-    with open('{}.folds.log'.format(output_logpath), 'w', encoding='utf-8') as folds_log:
+    with open('{}.{}.folds.log'.format(output_logpath, dataset),
+              'w', encoding='utf-8') as folds_log:
         print('{} avg sim = {}'.format(dataset, np.mean(sim)), file=folds_log)
         print('{} std sim = {}'.format(dataset, np.std(sim)), file=folds_log)
         while fold <= max_num_fold:
@@ -197,29 +199,12 @@ def _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size, dev_type,
                 'sim': sim[test_start_idx:test_end_idx]
             }
             train_split_idx_set = set(range(0, len(sim))) - test_split_idx_set
-            if dev_type == 'nodev':
-                train_split_idx_list = sorted(list(train_split_idx_set))
-                kfold_dict[fold]['train'] = {
-                    'left_idx': [left_idx[idx] for idx in train_split_idx_list],
-                    'right_idx': [right_idx[idx] for idx in train_split_idx_list],
-                    'sim': [sim[idx] for idx in train_split_idx_list]
-                }
-            elif dev_type == 'regular':
-                dev_split_idx_set = set(random.sample(train_split_idx_set,
-                                                      len(test_split_idx_set)))
-                train_split_idx_set = train_split_idx_set - dev_split_idx_set
-                dev_split_idx_list = sorted(list(dev_split_idx_set))
-                train_split_idx_list = sorted(list(train_split_idx_set))
-                kfold_dict[fold]['dev'] = {
-                    'left_idx': [left_idx[idx] for idx in dev_split_idx_list],
-                    'right_idx': [right_idx[idx] for idx in dev_split_idx_list],
-                    'sim': [sim[idx] for idx in dev_split_idx_list]
-                }
-                kfold_dict[fold]['train'] = {
-                    'left_idx': [left_idx[idx] for idx in train_split_idx_list],
-                    'right_idx': [right_idx[idx] for idx in train_split_idx_list],
-                    'sim': [sim[idx] for idx in train_split_idx_list]
-                }
+            train_split_idx_list = sorted(list(train_split_idx_set))
+            kfold_dict[fold]['train'] = {
+                'left_idx': [left_idx[idx] for idx in train_split_idx_list],
+                'right_idx': [right_idx[idx] for idx in train_split_idx_list],
+                'sim': [sim[idx] for idx in train_split_idx_list]
+            }
             print('fold {} train avg sim = {}'.format(
                 fold, np.mean(kfold_dict[fold]['train']['sim'])),
                   file=folds_log)
@@ -235,7 +220,8 @@ def _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size, dev_type,
     return kfold_dict
 
 
-def load_kfold_splits(vocab, dataset, kfold_size, dev_type, output_logpath):
+def _load_kfold_splits_single_dataset(vocab, dataset, kfold_size,
+                                      output_logpath):
     """Return a kfold train/test dict.
 
     The dict has the form dict[kfold_num] = {train_dict, test_dict} where
@@ -263,12 +249,27 @@ def load_kfold_splits(vocab, dataset, kfold_size, dev_type, output_logpath):
             }
         }
     return _load_kfold_splits_dict(left_idx, right_idx, f_sim, kfold_size,
-                                   dev_type, dataset, output_logpath)
+                                   dataset, output_logpath)
+
+
+def load_kfold_splits(vocab, datasets, kfold_size, output_logpath):
+    kfold_dict = {}
+    _kfold_dict = {dataset: _load_kfold_splits_single_dataset(
+        vocab, dataset, kfold_size, output_logpath) for dataset in datasets}
+    for dataset, dkfold in _kfold_dict.items():
+        for nfold, dfold in dkfold.items():
+            if nfold not in kfold_dict:
+                kfold_dict[nfold] = {'train': {}, 'test': {}}
+            kfold_dict[nfold]['train'][dataset] = dfold['train']
+            kfold_dict[nfold]['test'][dataset] = dfold['test']
+    return kfold_dict
 
 
 def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
                          singvalues_filepath=None, sing_alpha=None, start=None,
-                         end=None, dims_filepath=None):
+                         end=None, dims_filepath=None, shuffle=False,
+                         randomize=False, randtype=None, normloc=None,
+                         normscale=None):
     """Load a gensim or scipy/scikit-learn SVD, ICA or NMF model.
 
     Expects {NUMPY, ICA, NMF, SCIPY} models to have been generated by
@@ -277,6 +278,16 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
     logger.info('Loading model and vocabulary...')
     if model_type not in ['gensim', 'numpy', 'ica', 'nmf', 'txt', 'scipy']:
         raise Exception('Unsupported model model-type {}'.format(model_type))
+    if (shuffle or randomize) and not model_type == 'numpy':
+        raise Exception('--shuffle or --randomize only supported with --type numpy')
+    if (shuffle or randomize) and dims_filepath:
+        raise Exception('Cannot specify both --dims and --shuffle')
+    if randomize and randtype not in ['uniform', 'normal']:
+        raise Exception('Unsupported --randtype {}. You need  to specify '
+                        '--randtype with --randomize'.format(randtype))
+    if randtype == 'normal' and (normloc is None or normscale is None):
+        raise Exception('You need to specify --normloc and --normscale with '
+                        '--randtype normal')
     if model_type == 'gensim':
         wv = Word2Vec.load(model_filepath).wv
         logger.info('model size = {}'.format(wv.vector_size))
@@ -315,6 +326,18 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
         else:
             vocab = _load_vocab_from_txt_file(vocab_filepath)
             if model_type == 'numpy':
+                if randomize:
+                    size = end-start
+                    logger.warning('Generating matrix of random vectors with '
+                                   'shape = [{},{}] using a {} distribution'
+                                   .format(len(vocab), size, randtype))
+                    if randtype == 'uniform':
+                        model = np.random.uniform(-1, 1, [len(vocab), size])
+                    elif randtype == 'normal':
+                        distrib = get_truncated_normal(
+                            mean=normloc, sd=normscale, low=-1, upp=1)
+                        model = distrib.rvs((len(vocab), size))
+                    return model, vocab
                 logger.info('Loading numpy model...')
                 singvectors = np.load(model_filepath)
                 if dims_filepath:
@@ -330,7 +353,7 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
                         'Loading model with singalpha = {} from singvalues {}'
                         .format(sing_alpha, singvalues_filepath))
                     singvalues = np.load(singvalues_filepath)
-                if start is not None and end is not None:
+                if start is not None and end is not None and not shuffle:
                     logger.info('Reducing model to start = {} and end = {}'
                                 .format(start, end))
                     singvectors = singvectors[:, start:end]
@@ -347,6 +370,13 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
                 else:
                     model = np.matmul(singvectors, np.diag(np.power(singvalues,
                                                                     sing_alpha)))
+                if shuffle:
+                    logger.warning('Shuffle mode ON: will randomly select dimensions')
+                    randims = list(range(model.shape[1]))
+                    random.shuffle(randims)
+                    if start is not None and end is not None:
+                        randims = randims[start:end]
+                    model = model[:, randims]
             else:
                 if model_type == 'ica':
                     logger.info('Loading scikit-learn ICA model...')

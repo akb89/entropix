@@ -10,14 +10,12 @@ import logging
 import logging.config
 
 import numpy as np
-import scipy
-from scipy import sparse
 
 import entropix.utils.config as cutils
 import entropix.utils.files as futils
 import entropix.utils.data as dutils
-import entropix.core.counter as counter
 import entropix.core.calculator as calculator
+import entropix.core.comparator as comparator
 import entropix.core.evaluator as evaluator
 import entropix.core.generator as generator
 import entropix.core.reducer as reducer
@@ -126,6 +124,8 @@ def _reduce(args):
 
 
 def _sample(args):
+    if args.kfolding and args.dump:
+        raise Exception('Dumping kfold models is not supported')
     if args.output:
         dirname = args.output
         os.makedirs(dirname, exist_ok=True)
@@ -136,19 +136,19 @@ def _sample(args):
         keep_filepath_basename = os.path.join(
             dirname,
             '{}.{}.sampledims.metric-{}.mode-{}.rate-{}.niter-{}.start-{}.end-{}'
-            .format(basename, args.dataset, args.metric, args.args.mode,
+            .format(basename, '-'.join(args.datasets), args.metric, args.args.mode,
                     args.rate, args.iter, args.start, args.end))
     elif args.mode == 'seq':
         keep_filepath_basename = os.path.join(
             dirname,
             '{}.{}.sampledims.metric-{}.mode-{}.niter-{}.start-{}.end-{}'
-            .format(basename, args.dataset, args.metric, args.mode, args.iter,
+            .format(basename, '-'.join(args.datasets), args.metric, args.mode, args.iter,
                     args.start, args.end))
     elif args.mode == 'limit':
         keep_filepath_basename = os.path.join(
             dirname,
             '{}.{}.sampledims.metric-{}.mode-{}.d-{}.start-{}.end-{}'.format(
-                basename, args.dataset, args.metric, args.mode, args.limit,
+                basename, '-'.join(args.datasets), args.metric, args.mode, args.limit,
                 args.start, args.end))
     if args.shuffle:
         keep_filepath_basename = '{}.shuffled.timestamp-{}'.format(
@@ -163,15 +163,16 @@ def _sample(args):
     if args.logs_dirpath:
         os.makedirs(args.logs_dirpath, exist_ok=True)
     logger.debug('Outputing logs to {}'.format(args.logs_dirpath))
-    sampler = Sampler(args.model, args.type, args.vocab, args.dataset,
+    sampler = Sampler(args.model, args.type, args.vocab, args.datasets,
                       keep_filepath_basename, args.iter, args.shuffle,
                       args.mode, args.rate, args.start, args.end,
                       args.reduce, args.limit, args.rewind,
                       args.kfolding, args.kfold_size, args.num_threads,
-                      args.dev_type, args.debug, args.metric, args.alpha,
+                      args.debug, args.metric, args.alpha,
                       args.logs_dirpath, args.distance, args.singvalues,
-                      args.singalpha)
+                      args.singalpha, args.dump)
     sampler.sample_dimensions()
+
 
 def restricted_kfold_size(x):
     x = float(x)
@@ -204,54 +205,6 @@ def _remove_mean(args):
     remover.remove_mean(model, output_filepath)
 
 
-def _convert(args):
-    """deprecated."""
-    logger.info('Converting file {}'.format(args.input))
-    logger.info('Converting from {} to {}...'.format(args.source, args.to))
-    dirname = os.path.dirname(args.input)
-    if args.source == 'numpy':
-        basename = os.path.basename(args.input).split('.npy')[0]
-    elif args.source == 'text':
-        basename = os.path.basename(args.input).split('.txt')[0]
-    output_basename = os.path.join(dirname, basename)
-    if args.to == 'text':
-        model_filepath = '{}.txt'.format(output_basename)
-        model = np.load(args.input)
-        # model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
-        if args.dims:
-            dims = []
-            with open(args.dims, 'r', encoding='utf-8') as dims_stream:
-                for line in dims_stream:
-                    dims.append(int(line.strip()))
-            logger.info('Sampling model with {} dimensions = {}'
-                        .format(len(dims), dims))
-            model = model[:, dims]
-        with open(model_filepath, 'w', encoding='utf-8') as model_stream:
-            with open(args.vocab, 'r', encoding='utf-8') as vocab_stream:
-                for line in vocab_stream:
-                    word = line.strip().split('\t')[1]
-                    idx = int(line.strip().split('\t')[0])
-                    vector = ' '.join([str(coord) for coord in model[idx]])
-                    print('{} {}'.format(word, vector), file=model_stream)
-        logger.info('Saving to {}'.format(model_filepath))
-    elif args.to == 'numpy':
-        vocab_filepath = '{}.vocab'.format(output_basename)
-        model = None
-        with open(args.input, 'r', encoding='utf-8') as input_stream:
-            with open(vocab_filepath, 'w', encoding='utf-8') as vocab_stream:
-                for idx, line in enumerate(input_stream):
-                    items = line.strip().split(' ')
-                    embed = np.array([items[1:]], dtype=np.float64)
-                    if model is None:
-                        model = np.array([items[1:]], dtype=np.float64)
-                    else:
-                        model = np.append(model, embed, axis=0)
-                    print('{}\t{}'.format(idx, items[0]), file=vocab_stream)
-        logger.info('Saving to {}.npy'.format(output_basename))
-        np.save(output_basename, model)
-        logger.info('Done')
-
-
 def _ica(args):
     reducer.apply_fast_ica(args.model, args.dataset, args.vocab, args.max_iter)
 
@@ -276,9 +229,28 @@ def _export(args):
         raise Exception('Both --start and --end params should be specified')
     model, vocab = dutils.load_model_and_vocab(
         args.model, args.type, args.vocab, args.singvalues, args.singalpha,
-        args.start, args.end, args.dims)
+        args.start, args.end, args.dims, args.shuffle, args.randomize,
+        args.randtype, args.normloc, args.normscale)
     np.save(args.output, model)
     dutils.save_vocab(vocab, '{}.vocab'.format(args.output))
+
+
+def _compare(args):
+    basename1 = os.path.basename(args.model1)
+    basename2 = os.path.basename(args.model2)
+    logger.info('Comparing DS models {} and {}'.format(basename1, basename2))
+    VOCAB1_FILEPATH = '{}.vocab'.format(args.model1.split('.npy')[0])
+    VOCAB2_FILEPATH = '{}.vocab'.format(args.model2.split('.npy')[0])
+    model1, vocab1 = dutils.load_model_and_vocab(
+        model_filepath=args.model1, model_type='numpy',
+        vocab_filepath=VOCAB1_FILEPATH)
+    model2, vocab2 = dutils.load_model_and_vocab(
+        model_filepath=args.model2, model_type='numpy',
+        vocab_filepath=VOCAB2_FILEPATH)
+    avg, std = comparator.compare(model1, model2, vocab1, vocab2,
+                                  args.num_neighbors, args.num_threads)
+    logger.info('avg = {}'.format(avg))
+    logger.info('std = {}'.format(std))
 
 
 def main():
@@ -453,9 +425,9 @@ def main():
     parser_sample.add_argument('-o', '--output',
                                help='absolute path to output directory where '
                                     'to save sampled models')
-    parser_sample.add_argument('-d', '--dataset', required=True,
-                               choices=['men', 'simlex', 'simverb', 'sts2012'],
-                               help='dataset to optimize on')
+    parser_sample.add_argument('-d', '--datasets', required=True, nargs='+',
+                               #choices=['men', 'simlex', 'simverb', 'sts2012'],
+                               help='dataset(s) to optimize on')
     parser_sample.add_argument('-i', '--iter', type=int, default=1,
                                help='number of iterations')
     parser_sample.add_argument('-s', '--shuffle', action='store_true',
@@ -482,9 +454,6 @@ def main():
                                help='determine size of kfold. Should be in '
                                     '[0, 0.5], that is, less than 50% of '
                                     'total dataset size')
-    parser_sample.add_argument('-y', '--dev-type', default='nodev',
-                               choices=['nodev', 'regular', 'balanced'],
-                               help='which type of dev split to use')
     parser_sample.add_argument('-c', '--metric', required=True,
                                choices=['spr', 'rmse', 'combined', 'both'],
                                help='which eval metric to use')
@@ -512,6 +481,10 @@ def main():
                                choices=['numpy', 'gensim', 'ica', 'nmf', 'txt',
                                         'scipy'],
                                help='model type')
+    parser_sample.add_argument('--dump',
+                               help='absolute filepath with model name where '
+                                    'to save .npy and .vocab files of final '
+                                    'sampled model')
     parser_analyse_ppmi_rows_overlap = subparsers.add_parser(
         'analyse-overlap', formatter_class=argparse.RawTextHelpFormatter,
         help='provides qualitative data on features overlap in a provided dataset')
@@ -527,7 +500,7 @@ def main():
         'export', formatter_class=argparse.RawTextHelpFormatter,
         help='export different model types to a standardized numpy format')
     parser_export.set_defaults(func=_export)
-    parser_export.add_argument('-m', '--model', required=True,
+    parser_export.add_argument('-m', '--model',
                                help='absolute path to input embedding model')
     parser_export.add_argument('-o', '--output', required=True,
                                help='absolute path to output numpy model')
@@ -548,5 +521,30 @@ def main():
                                help='absolute path to singular values')
     parser_export.add_argument('--singalpha', type=float,
                                help='power alpha for singular values')
+    parser_export.add_argument('--shuffle', action='store_true',
+                               help='if true, will shuffle svd dims')
+    parser_export.add_argument('--randomize', action='store_true',
+                               help='if true, will replace vectors values '
+                                    'with random numbers')
+    parser_export.add_argument('--randtype', choices=['uniform', 'normal'],
+                               help='distribution to use with --randomize')
+    parser_export.add_argument('--normloc', type=float,
+                               help='mean of --randtype normal distribution. '
+                                    'Should be in [-1, 1]')
+    parser_export.add_argument('--normscale', type=float,
+                               help='std of --randtype normal distribution. '
+                                    'Should be > 0')
+    parser_compare = subparsers.add_parser(
+        'compare', formatter_class=argparse.RawTextHelpFormatter,
+        help='compare the nearest neighbors of two numpy models')
+    parser_compare.set_defaults(func=_compare)
+    parser_compare.add_argument('-m1', '--model1', required=True,
+                                help='absolute path to input embedding model1')
+    parser_compare.add_argument('-m2', '--model2', required=True,
+                                help='absolute path to input embedding model2')
+    parser_compare.add_argument('-n', '--num-neighbors', type=int, default=5,
+                                help='number of neighbors to consider')
+    parser_compare.add_argument('--num-threads', type=int, default=1,
+                                help='number of threads to use for low RAM')
     args = parser.parse_args()
     args.func(args)
