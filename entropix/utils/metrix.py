@@ -30,9 +30,9 @@ def purity(y_true, y_pred):
     true_clusters = np.zeros(shape=(len(set(y_true)), len(y_true)))
     pred_clusters = np.zeros_like(true_clusters)
     for id, cl in enumerate(set(y_true)):
-        true_clusters[id] = (y_true == cl).astype("int")
+        true_clusters[id] = (y_true == cl).astype('int')
     for id, cl in enumerate(set(y_pred)):
-        pred_clusters[id] = (y_pred == cl).astype("int")
+        pred_clusters[id] = (y_pred == cl).astype('int')
     M = pred_clusters.dot(true_clusters.T)
     return 1. / len(y_true) * np.sum(np.max(M, axis=1))
 
@@ -107,13 +107,19 @@ def get_rmse(model, left_idx, right_idx, sim, dataset, distance):
         raise Exception('Unsupported dataset: {}'.format(dataset))
     model_sim = get_numpy_model_sim(model, left_idx, right_idx, dataset,
                                     distance)
-    return root_mean_square_error(sim, model_sim)
+    rmse = root_mean_square_error(sim, model_sim)
+    if np.isnan(rmse):
+        return 1.
+    return rmse
 
 
 def get_spr_correlation(model, left_idx, right_idx, sim, dataset, distance):
     model_sim = get_numpy_model_sim(model, left_idx, right_idx, dataset,
                                     distance)
-    return spearman(sim, model_sim)
+    spr = spearman(sim, model_sim)
+    if np.isnan(spr):
+        return -1.
+    return spr
 
 
 def get_combined_spr_rmse(model, left_idx, right_idx, sim, dataset, alpha,
@@ -128,10 +134,9 @@ def get_combined_spr_rmse(model, left_idx, right_idx, sim, dataset, alpha,
 
 
 def get_both_spr_rmse(model, left_idx, right_idx, sim, dataset, distance):
-    return '{}#{}'.format(get_spr_correlation(model, left_idx, right_idx, sim,
-                                              dataset, distance),
-                          get_rmse(model, left_idx, right_idx, sim, dataset,
-                                   distance))
+    return (get_spr_correlation(model, left_idx, right_idx, sim,
+                                dataset, distance),
+            get_rmse(model, left_idx, right_idx, sim, dataset, distance))
 
 
 def init_eval_metrix(metric, alpha=None):
@@ -143,4 +148,4 @@ def init_eval_metrix(metric, alpha=None):
         return 1.
     if metric == 'combined':
         return alpha * -1. - (1. - alpha) * 1.
-    return '{}#{}'.format(-1, 1)
+    return (-1, 1)

@@ -178,15 +178,14 @@ def load_dataset(dataset, vocab):
     return _load_categories_to_words_dict(dataset, vocab)
 
 
-def _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size, dev_type,
-                            dataset, output_logpath):
-    if dev_type not in ['nodev', 'regular']:
-        raise Exception('Unsupported dev_type = {}'.format(dev_type))
+def _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size, dataset,
+                            output_logpath):
     kfold_dict = defaultdict(defaultdict)
     len_test_set = max(math.floor(len(sim)*kfold_size), 1)
     fold = 1
     max_num_fold = math.floor(len(sim) / len_test_set)
-    with open('{}.folds.log'.format(output_logpath), 'w', encoding='utf-8') as folds_log:
+    with open('{}.{}.folds.log'.format(output_logpath, dataset),
+              'w', encoding='utf-8') as folds_log:
         print('{} avg sim = {}'.format(dataset, np.mean(sim)), file=folds_log)
         print('{} std sim = {}'.format(dataset, np.std(sim)), file=folds_log)
         while fold <= max_num_fold:
@@ -200,29 +199,12 @@ def _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size, dev_type,
                 'sim': sim[test_start_idx:test_end_idx]
             }
             train_split_idx_set = set(range(0, len(sim))) - test_split_idx_set
-            if dev_type == 'nodev':
-                train_split_idx_list = sorted(list(train_split_idx_set))
-                kfold_dict[fold]['train'] = {
-                    'left_idx': [left_idx[idx] for idx in train_split_idx_list],
-                    'right_idx': [right_idx[idx] for idx in train_split_idx_list],
-                    'sim': [sim[idx] for idx in train_split_idx_list]
-                }
-            elif dev_type == 'regular':
-                dev_split_idx_set = set(random.sample(train_split_idx_set,
-                                                      len(test_split_idx_set)))
-                train_split_idx_set = train_split_idx_set - dev_split_idx_set
-                dev_split_idx_list = sorted(list(dev_split_idx_set))
-                train_split_idx_list = sorted(list(train_split_idx_set))
-                kfold_dict[fold]['dev'] = {
-                    'left_idx': [left_idx[idx] for idx in dev_split_idx_list],
-                    'right_idx': [right_idx[idx] for idx in dev_split_idx_list],
-                    'sim': [sim[idx] for idx in dev_split_idx_list]
-                }
-                kfold_dict[fold]['train'] = {
-                    'left_idx': [left_idx[idx] for idx in train_split_idx_list],
-                    'right_idx': [right_idx[idx] for idx in train_split_idx_list],
-                    'sim': [sim[idx] for idx in train_split_idx_list]
-                }
+            train_split_idx_list = sorted(list(train_split_idx_set))
+            kfold_dict[fold]['train'] = {
+                'left_idx': [left_idx[idx] for idx in train_split_idx_list],
+                'right_idx': [right_idx[idx] for idx in train_split_idx_list],
+                'sim': [sim[idx] for idx in train_split_idx_list]
+            }
             print('fold {} train avg sim = {}'.format(
                 fold, np.mean(kfold_dict[fold]['train']['sim'])),
                   file=folds_log)
@@ -238,7 +220,8 @@ def _load_kfold_splits_dict(left_idx, right_idx, sim, kfold_size, dev_type,
     return kfold_dict
 
 
-def load_kfold_splits(vocab, dataset, kfold_size, dev_type, output_logpath):
+def _load_kfold_splits_single_dataset(vocab, dataset, kfold_size,
+                                      output_logpath):
     """Return a kfold train/test dict.
 
     The dict has the form dict[kfold_num] = {train_dict, test_dict} where
@@ -266,7 +249,20 @@ def load_kfold_splits(vocab, dataset, kfold_size, dev_type, output_logpath):
             }
         }
     return _load_kfold_splits_dict(left_idx, right_idx, f_sim, kfold_size,
-                                   dev_type, dataset, output_logpath)
+                                   dataset, output_logpath)
+
+
+def load_kfold_splits(vocab, datasets, kfold_size, output_logpath):
+    kfold_dict = {}
+    _kfold_dict = {dataset: _load_kfold_splits_single_dataset(
+        vocab, dataset, kfold_size, output_logpath) for dataset in datasets}
+    for dataset, dkfold in _kfold_dict.items():
+        for nfold, dfold in dkfold.items():
+            if nfold not in kfold_dict:
+                kfold_dict[nfold] = {'train': {}, 'test': {}}
+            kfold_dict[nfold]['train'][dataset] = dfold['train']
+            kfold_dict[nfold]['test'][dataset] = dfold['test']
+    return kfold_dict
 
 
 def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,

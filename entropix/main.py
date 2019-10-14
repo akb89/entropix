@@ -136,19 +136,19 @@ def _sample(args):
         keep_filepath_basename = os.path.join(
             dirname,
             '{}.{}.sampledims.metric-{}.mode-{}.rate-{}.niter-{}.start-{}.end-{}'
-            .format(basename, args.dataset, args.metric, args.args.mode,
+            .format(basename, '-'.join(args.datasets), args.metric, args.args.mode,
                     args.rate, args.iter, args.start, args.end))
     elif args.mode == 'seq':
         keep_filepath_basename = os.path.join(
             dirname,
             '{}.{}.sampledims.metric-{}.mode-{}.niter-{}.start-{}.end-{}'
-            .format(basename, args.dataset, args.metric, args.mode, args.iter,
+            .format(basename, '-'.join(args.datasets), args.metric, args.mode, args.iter,
                     args.start, args.end))
     elif args.mode == 'limit':
         keep_filepath_basename = os.path.join(
             dirname,
             '{}.{}.sampledims.metric-{}.mode-{}.d-{}.start-{}.end-{}'.format(
-                basename, args.dataset, args.metric, args.mode, args.limit,
+                basename, '-'.join(args.datasets), args.metric, args.mode, args.limit,
                 args.start, args.end))
     if args.shuffle:
         keep_filepath_basename = '{}.shuffled.timestamp-{}'.format(
@@ -163,12 +163,12 @@ def _sample(args):
     if args.logs_dirpath:
         os.makedirs(args.logs_dirpath, exist_ok=True)
     logger.debug('Outputing logs to {}'.format(args.logs_dirpath))
-    sampler = Sampler(args.model, args.type, args.vocab, args.dataset,
+    sampler = Sampler(args.model, args.type, args.vocab, args.datasets,
                       keep_filepath_basename, args.iter, args.shuffle,
                       args.mode, args.rate, args.start, args.end,
                       args.reduce, args.limit, args.rewind,
                       args.kfolding, args.kfold_size, args.num_threads,
-                      args.dev_type, args.debug, args.metric, args.alpha,
+                      args.debug, args.metric, args.alpha,
                       args.logs_dirpath, args.distance, args.singvalues,
                       args.singalpha, args.dump)
     sampler.sample_dimensions()
@@ -425,9 +425,9 @@ def main():
     parser_sample.add_argument('-o', '--output',
                                help='absolute path to output directory where '
                                     'to save sampled models')
-    parser_sample.add_argument('-d', '--dataset', required=True,
-                               choices=['men', 'simlex', 'simverb', 'sts2012'],
-                               help='dataset to optimize on')
+    parser_sample.add_argument('-d', '--datasets', required=True, nargs='+',
+                               #choices=['men', 'simlex', 'simverb', 'sts2012'],
+                               help='dataset(s) to optimize on')
     parser_sample.add_argument('-i', '--iter', type=int, default=1,
                                help='number of iterations')
     parser_sample.add_argument('-s', '--shuffle', action='store_true',
@@ -454,9 +454,6 @@ def main():
                                help='determine size of kfold. Should be in '
                                     '[0, 0.5], that is, less than 50% of '
                                     'total dataset size')
-    parser_sample.add_argument('-y', '--dev-type', default='nodev',
-                               choices=['nodev', 'regular', 'balanced'],
-                               help='which type of dev split to use')
     parser_sample.add_argument('-c', '--metric', required=True,
                                choices=['spr', 'rmse', 'combined', 'both'],
                                help='which eval metric to use')
