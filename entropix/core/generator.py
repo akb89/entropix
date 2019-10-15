@@ -110,11 +110,11 @@ def generate_distributional_model(output_dirpath, corpus_filepath,
                     rowx = 0
                     for row, columns in _data_dic.items():
                         rowx += 1
-                        print('Processing rowx = {}'.format(rowx))
+                        #print('Processing rowx = {}'.format(rowx))
                         colx = 0
                         for col, count in columns.items():
                             colx += 1
-                            print('Processing colx = {}'.format(colx))
+                            #print('Processing colx = {}'.format(colx))
                             data_dic[row][col] += count
 
     logger.info('Building CSR sparse matrix...')
