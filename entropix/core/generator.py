@@ -33,9 +33,9 @@ def _count_with_info_filter(word_to_idx_dic, win_size, line):
         context = tokens[max(0, token_pos-win_size): token_pos] + tokens[token_pos+1: min(len(tokens), token_pos+win_size+1)]
         # use tuple to be able to use lru_cache
         context = tuple([w for w in context if w in word_to_idx_dic])
-        #print('filtering {}'.format(context))
+        print('filtering {}'.format(context))
         filtered_context = info.filter_context_words(context)
-        #print('done filtering {}'.format(filtered_context))
+        print('done filtering {}'.format(filtered_context))
         # print('tokens = {}'.format(tokens))
         # print('target = {}'.format(tokens[token_pos]))
         # print('context = {}'.format(context))
@@ -104,9 +104,10 @@ def generate_distributional_model(output_dirpath, corpus_filepath,
             with multiprocessing.Pool(processes=num_threads) as pool:
                 _process = functools.partial(_count_with_info_filter,
                                              word_to_idx_dic, win_size)
-                for _data_dic in tqdm(pool.imap_unordered(_process,
-                                                          input_stream),
-                                      total=total_num_lines):
+                # for _data_dic in tqdm(pool.imap_unordered(_process,
+                #                                           input_stream),
+                #                       total=total_num_lines):
+                for _data_dic in pool.imap_unordered(_process, input_stream):
                     rowx = 0
                     for row, columns in _data_dic.items():
                         rowx += 1
