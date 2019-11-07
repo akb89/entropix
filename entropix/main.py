@@ -548,7 +548,6 @@ def main():
     parser_compare.add_argument('--num-threads', type=int, default=1,
                                 help='number of threads to use for low RAM')
     parser_compare.add_argument('--low-ram', action='store_true',
-                                default=False,
                                 help='force (slower) low-ram comparison')
     args = parser.parse_args()
     args.func(args)

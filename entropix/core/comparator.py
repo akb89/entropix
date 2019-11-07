@@ -73,6 +73,9 @@ def _compare_fast(model1, model2, n):
 
 def _compare(model1, model2, num_neighbors, num_threads, low_ram):
     if low_ram:
+        logger.warning('Forcing low RAM comparison. This should be slower, '
+                       'but you can pass in a --num-threads parameter to '
+                       'speed up the process')
         return _compare_low_ram(model1, model2, num_neighbors, num_threads)
     try:
         return _compare_fast(model1, model2, num_neighbors)
@@ -112,7 +115,7 @@ def compare(model1, model2, vocab1, vocab2, num_neighbors, num_threads,
             low_ram):
     model1, model2 = align_vocab(model1, model2, vocab1, vocab2)
     variance = _compare(model1, model2, num_neighbors, num_threads,
-                        num_threads)
+                        num_threads, low_ram)
     # take the average and std
     avg = np.mean(variance)
     std = np.std(variance)
