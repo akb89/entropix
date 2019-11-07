@@ -114,8 +114,7 @@ def align_vocab(model1, model2, vocab1, vocab2):
 def compare(model1, model2, vocab1, vocab2, num_neighbors, num_threads,
             low_ram):
     model1, model2 = align_vocab(model1, model2, vocab1, vocab2)
-    variance = _compare(model1, model2, num_neighbors, num_threads,
-                        num_threads, low_ram)
+    variance = _compare(model1, model2, num_neighbors, num_threads, low_ram)
     # take the average and std
     avg = np.mean(variance)
     std = np.std(variance)
