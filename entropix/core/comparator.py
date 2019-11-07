@@ -71,14 +71,16 @@ def _compare_fast(model1, model2, n):
     return 1 - np.count_nonzero(idx1 == idx2, axis=1) / n
 
 
-def _compare(model1, model2, n, num_threads):
+def _compare(model1, model2, num_neighbors, num_threads, low_ram):
+    if low_ram:
+        return _compare_low_ram(model1, model2, num_neighbors, num_threads)
     try:
-        return _compare_fast(model1, model2, n)
+        return _compare_fast(model1, model2, num_neighbors)
     except MemoryError:
         logger.warning('Models are too big to fit in RAM. Switching to low '
                        'RAM footprint algorithm. You can pass in a '
                        '--num-threads parameter to speed up the process')
-        return _compare_low_ram(model1, model2, n, num_threads)
+        return _compare_low_ram(model1, model2, num_neighbors, num_threads)
 
 
 def _align_model_vocab(model1, model2, vocab1, vocab2):
@@ -106,9 +108,11 @@ def align_vocab(model1, model2, vocab1, vocab2):
     return model1, model2
 
 
-def compare(model1, model2, vocab1, vocab2, n, num_threads):
+def compare(model1, model2, vocab1, vocab2, num_neighbors, num_threads,
+            low_ram):
     model1, model2 = align_vocab(model1, model2, vocab1, vocab2)
-    variance = _compare(model1, model2, n, num_threads)
+    variance = _compare(model1, model2, num_neighbors, num_threads,
+                        num_threads)
     # take the average and std
     avg = np.mean(variance)
     std = np.std(variance)

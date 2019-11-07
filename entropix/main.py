@@ -248,7 +248,8 @@ def _compare(args):
         model_filepath=args.model2, model_type='numpy',
         vocab_filepath=VOCAB2_FILEPATH)
     avg, std = comparator.compare(model1, model2, vocab1, vocab2,
-                                  args.num_neighbors, args.num_threads)
+                                  args.num_neighbors, args.num_threads,
+                                  args.low_ram)
     logger.info('avg = {}'.format(avg))
     logger.info('std = {}'.format(std))
 
@@ -546,5 +547,7 @@ def main():
                                 help='number of neighbors to consider')
     parser_compare.add_argument('--num-threads', type=int, default=1,
                                 help='number of threads to use for low RAM')
+    parser_compare.add_argument('--low-ram', action='store_true',
+                                help='force (slower) low-ram comparison')
     args = parser.parse_args()
     args.func(args)
