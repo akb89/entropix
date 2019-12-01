@@ -44,13 +44,7 @@ To intersect the vocabularies of two models generated from two different corpora
 ```
 
 ## Align
-To align two models via centering + rotation, run:
-```
-
-```
-
-## Compare
-To compare two aligned models by computing the RMSE, run:
+To align two models via centering + rotation and get the RMSE, run:
 ```
 
 ```
