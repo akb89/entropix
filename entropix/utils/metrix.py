@@ -9,7 +9,8 @@ import scipy.spatial as spatial
 logger = logging.getLogger(__name__)
 
 __all__ = ('get_combined_spr_rmse', 'get_spr_correlation', 'get_rmse',
-           'get_both_spr_rmse', 'purity', 'init_eval_metrix')
+           'get_both_spr_rmse', 'purity', 'init_eval_metrix',
+           'root_mean_square_error')
 
 
 def purity(y_true, y_pred):

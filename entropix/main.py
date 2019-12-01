@@ -14,6 +14,7 @@ import numpy as np
 import entropix.utils.config as cutils
 import entropix.utils.files as futils
 import entropix.utils.data as dutils
+import entropix.utils.metrix as metrix
 import entropix.core.calculator as calculator
 import entropix.core.comparator as comparator
 import entropix.core.evaluator as evaluator
@@ -23,6 +24,7 @@ import entropix.core.remover as remover
 import entropix.core.weigher as weigher
 import entropix.core.analyzer as analyzer
 import entropix.core.aligner as aligner
+import entropix.core.matrixor as matrixor
 
 from entropix.core.sampler import Sampler
 
@@ -279,6 +281,15 @@ def _align(args):
                 .format(model1.shape, aligned_model1.shape))
     logger.info('Reduced model2 from {} to {}'
                 .format(model2.shape, aligned_model2.shape))
+
+
+def _transform(args):
+    logger.info('Applying matrix transformation AO + Scaling...')
+    A = np.load(args.model1)
+    B = np.load(args.model2)
+    T = matrixor.apply_absolute_orientation_with_scaling(A, B)
+    rmse = metrix.root_mean_square_error(A, T)
+    logger.info('RMSE = {}'.format(rmse))
 
 
 def main():
@@ -590,5 +601,13 @@ def main():
                               help='absolute path to model2 vocab')
     parser_align.add_argument('-o', '--outputname', required=True,
                               help='output name to use to rename files')
+    parser_transform = subparsers.add_parser(
+        'transform', formatter_class=argparse.RawTextHelpFormatter,
+        help='apply matrix transformation to minimize RMSE')
+    parser_transform.set_defaults(func=_transform)
+    parser_transform.add_argument('-m1', '--model1', required=True,
+                                  help='absolute path to input embedding model1')
+    parser_transform.add_argument('-m2', '--model2', required=True,
+                                  help='absolute path to input embedding model2')
     args = parser.parse_args()
     args.func(args)

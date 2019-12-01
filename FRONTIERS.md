@@ -51,14 +51,16 @@ To intersect the vocabularies of two models generated from two different corpora
 ```
 entropix align \
 --model1 /abs/path/to/np/model1 \
---model2 /abs/path/to/np/mode2 \
+--model2 /abs/path/to/np/model2 \
 --vocab1 /abs/path/to/vocab1 \
 --vocab2 /abs/path/to/vocab2 \
 --outputname model1-model2-align
 ```
 
 ## Transform
-To align two models via centering + rotation and get the RMSE, run:
+To transform two **aligned** models via absolute orientation + scaling and get the RMSE, run:
 ```
-
+entropix transform \
+--model1 /abs/path/to/np/model1 \
+--model2 /abs/path/to/np/model2
 ```
