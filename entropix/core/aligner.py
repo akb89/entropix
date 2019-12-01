@@ -9,16 +9,19 @@ __all__ = ('_align_model_vocab')
 
 def _align_model_vocab(model1, model2, vocab1, vocab2):
     logger.info('Aligning models and vocabularies...')
-    vocab = {word: idx for word, idx in vocab1.items() if word in vocab2}
     vocab2_to_vocab1 = {idx: vocab1[word] for word, idx in vocab2.items()
                         if word in vocab1}
-    assert len(vocab) == len(vocab2_to_vocab1)
     _model1 = np.empty(shape=(len(vocab2_to_vocab1), model1.shape[1]))
     idx2 = [idx for word, idx in vocab2.items() if word in vocab1]
     assert len(idx2) == len(vocab2_to_vocab1)
     _model2 = model2[idx2, :]
+    vocab = {}
+    _idx_to_word = {idx: word for word, idx in vocab2.items()}
     for idx, item in enumerate(sorted(idx2)):
         _model1[idx] = model1[vocab2_to_vocab1[item]]
+        vocab[_idx_to_word[item]] = idx
+    assert len(vocab) == _model1.shape[0]
+    assert _model1.shape[0] == _model2.shape[0]
     return _model1, _model2, vocab
 
 

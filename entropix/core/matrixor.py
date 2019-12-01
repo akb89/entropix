@@ -1,6 +1,7 @@
 """Matrix transformations.
 
 Implements algorithm 2.4 (AO+Scaling) of the paper:
+
 @article{devetal2018,
     title={{Absolute Orientation for Word Embedding Alignment}},
     author={Sunipa Dev and Safia Hassan and Jeff M. Phillips},

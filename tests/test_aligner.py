@@ -1,7 +1,7 @@
-"""Test the intersector."""
+"""Test the aligner."""
 import numpy as np
 
-import entropix.core.intersector as intersector
+import entropix.core.aligner as aligner
 
 
 def test_align_vocab():
@@ -9,7 +9,7 @@ def test_align_vocab():
     B = np.array([[3], [1], [2], [0], [4]])
     vocabA = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'X': 4, 'Z': 5}
     vocabB = {'D': 0, 'C': 1, 'B': 2, 'A': 3, 'Y': 4}
-    C, D, vocab = intersector.align_vocab(A, B, vocabA, vocabB)
+    C, D, vocab = aligner.align_vocab(A, B, vocabA, vocabB)
     assert C.shape == D.shape
     assert C.shape[0] == 4
     assert C.shape[1] == 1

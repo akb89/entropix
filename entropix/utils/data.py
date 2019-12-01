@@ -127,17 +127,19 @@ def _load_idx_and_sim(left, right, sim, vocab, dataset, shuffle):
     f_sim = []
     if dataset in ['men', 'simlex', 'simverb', 'ws353']:
         for l, r, s in zip(left, right, sim):
-            if l not in vocab:
-                raise Exception('Word {} not in {} dataset'.format(l, dataset))
-            if r not in vocab:
-                raise Exception('Word {} not in {} dataset'.format(r, dataset))
-            # if l in vocab and r in vocab:
-            left_idx.append(vocab[l])
-            right_idx.append(vocab[r])
-            if dataset == 'men':  # men has sim in [0, 50]
-                f_sim.append(s/50)
-            else:  # all other datasets have sim in [0, 10]
-                f_sim.append(s/10)
+            # if l not in vocab:
+            #     raise Exception('Word {} not in {} dataset'.format(l, dataset))
+            # if r not in vocab:
+            #     raise Exception('Word {} not in {} dataset'.format(r, dataset))
+            if l in vocab and r in vocab:
+                left_idx.append(vocab[l])
+                right_idx.append(vocab[r])
+                if dataset == 'men':  # men has sim in [0, 50]
+                    f_sim.append(s/50)
+                else:  # all other datasets have sim in [0, 10]
+                    f_sim.append(s/10)
+        logger.info('Testing on {} pairs out of {}'.format(len(f_sim), len(sim)))
+        logger.info('Test pairs ratio = {}%'.format(round(len(f_sim) / len(sim)*100)))
     # TODO: remove hardcoded values?
     if dataset == 'sts2012':
         for l, r, s in zip(left, right, sim):

@@ -127,16 +127,14 @@ def _evaluate_word_similarity(model, vocab, dataset, metric, model_type,
     if model_type == 'scipy':
         model = model.todense()  # FIXME: this does not work for large models. Need to calculate cosine with sparse matrix
     dim = model.shape[1]
-    splits = dutils.load_kfold_splits(vocab, dataset, kfold_size,
+    splits = dutils.load_kfold_splits(vocab, [dataset], kfold_size,
                                       output_logpath=None)
     for fold in splits.keys():
-        logger.info('Evaluating on {} word pairs'
-                    .format(len(splits[fold]['test']['sim'])))
-        results.append(evaluate(model, splits[fold]['test'], dataset,
+        results.append(evaluate(model, splits[fold]['test'], [dataset],
                                 metric, distance))
     if kfold_size == 0:
         result = results[0]
-        logger.info('{} = {}'.format(metric, result))
+        logger.info('{} = {}'.format(metric, result[0]))
     else:
         result = np.mean(results)
         logger.info('avg test {} = {}'.format(metric, result))
