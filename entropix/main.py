@@ -21,7 +21,8 @@ import entropix.core.generator as generator
 import entropix.core.reducer as reducer
 import entropix.core.remover as remover
 import entropix.core.weigher as weigher
-import entropix.core.overlap_analyser as analyser
+import entropix.core.analyzer as analyzer
+import entropix.core.intersector as intersector
 
 from entropix.core.sampler import Sampler
 
@@ -214,8 +215,8 @@ def _nmf(args):
                       args.n_components, args.dataset, args.vocab)
 
 
-def _analyse_ppmi_rows_overlap(args):
-    analyser.analyse_overlap(args.model, args.vocab, args.dataset)
+def _analyze_ppmi_rows_overlap(args):
+    analyzer.analyze_overlap(args.model, args.vocab, args.dataset)
 
 
 def _export(args):
@@ -252,6 +253,28 @@ def _compare(args):
                                   args.low_ram)
     logger.info('avg = {}'.format(avg))
     logger.info('std = {}'.format(std))
+
+
+def _intersect(args):
+    logger.info('Intersecting vocabularies and aligning models accordingly...')
+    vocab_filepath = '{}.vocab'.format(os.path.join(os.path.dirname(
+        args.vocab1), args.outputname))
+    model1, vocab1 = dutils.load_model_and_vocab(
+        args.model1, 'numpy', args.vocab1)
+    model2, vocab2 = dutils.load_model_and_vocab(
+        args.model2, 'numpy', args.vocab2)
+    aligned_model1, aligned_model2, vocab = intersector.align_vocab(
+        model1, model2, vocab1, vocab2)
+    aligned_model1_filepath = '{}.{}'.format(args.mode1.split('.npy')[0],
+                                             args.outputname)
+    aligned_model2_filepath = '{}.{}'.format(args.mode2.split('.npy')[0],
+                                             args.outputname)
+    logger.info('Saving aligned vocab to {}'.format(vocab_filepath))
+    futils.save_vocab(vocab, vocab_filepath)
+    logger.info('Saving aligned model1 to {}'.format(aligned_model1_filepath))
+    np.save(aligned_model1_filepath, aligned_model1)
+    logger.info('Saving aligned model2 to {}'.format(aligned_model2_filepath))
+    np.save(aligned_model2_filepath, aligned_model2)
 
 
 def main():
@@ -486,15 +509,15 @@ def main():
                                help='absolute filepath with model name where '
                                     'to save .npy and .vocab files of final '
                                     'sampled model')
-    parser_analyse_ppmi_rows_overlap = subparsers.add_parser(
+    parser_analyze_ppmi_rows_overlap = subparsers.add_parser(
         'analyse-overlap', formatter_class=argparse.RawTextHelpFormatter,
         help='provides qualitative data on features overlap in a provided dataset')
-    parser_analyse_ppmi_rows_overlap.set_defaults(func=_analyse_ppmi_rows_overlap)
-    parser_analyse_ppmi_rows_overlap.add_argument('-m', '--model', required=True,
+    parser_analyze_ppmi_rows_overlap.set_defaults(func=_analyze_ppmi_rows_overlap)
+    parser_analyze_ppmi_rows_overlap.add_argument('-m', '--model', required=True,
                                                   help='absolute path to .npz matrix')
-    parser_analyse_ppmi_rows_overlap.add_argument('-v', '--vocab', required=True,
+    parser_analyze_ppmi_rows_overlap.add_argument('-v', '--vocab', required=True,
                                                   help='vocabulary mapping for dsm')
-    parser_analyse_ppmi_rows_overlap.add_argument('-d', '--dataset', required=True,
+    parser_analyze_ppmi_rows_overlap.add_argument('-d', '--dataset', required=True,
                                                   choices=['men', 'simlex', 'simverb'],
                                                   help='which dataset to consider')
     parser_export = subparsers.add_parser(
@@ -549,5 +572,20 @@ def main():
                                 help='number of threads to use for low RAM')
     parser_compare.add_argument('--low-ram', action='store_true',
                                 help='force (slower) low-ram comparison')
+    args = parser.parse_args()
+    parser_intersect = subparsers.add_parser(
+        'intersect', formatter_class=argparse.RawTextHelpFormatter,
+        help='intersect vocabularies and align models accordingly')
+    parser_intersect.set_defaults(func=_intersect)
+    parser_intersect.add_argument('-m1', '--model1', required=True,
+                                  help='absolute path to input embedding model1')
+    parser_intersect.add_argument('-m2', '--model2', required=True,
+                                  help='absolute path to input embedding model2')
+    parser_intersect.add_argument('-v1', '--vocab1', required=True,
+                                  help='absolute path to model1 vocab')
+    parser_intersect.add_argument('-v2', '--vocab2', required=True,
+                                  help='absolute path to model2 vocab')
+    parser_intersect.add_argument('-o', '--outputname', required=True,
+                                  help='output name to use to rename files')
     args = parser.parse_args()
     args.func(args)

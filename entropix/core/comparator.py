@@ -86,31 +86,6 @@ def _compare(model1, model2, num_neighbors, num_threads, low_ram):
         return _compare_low_ram(model1, model2, num_neighbors, num_threads)
 
 
-def _align_model_vocab(model1, model2, vocab1, vocab2):
-    logger.info('Aligning model vocabularies...')
-    vocab_2_to_vocab1 = {idx: vocab1[word] for word, idx in vocab2.items()
-                         if word in vocab1}
-    _model1 = np.empty(shape=(len(vocab_2_to_vocab1), model1.shape[1]))
-    idx2 = [idx for word, idx in vocab2.items() if word in vocab1]
-    assert len(idx2) == len(vocab_2_to_vocab1)
-    _model2 = model2[idx2, :]
-    for idx, item in enumerate(sorted(idx2)):
-        _model1[idx] = model1[vocab_2_to_vocab1[item]]
-    return _model1, _model2
-
-
-def align_vocab(model1, model2, vocab1, vocab2):
-    if len(vocab1) != len(vocab2):
-        return _align_model_vocab(model1, model2, vocab1, vocab2)
-    for word, idx in vocab1.items():
-        if word not in vocab2:
-            return _align_model_vocab(model1, model2, vocab1, vocab2)
-        if vocab2[word] != idx:
-            return _align_model_vocab(model1, model2, vocab1, vocab2)
-    logger.info('Processing already aligned vocabularies')
-    return model1, model2
-
-
 def compare(model1, model2, vocab1, vocab2, num_neighbors, num_threads,
             low_ram):
     model1, model2 = align_vocab(model1, model2, vocab1, vocab2)

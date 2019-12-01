@@ -10,10 +10,10 @@ import entropix.utils.data as dutils
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('analyse_overlap')
+__all__ = ('analyze_overlap')
 
 
-def analyse_overlap(model_filepath, vocab_filepath, dataset_name):
+def analyze_overlap(model_filepath, vocab_filepath, dataset_name):
 
     dataset_left, dataset_right, dataset_sim = dutils.load_word_pairs_and_sim(dataset_name)
 
