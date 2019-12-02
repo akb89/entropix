@@ -139,7 +139,8 @@ def _load_idx_and_sim(left, right, sim, vocab, dataset, shuffle):
                 else:  # all other datasets have sim in [0, 10]
                     f_sim.append(s/10)
         logger.info('Testing on {} pairs out of {}'.format(len(f_sim), len(sim)))
-        logger.info('Test pairs ratio = {}%'.format(round(len(f_sim) / len(sim)*100)))
+        ratio = (len(f_sim) / len(sim)) * 100
+        logger.info('Test pairs ratio = {}%'.format(round(ratio, 2)))
     # TODO: remove hardcoded values?
     if dataset == 'sts2012':
         for l, r, s in zip(left, right, sim):
