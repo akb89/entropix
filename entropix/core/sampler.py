@@ -5,7 +5,6 @@ import logging
 import random
 import functools
 import multiprocessing
-from collections import defaultdict
 
 import numpy as np
 import entropix.core.evaluator as evaluator
@@ -186,7 +185,7 @@ class Sampler():
                 print('Max {} test rmse = {}'.format(dataset, max_test_rmse), file=out_res)
                 logger.info('Average {} test rmse = {}'.format(dataset, avg_test_rmse))
                 print('Average {} test rmse = {}'.format(dataset, avg_test_rmse), file=out_res)
-                logger.info('Std test rmse = {}'.format(dataset, std_test_rmse))
+                logger.info('Std {} test rmse = {}'.format(dataset, std_test_rmse))
                 print('Std {} test rmse = {}'.format(dataset, std_test_rmse), file=out_res)
                 logger.info('{} one-liner: {} & {} & {} & {} & {} & {} & {} & {} & '
                             '{} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} '
