@@ -451,14 +451,12 @@ class Sampler():
         return self.sample_seq_mix(keep, dims, fold)
 
     def sample_dimensions(self):
-        global model
+        global model  # hack to limit RAM footprint in multithreaded-kfold
         logger.info('Sampling dimensions over a total of {} dims, optimizing '
                     'on {} using {} mode...'.format(
                         model.shape[1], '-'.join(self._datasets), self._mode))
         if self._mode not in ['seq', 'mix', 'limit']:
             raise Exception('Unsupported mode {}'.format(self._mode))
-        # if not self._kfolding:
-        #     raise Exception('Non-kfold mode needs reimplementation')
         if self._end > model.shape[1]:
             raise Exception('End parameter is > model.shape[1]: {} > {}'
                             .format(self._end, model.shape[1]))

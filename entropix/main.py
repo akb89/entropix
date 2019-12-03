@@ -239,20 +239,12 @@ def _export(args):
 
 
 def _compare(args):
-    basename1 = os.path.basename(args.model1)
-    basename2 = os.path.basename(args.model2)
-    logger.info('Comparing DS models {} and {}'.format(basename1, basename2))
-    VOCAB1_FILEPATH = '{}.vocab'.format(args.model1.split('.npy')[0])
-    VOCAB2_FILEPATH = '{}.vocab'.format(args.model2.split('.npy')[0])
-    model1, vocab1 = dutils.load_model_and_vocab(
-        model_filepath=args.model1, model_type='numpy',
-        vocab_filepath=VOCAB1_FILEPATH)
-    model2, vocab2 = dutils.load_model_and_vocab(
-        model_filepath=args.model2, model_type='numpy',
-        vocab_filepath=VOCAB2_FILEPATH)
-    avg, std = comparator.compare(model1, model2, vocab1, vocab2,
-                                  args.num_neighbors, args.num_threads,
-                                  args.low_ram)
+    logger.info('Comparing DS models {} and {}'.format(
+        os.path.basename(args.model1), os.path.basename(args.model2)))
+    model1 = np.load(args.model1)
+    model2 = np.load(args.model2)
+    avg, std = comparator.compare(model1, model2, args.num_neighbors,
+                                  args.num_threads, args.low_ram)
     logger.info('avg = {}'.format(avg))
     logger.info('std = {}'.format(std))
 
