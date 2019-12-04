@@ -70,4 +70,4 @@ if __name__ == '__main__':
                 rmse2 = metrix.root_mean_square_error(B, V)
                 avg = (rmse1 + rmse2) / 2
                 print('ALIGNMENT RMSE', file=out_str)
-                print('{}-{} RMSE = {}'.format(name1, name2, avg))
+                print('{}-{} RMSE = {}'.format(name1, name2, avg), file=out_str)
