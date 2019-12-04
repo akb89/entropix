@@ -14,9 +14,8 @@ if __name__ == '__main__':
     RESULTS_FILEPATH = '/home/kabbach/entropix/models/frontiers/xp1.results'
     START = 0
     END = 300
-    print('Running entropix XP#001')
+    print('Running entropix XP#001 on SVD-TOP-300')
     MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc']
-    print('Computing MEN and SIMLEX SPR scores...')
     with open(RESULTS_FILEPATH, 'w', encoding='utf-8') as out_str:
         loaded = []
         for MODEL_NAME in MODEL_NAMES:
@@ -26,7 +25,6 @@ if __name__ == '__main__':
             model, vocab = dutils.load_model_and_vocab(
                 MODEL_PATH, 'numpy', VOCAB_PATH, start=START, end=END)
             loaded.append((MODEL_NAME.upper(), model, vocab))
-        print('ALIGNMENT RMSE', file=out_str)
         for name1, model1, vocab1 in tqdm(loaded):
             aligned_model1 = model1
             vocab = vocab1
@@ -48,7 +46,7 @@ if __name__ == '__main__':
             print('{}\t{}\t{}\t{}\t{}'.format(
                 name1.upper(), men_spr, men_ratio, simlex_spr, simlex_ratio),
                   file=out_str)
-            for name2, model2, vocab2 in loaded:
+            for name2, model2, vocab2 in tqdm(loaded):
                 if name1 == name2:
                     continue
                 A, B, _ = aligner.align_vocab(
@@ -71,3 +69,5 @@ if __name__ == '__main__':
                 rmse1 = metrix.root_mean_square_error(A, T)
                 rmse2 = metrix.root_mean_square_error(B, V)
                 avg = (rmse1 + rmse2) / 2
+                print('ALIGNMENT RMSE', file=out_str)
+                print('{}-{} RMSE = {}'.format(name1, name2, avg))
