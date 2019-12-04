@@ -1,55 +1,73 @@
-"""Generating entropies and counts for a set of wikipedia dumps."""
-
+"""XP1: SVD-TOP-300."""
 import os
-import functools
-import multiprocessing
 
-import entropix
-import entropix.utils.files as futils
+from tqdm import tqdm
 
-
-def _process(counts_dirpath, min_count, wiki_filepath):
-    counts = entropix.count(corpus_filepath=wiki_filepath,
-                            output_dirpath=counts_dirpath, min_count=min_count)
-    corpus_size, vocab_size, entropy = entropix.compute(counts)
-    return wiki_filepath, corpus_size, vocab_size, entropy
-
+import entropix.utils.data as dutils
+import entropix.utils.metrix as metrix
+import entropix.core.aligner as aligner
+import entropix.core.matrixor as matrixor
+import entropix.core.evaluator as evaluator
 
 if __name__ == '__main__':
+    SVD_DIRPATH = '/home/kabbach/entropix/models/svd'
+    RESULTS_FILEPATH = '/home/kabbach/entropix/models/frontiers/xp1.results'
+    START = 0
+    END = 300
     print('Running entropix XP#001')
-
-    WIKI_DIRPATH = '/home/kabbach/witokit/data/wiki/'
-    COUNTS_DIRPATH = '/home/kabbach/witokit/data/counts/xp001/'
-    RESULTS_FILEPATH = '/home/kabbach/entropix/results/xp001.results'
-    NUM_THREADS = 51
-    MIN_COUNT = 0
-
-    assert os.path.exists(WIKI_DIRPATH)
-    assert os.path.exists(COUNTS_DIRPATH)
-
-    file_num = 0
-    results = {}
-    wiki_filepaths = futils.get_input_filepaths(WIKI_DIRPATH)
-    with multiprocessing.Pool(NUM_THREADS) as pool:
-        process = functools.partial(_process, COUNTS_DIRPATH, MIN_COUNT)
-        for wikipath, corpus_size, vocab_size, entropy in pool.imap_unordered(process, wiki_filepaths):
-            file_num += 1
-            print('Done processing file {}'.format(wikipath))
-            print('Completed processing of {}/{} files'
-                  .format(file_num, len(wiki_filepaths)))
-            partial = {
-                'corpus_size': corpus_size,
-                'vocab_size': vocab_size,
-                'entropy': entropy
-            }
-            results[os.path.basename(wikipath)] = partial
-    print('Saving results to file {}'.format(RESULTS_FILEPATH))
-    with open(RESULTS_FILEPATH, 'w', encoding='utf-8') as output_stream:
-        print('{:25}\t{:>15}\t{:>10}\t{:>7}'
-              .format('Wiki', 'Corpus', 'Vocab', 'Entropy'),
-              file=output_stream)
-        for key in sorted(results.keys()):
-            print('{:25}\t{:>15}\t{:>10}\t{:>7}'
-                  .format(key, results[key]['corpus_size'],
-                          results[key]['vocab_size'], results[key]['entropy']),
-                  file=output_stream)
+    MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc']
+    print('Computing MEN and SIMLEX SPR scores...')
+    with open(RESULTS_FILEPATH, 'w', encoding='utf-8') as out_str:
+        loaded = []
+        for MODEL_NAME in MODEL_NAMES:
+            print('Loading model {}...'.format(MODEL_NAME))
+            MODEL_PATH = os.path.join(SVD_DIRPATH, '{}.npy'.format(MODEL_NAME))
+            VOCAB_PATH = os.path.join(SVD_DIRPATH, '{}.vocab'.format(MODEL_NAME))
+            model, vocab = dutils.load_model_and_vocab(
+                MODEL_PATH, 'numpy', VOCAB_PATH, start=START, end=END)
+            loaded.append((MODEL_NAME.upper(), model, vocab))
+        print('ALIGNMENT RMSE', file=out_str)
+        for name1, model1, vocab1 in tqdm(loaded):
+            aligned_model1 = model1
+            vocab = vocab1
+            for name2, model2, vocab2 in loaded:
+                if name1 == name2:
+                    continue
+                assert aligned_model1.shape[1] == model2.shape[1]
+                aligned_model1, _, vocab = aligner.align_vocab(
+                    aligned_model1, model2, vocab, vocab2)
+            print('MODEL\tMEN SPR\tMEN RATIO\tSIMLEX SPR\tSIMLEX RATIO', file=out_str)
+            m_cov_pairs, m_pairs = dutils.get_dataset_coverage('men', vocab)
+            men_spr = evaluator.evaluate_distributional_space(
+                aligned_model1, vocab, 'men', 'spr', 'numpy', 'cosine', 0)[0]
+            men_ratio = (m_cov_pairs / m_pairs) * 100
+            simlex_spr = evaluator.evaluate_distributional_space(
+                aligned_model1, vocab, 'simlex', 'spr', 'numpy', 'cosine', 0)[0]
+            s_cov_pairs, s_pairs = dutils.get_dataset_coverage('simlex', vocab)
+            simlex_ratio = (s_cov_pairs / s_pairs) * 100
+            print('{}\t{}\t{}\t{}\t{}'.format(
+                name1.upper(), men_spr, men_ratio, simlex_spr, simlex_ratio),
+                  file=out_str)
+            for name2, model2, vocab2 in loaded:
+                if name1 == name2:
+                    continue
+                A, B, _ = aligner.align_vocab(
+                    aligned_model1, model2, vocab, vocab2)
+                assert A.shape == B.shape
+                print('MODEL\tMEN SPR\tMEN RATIO\tSIMLEX SPR\tSIMLEX RATIO', file=out_str)
+                m_cov_pairs, m_pairs = dutils.get_dataset_coverage('men', vocab)
+                men_spr = evaluator.evaluate_distributional_space(
+                    B, vocab, 'men', 'spr', 'numpy', 'cosine', 0)[0]
+                men_ratio = (m_cov_pairs / m_pairs) * 100
+                simlex_spr = evaluator.evaluate_distributional_space(
+                    B, vocab, 'simlex', 'spr', 'numpy', 'cosine', 0)[0]
+                s_cov_pairs, s_pairs = dutils.get_dataset_coverage('simlex', vocab)
+                simlex_ratio = (s_cov_pairs / s_pairs) * 100
+                print('{}\t{}\t{}\t{}\t{}'.format(
+                    name2.upper(), men_spr, men_ratio, simlex_spr, simlex_ratio),
+                      file=out_str)
+                T = matrixor.apply_absolute_orientation_with_scaling(A, B)
+                V = matrixor.apply_absolute_orientation_with_scaling(B, A)
+                rmse1 = metrix.root_mean_square_error(A, T)
+                rmse2 = metrix.root_mean_square_error(B, V)
+                avg = (rmse1 + rmse2) / 2

@@ -230,10 +230,13 @@ def _export(args):
         raise Exception('Cannot specify both --dims and --start or --end params')
     if args.start is not None and args.end is None or args.end is not None and args.start is None:
         raise Exception('Both --start and --end params should be specified')
+    if args.shuffle and args.dims and not args.block_size:
+        raise Exception('You need to specify the block_size parameter for '
+                        'shuffling with dim bias')
     model, vocab = dutils.load_model_and_vocab(
         args.model, args.type, args.vocab, args.singvalues, args.singalpha,
         args.start, args.end, args.dims, args.shuffle, args.randomize,
-        args.randtype, args.normloc, args.normscale)
+        args.randtype, args.normloc, args.normscale, args.block_size)
     np.save(args.output, model)
     dutils.save_vocab(vocab, '{}.vocab'.format(args.output))
 
@@ -280,7 +283,11 @@ def _transform(args):
     A = np.load(args.model1)
     B = np.load(args.model2)
     T = matrixor.apply_absolute_orientation_with_scaling(A, B)
-    rmse = metrix.root_mean_square_error(A, T)
+    X = matrixor.apply_absolute_orientation_with_scaling(B, A)
+    rmse1 = metrix.root_mean_square_error(A, T)
+    rmse2 = metrix.root_mean_square_error(B, X)
+    rmse = (rmse1 + rmse2) / 2
+    logger.info('rmse1 = {}, rmse2 = {}'.format(rmse1, rmse2))
     logger.info('RMSE = {}'.format(rmse))
 
 
@@ -565,6 +572,8 @@ def main():
     parser_export.add_argument('--normscale', type=float,
                                help='std of --randtype normal distribution. '
                                     'Should be > 0')
+    parser_export.add_argument('--block-size', type=int, default=30,
+                               help='block size to compute probs for biased shuffling')
     parser_compare = subparsers.add_parser(
         'compare', formatter_class=argparse.RawTextHelpFormatter,
         help='compare the nearest neighbors of two numpy models')

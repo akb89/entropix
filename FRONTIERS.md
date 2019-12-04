@@ -42,9 +42,28 @@ entropix export \
 --output /abs/path/to/output/model
 ```
 
-
 ## Sample
+with kfold:
+```
 
+```
+
+without kfold and dumping model:
+```
+/home/kabbach/venv/bin/entropix sample \
+--vocab /home/kabbach/entropix/models/mincount-30/raw/enwiki8.mincount-30.win-2.vocab \
+--output /home/kabbach/entropix/models/mincount-30/limit/ \
+--model /home/kabbach/entropix/models/mincount-30/ppmi/enwiki8.mincount-30.win-2.ppmi.k10000.LM.singvectors.npy \
+--logs-dir /home/kabbach/entropix/logs/ \
+--mode limit \
+--distance cosine \
+--singalpha 0 \
+--type numpy \
+--limit 30 \
+--dataset men \
+--metric both \
+--dump /home/kabbach/entropix/models/mincount-30/limit/enwiki8-men-limit-d30
+```
 
 ## Align
 To intersect the vocabularies of two models generated from two different corpora, run:
@@ -63,4 +82,11 @@ To transform two **aligned** models via absolute orientation + scaling and get t
 entropix transform \
 --model1 /abs/path/to/np/model1 \
 --model2 /abs/path/to/np/model2
+```
+
+## Randomize
+Generate a random model of dim = 30 from the SVD matrix:
+```
+entropix export \
+
 ```
