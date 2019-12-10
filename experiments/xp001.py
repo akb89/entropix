@@ -1,15 +1,14 @@
-"""XP1: SVD-TOP-300. This script should be run after XP0 with aligned models."""
+"""Generate a set of aligned vocabularies for each model.
 
-import common as com_xp
-
+Trying with acl mincount-30 instead of acl mincount-3.
+"""
 
 if __name__ == '__main__':
-    SVD_DIRPATH = '/home/kabbach/entropix/models/svd'
-    RESULTS_FILEPATH = '/home/kabbach/entropix/models/frontiers/xp001.results'
+    SVD_DIRPATH = '/home/kabbach/entropix/models/frontiers/svd/'
+    OUTPUT_DIRPATH = '/home/kabbach/entropix/models/frontiers/aligned/'
     START = 0
-    END = 300
-    SCALE = 1e4  # scaling factor for RMSE
-    print('Running entropix XP#001 on SVD-TOP-300')
-    MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc']
-    com_xp.launch_xp(MODEL_NAMES, SVD_DIRPATH, START, END, SCALE,
-                     RESULTS_FILEPATH)
+    END = 10000
+    print('Aligning vocabularies across all models with acl-mincount-30')
+    MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl-30', 'enwiki4', 'bnc']
+    MODELS = com_xp.load_models(MODEL_NAMES, SVD_DIRPATH, START, END)
+    com_xp.dump_aligned_models(MODELS, OUTPUT_DIRPATH)
