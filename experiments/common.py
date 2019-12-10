@@ -60,22 +60,22 @@ def print_batch_results(rmse, xp_results_filepath):
     with open(xp_results_filepath, 'w', encoding='utf-8') as out_str:
         print('Printing RMSE results to file...')
         print('ALIGNMENT RMSE * 10^-4', file=out_str)
-        print('\\oanc & {0:.2f} $\\pm$ {0:.2f} &  &  &  & \\\\'.format(
+        print('\\oanc & {0:.2f} $\\pm$ {1:.2f} &  &  &  & \\\\'.format(
             np.mean(rmse['oanc']['enwiki07']),
             np.std(rmse['oanc']['enwiki07'])), file=out_str)
-        print('\\wikitwo & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} &  &  & \\\\'.format(
+        print('\\wikitwo & {0:.2f} $\\pm$ {1:.2f} & {2:.2f} $\\pm$ {3:.2f} &  &  & \\\\'.format(
             np.mean(rmse['enwiki2']['enwiki07']),
             np.std(rmse['enwiki2']['enwiki07']),
             np.mean(rmse['enwiki2']['oanc']),
             np.std(rmse['enwiki2']['oanc'])), file=out_str)
-        print('\\acl & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {} &  & \\\\'.format(
+        print('\\acl & {0:.2f} $\\pm$ {1:.2f} & {2:.2f} $\\pm$ {3:.2f} & {4:.2f} $\\pm$ {5:.2f} &  & \\\\'.format(
             np.mean(rmse['acl']['enwiki07']),
             np.std(rmse['acl']['enwiki07']),
             np.mean(rmse['acl']['oanc']),
             np.std(rmse['acl']['oanc']),
             np.mean(rmse['acl']['enwiki2']),
             np.std(rmse['acl']['enwiki2'])), file=out_str)
-        print('\\wikifour & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} & \\\\'.format(
+        print('\\wikifour & {0:.2f} $\\pm$ {1:.2f} & {2:.2f} $\\pm$ {3:.2f} & {4:.2f} $\\pm$ {5:.2f} & {6:.2f} $\\pm$ {7:.2f} & \\\\'.format(
             np.mean(rmse['enwiki4']['enwiki07']),
             np.std(rmse['enwiki4']['enwiki07']),
             np.mean(rmse['enwiki4']['oanc']),
@@ -84,7 +84,7 @@ def print_batch_results(rmse, xp_results_filepath):
             np.std(rmse['enwiki4']['enwiki2']),
             np.mean(rmse['enwiki4']['acl']),
             np.std(rmse['enwiki4']['acl'])), file=out_str)
-        print('\\bnc & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} \\\\'.format(
+        print('\\bnc & {0:.2f} $\\pm$ {1:.2f} & {2:.2f} $\\pm$ {3:.2f} & {4:.2f} $\\pm$ {5:.2f} & {6:.2f} $\\pm$ {7:.2f} & {8:.2f} $\\pm$ {9:.2f} \\\\'.format(
             np.mean(rmse['bnc']['enwiki07']),
             np.std(rmse['bnc']['enwiki07']),
             np.mean(rmse['bnc']['oanc']),
