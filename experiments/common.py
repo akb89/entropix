@@ -253,6 +253,6 @@ def launch_xp(model_names, model_dirpath, start, end, scale,
         sim = defaultdict(lambda: defaultdict(dict))
         models = load_aligned_models(
             model_names, model_dirpath, start, end, randomize,
-            dims_dirpath, dataset)
+            dims_dirpath, dataset, block_size)
         rmse, sim = get_results(models, scale, rmse, sim, randomize)
         print_results(rmse, sim, xp_results_filepath)
