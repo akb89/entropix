@@ -56,6 +56,47 @@ def dump_ndim_rmse(name1, name2, model1, model2, vocab1, vocab2, ndim, dirpath,
             print('{}\t{}'.format(idx, rmse), file=output_str)
 
 
+def print_batch_results(rmse, xp_results_filepath):
+    with open(xp_results_filepath, 'w', encoding='utf-8') as out_str:
+        print('Printing RMSE results to file...')
+        print('ALIGNMENT RMSE * 10^-4', file=out_str)
+        print('\\oanc & {} \\pm {} &  &  &  & \\\\'.format(
+            np.mean(rmse['oanc']['enwiki07']),
+            np.std(rmse['oanc']['enwiki07'])), file=out_str)
+        print('\\wikitwo & {} \\pm {} & {} \\pm {} &  &  & \\\\'.format(
+            np.mean(rmse['enwiki2']['enwiki07']),
+            np.std(rmse['enwiki2']['enwiki07']),
+            np.mean(rmse['enwiki2']['oanc']),
+            np.std(rmse['enwiki2']['oanc'])), file=out_str)
+        print('\\acl & {} \\pm {} & {} \\pm {} & {} \\pm {} &  & \\\\'.format(
+            np.mean(rmse['acl']['enwiki07']),
+            np.std(rmse['acl']['enwiki07']),
+            np.mean(rmse['acl']['oanc']),
+            np.std(rmse['acl']['oanc']),
+            np.mean(rmse['acl']['enwiki2']),
+            np.std(rmse['acl']['enwiki2'])), file=out_str)
+        print('\\wikifour & {} \\pm {} & {} \\pm {} & {} \\pm {} & {} \\pm {} & \\\\'.format(
+            np.mean(rmse['enwiki4']['enwiki07']),
+            np.std(rmse['enwiki4']['enwiki07']),
+            np.mean(rmse['enwiki4']['oanc']),
+            np.std(rmse['enwiki4']['oanc']),
+            np.mean(rmse['enwiki4']['enwiki2']),
+            np.std(rmse['enwiki4']['enwiki2']),
+            np.mean(rmse['enwiki4']['acl']),
+            np.std(rmse['enwiki4']['acl'])), file=out_str)
+        print('\\bnc & {} \\pm {} & {} \\pm {} & {} \\pm {} & {} \\pm {} & {} \\pm {} \\\\'.format(
+            np.mean(rmse['bnc']['enwiki07']),
+            np.std(rmse['bnc']['enwiki07']),
+            np.mean(rmse['bnc']['oanc']),
+            np.std(rmse['bnc']['oanc']),
+            np.mean(rmse['bnc']['enwiki2']),
+            np.std(rmse['bnc']['enwiki2']),
+            np.mean(rmse['bnc']['acl']),
+            np.std(rmse['bnc']['acl']),
+            np.mean(rmse['bnc']['enwiki4']),
+            np.std(rmse['bnc']['enwiki4'])), file=out_str)
+
+
 def print_results(rmse, sim, xp_results_filepath):
     with open(xp_results_filepath, 'w', encoding='utf-8') as out_str:
         print('Printing RMSE results to file...')
@@ -139,9 +180,7 @@ def update_sim_results(sim, name, model, vocab):
     return sim
 
 
-def get_results(models, scale):
-    rmse = defaultdict(lambda: defaultdict(dict))
-    sim = defaultdict(lambda: defaultdict(dict))
+def get_results(models, scale, rmse, sim, randomize=False):
     for name1, model1, vocab1 in tqdm(models):
         aligned_model1 = model1
         vocab = vocab1
@@ -151,25 +190,34 @@ def get_results(models, scale):
             assert aligned_model1.shape[1] == model2.shape[1]
             aligned_model1, _, vocab = aligner.align_vocab(
                 aligned_model1, model2, vocab, vocab2)
-        update_sim_results(sim, name1, aligned_model1, vocab)
+        if not randomize:
+            update_sim_results(sim, name1, aligned_model1, vocab)
         for name2, model2, vocab2 in tqdm(models):
             if name1 == name2:
                 continue
             A, B, _ = aligner.align_vocab(
                 aligned_model1, model2, vocab, vocab2)
             assert A.shape == B.shape
-            rmse[name1][name2] = get_rmse(A, B) * scale
+            if not randomize:
+                rmse[name1][name2] = get_rmse(A, B) * scale
+            else:
+                rmse[name1][name2].append(get_rmse(A, B) * scale)
     return rmse, sim
 
 
-def load_aligned_models(model_names, model_dirpath, start, end):
+def load_aligned_models(model_names, model_dirpath, start, end, randomize,
+                        dims_dirpath, dataset):
     loaded_models = []
     for name in model_names:
         print('Loading aligned model {}...'.format(name))
         model_path = os.path.join(model_dirpath, '{}-aligned.npy'.format(name))
         vocab_path = os.path.join(model_dirpath, '{}-aligned.vocab'.format(name))
+        if dims_dirpath:
+            dim_path = os.path.join(dims_dirpath,
+                                    '{}-{}.dims'.format(name, dataset))
         model, vocab = dutils.load_model_and_vocab(
-            model_path, 'numpy', vocab_path, start=start, end=end)
+            model_path, 'numpy', vocab_path, start=start, end=end,
+            shuffle=randomize, dims_filepath=dim_path)
         loaded_models.append((name, model, vocab))
     return loaded_models
 
@@ -187,7 +235,18 @@ def load_models(model_names, model_dirpath, start, end):
 
 
 def launch_xp(model_names, model_dirpath, start, end, scale,
-              xp_results_filepath):
-    models = load_aligned_models(model_names, model_dirpath, start, end)
-    rmse, sim = get_results(models, scale)
-    print_results(rmse, sim, xp_results_filepath)
+              xp_results_filepath, randomize=False, dims_dirpath=None,
+              dataset=None, niter=0):
+    if randomize is True:
+        rmse = defaultdict(lambda: defaultdict(list))
+        for _ in range(niter):
+            models = load_aligned_models(
+                model_names, model_dirpath, start, end, randomize,
+                dims_dirpath, dataset)
+            rmse, sim = get_results(models, scale, rmse, _, randomize)
+        print_batch_results(rmse, xp_results_filepath)
+    else:
+        rmse = defaultdict(lambda: defaultdict(dict))
+        sim = defaultdict(lambda: defaultdict(dict))
+        rmse, sim = get_results(models, scale, rmse, sim, randomize)
+        print_results(rmse, sim, xp_results_filepath)
