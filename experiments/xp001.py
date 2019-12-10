@@ -3,9 +3,11 @@
 Trying with acl mincount-30 instead of acl mincount-3.
 """
 
+import common as com_xp
+
 if __name__ == '__main__':
     SVD_DIRPATH = '/home/kabbach/entropix/models/frontiers/svd/'
-    OUTPUT_DIRPATH = '/home/kabbach/entropix/models/frontiers/aligned/'
+    OUTPUT_DIRPATH = '/home/kabbach/entropix/models/frontiers/aligned-acl-30/'
     START = 0
     END = 10000
     print('Aligning vocabularies across all models with acl-mincount-30')

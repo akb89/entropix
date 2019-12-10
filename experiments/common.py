@@ -174,6 +174,18 @@ def load_aligned_models(model_names, model_dirpath, start, end):
     return loaded_models
 
 
+def load_models(model_names, model_dirpath, start, end):
+    loaded_models = []
+    for name in model_names:
+        print('Loading model {}...'.format(name))
+        model_path = os.path.join(model_dirpath, '{}.npy'.format(name))
+        vocab_path = os.path.join(model_dirpath, '{}.vocab'.format(name))
+        model, vocab = dutils.load_model_and_vocab(
+            model_path, 'numpy', vocab_path, start=start, end=end)
+        loaded_models.append((name, model, vocab))
+    return loaded_models
+
+
 def launch_xp(model_names, model_dirpath, start, end, scale,
               xp_results_filepath):
     models = load_aligned_models(model_names, model_dirpath, start, end)

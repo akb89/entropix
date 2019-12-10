@@ -1,4 +1,4 @@
-"""XP1: SVD-TOP-300. This script should be run after XP0 with aligned models."""
+"""XP1: SVD-TOP-300. This script should be run with aligned models."""
 
 import common as com_xp
 
