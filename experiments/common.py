@@ -17,18 +17,18 @@ def print_results(rmse, sim, xp_results_filepath):
     with open(xp_results_filepath, 'w', encoding='utf-8') as out_str:
         print('Printing RMSE results to file...')
         print('ALIGNMENT RMSE * 10^-4', file=out_str)
-        print('\\oanc & {} &  &  &  & '.format(
+        print('\\oanc & {} &  &  &  & \\'.format(
             rmse['oanc']['enwiki07']), file=out_str)
-        print('\\enwiki2 & {} & {} &  &  & '.format(
+        print('\\wikitwo & {} & {} &  &  & \\'.format(
             rmse['enwiki2']['enwiki07'], rmse['enwiki2']['oanc']),
               file=out_str)
         print('\\acl & {} & {} & {} &  & '.format(
             rmse['acl']['enwiki07'], rmse['acl']['oanc'],
             rmse['acl']['enwiki2']), file=out_str)
-        print('\\enwiki4 & {} & {} & {} & {} & '.format(
+        print('\\wikifour & {} & {} & {} & {} & \\'.format(
             rmse['enwiki4']['enwiki07'], rmse['enwiki4']['oanc'],
             rmse['enwiki4']['enwiki2'], rmse['enwiki4']['acl']), file=out_str)
-        print('\\bnc & {} & {} & {} & {} & {}'.format(
+        print('\\bnc & {} & {} & {} & {} & {} \\'.format(
             rmse['bnc']['enwiki07'], rmse['bnc']['oanc'],
             rmse['bnc']['enwiki2'], rmse['bnc']['acl'],
             rmse['bnc']['enwiki4']), file=out_str)
@@ -112,11 +112,9 @@ def get_results(models, scale):
         for name2, model2, vocab2 in tqdm(models):
             if name1 == name2:
                 continue
-            A, B, test_vocab = aligner.align_vocab(
+            A, B, _ = aligner.align_vocab(
                 aligned_model1, model2, vocab, vocab2)
             assert A.shape == B.shape
-            # if name2 in sim:
-            #     assert_consistancy_sim_results(sim, name2, B, test_vocab)
             update_rmse_results(rmse, A, B, scale, name1, name2)
     return rmse, sim
 
@@ -124,9 +122,11 @@ def get_results(models, scale):
 def load_models(model_names, model_dirpath, start, end):
     loaded_models = []
     for model_name in model_names:
-        print('Loading model {}...'.format(model_name))
-        model_path = os.path.join(model_dirpath, '{}-aligned.npy'.format(model_name))
-        vocab_path = os.path.join(model_dirpath, '{}-aligned.vocab'.format(model_name))
+        print('Loading aligned model {}...'.format(model_name))
+        model_path = os.path.join(model_dirpath, '{}-aligned.npy'.format(
+            model_name))
+        vocab_path = os.path.join(model_dirpath, '{}-aligned.vocab'.format(
+            model_name))
         model, vocab = dutils.load_model_and_vocab(
             model_path, 'numpy', vocab_path, start=start, end=end)
         loaded_models.append((model_name, model, vocab))
