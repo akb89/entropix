@@ -215,6 +215,8 @@ def load_aligned_models(model_names, model_dirpath, start, end, randomize,
         if dims_dirpath:
             dim_path = os.path.join(dims_dirpath,
                                     '{}-{}.dims'.format(name, dataset))
+        else:
+            dim_path = None
         model, vocab = dutils.load_model_and_vocab(
             model_path, 'numpy', vocab_path, start=start, end=end,
             shuffle=randomize, dims_filepath=dim_path)

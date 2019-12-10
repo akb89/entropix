@@ -424,7 +424,7 @@ def load_model_and_vocab(model_filepath, model_type, vocab_filepath=None,
                         ndim = end-start
                     else:
                         ndim = model.shape[1]
-                    if not dims:
+                    if not dims_filepath:
                         logger.warning(
                             'Shuffle mode ON: will randomly select {} '
                             'dimensions out of {} in the SVD matrix with no '
