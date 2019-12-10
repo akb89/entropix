@@ -60,22 +60,22 @@ def print_batch_results(rmse, xp_results_filepath):
     with open(xp_results_filepath, 'w', encoding='utf-8') as out_str:
         print('Printing RMSE results to file...')
         print('ALIGNMENT RMSE * 10^-4', file=out_str)
-        print('\\oanc & {} \\pm {} &  &  &  & \\\\'.format(
+        print('\\oanc & {0:.2f} $\\pm$ {0:.2f} &  &  &  & \\\\'.format(
             np.mean(rmse['oanc']['enwiki07']),
             np.std(rmse['oanc']['enwiki07'])), file=out_str)
-        print('\\wikitwo & {} \\pm {} & {} \\pm {} &  &  & \\\\'.format(
+        print('\\wikitwo & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} &  &  & \\\\'.format(
             np.mean(rmse['enwiki2']['enwiki07']),
             np.std(rmse['enwiki2']['enwiki07']),
             np.mean(rmse['enwiki2']['oanc']),
             np.std(rmse['enwiki2']['oanc'])), file=out_str)
-        print('\\acl & {} \\pm {} & {} \\pm {} & {} \\pm {} &  & \\\\'.format(
+        print('\\acl & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {} &  & \\\\'.format(
             np.mean(rmse['acl']['enwiki07']),
             np.std(rmse['acl']['enwiki07']),
             np.mean(rmse['acl']['oanc']),
             np.std(rmse['acl']['oanc']),
             np.mean(rmse['acl']['enwiki2']),
             np.std(rmse['acl']['enwiki2'])), file=out_str)
-        print('\\wikifour & {} \\pm {} & {} \\pm {} & {} \\pm {} & {} \\pm {} & \\\\'.format(
+        print('\\wikifour & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} & \\\\'.format(
             np.mean(rmse['enwiki4']['enwiki07']),
             np.std(rmse['enwiki4']['enwiki07']),
             np.mean(rmse['enwiki4']['oanc']),
@@ -84,7 +84,7 @@ def print_batch_results(rmse, xp_results_filepath):
             np.std(rmse['enwiki4']['enwiki2']),
             np.mean(rmse['enwiki4']['acl']),
             np.std(rmse['enwiki4']['acl'])), file=out_str)
-        print('\\bnc & {} \\pm {} & {} \\pm {} & {} \\pm {} & {} \\pm {} & {} \\pm {} \\\\'.format(
+        print('\\bnc & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} & {0:.2f} $\\pm$ {0:.2f} \\\\'.format(
             np.mean(rmse['bnc']['enwiki07']),
             np.std(rmse['bnc']['enwiki07']),
             np.mean(rmse['bnc']['oanc']),
@@ -238,11 +238,11 @@ def load_models(model_names, model_dirpath, start, end):
 
 def launch_xp(model_names, model_dirpath, start, end, scale,
               xp_results_filepath, randomize=False, dims_dirpath=None,
-              dataset=None, niter=0, block_size=0):
+              dataset=None, nruns=0, block_size=0):
     if randomize is True:
         rmse = defaultdict(lambda: defaultdict(list))
-        for idx in range(niter):
-            print('Running randomized iter = {}/{}'.format(idx+1, niter))
+        for idx in range(nruns):
+            print('Running randomized iter = {}/{}'.format(idx+1, nruns))
             models = load_aligned_models(
                 model_names, model_dirpath, start, end, randomize,
                 dims_dirpath, dataset, block_size)
