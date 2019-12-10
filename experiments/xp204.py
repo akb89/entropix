@@ -15,4 +15,5 @@ if __name__ == '__main__':
     MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc']
     com_xp.launch_xp(MODEL_NAMES, SVD_DIRPATH, START, END, SCALE,
                      RESULTS_FILEPATH, randomize=True,
-                     dims_dirpath=DIMS_DIRPATH, dataset='men', niter=NITER)
+                     dims_dirpath=DIMS_DIRPATH, dataset='men', niter=NITER,
+                     block_size=BLOCK)

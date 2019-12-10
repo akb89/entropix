@@ -206,7 +206,7 @@ def get_results(models, scale, rmse, sim, randomize=False):
 
 
 def load_aligned_models(model_names, model_dirpath, start, end, randomize,
-                        dims_dirpath, dataset):
+                        dims_dirpath, dataset, block_size):
     loaded_models = []
     for name in model_names:
         print('Loading aligned model {}...'.format(name))
@@ -219,7 +219,7 @@ def load_aligned_models(model_names, model_dirpath, start, end, randomize,
             dim_path = None
         model, vocab = dutils.load_model_and_vocab(
             model_path, 'numpy', vocab_path, start=start, end=end,
-            shuffle=randomize, dims_filepath=dim_path)
+            shuffle=randomize, dims_filepath=dim_path, block_size=block_size)
         loaded_models.append((name, model, vocab))
     return loaded_models
 
@@ -238,14 +238,14 @@ def load_models(model_names, model_dirpath, start, end):
 
 def launch_xp(model_names, model_dirpath, start, end, scale,
               xp_results_filepath, randomize=False, dims_dirpath=None,
-              dataset=None, niter=0):
+              dataset=None, niter=0, block_size=0):
     if randomize is True:
         rmse = defaultdict(lambda: defaultdict(list))
         for idx in range(niter):
             print('Running randomized iter = {}/{}'.format(idx+1, niter))
             models = load_aligned_models(
                 model_names, model_dirpath, start, end, randomize,
-                dims_dirpath, dataset)
+                dims_dirpath, dataset, block_size)
             rmse, sim = get_results(models, scale, rmse, _, randomize)
         print_batch_results(rmse, xp_results_filepath)
     else:
