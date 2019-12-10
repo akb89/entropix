@@ -1,0 +1,140 @@
+"""Common functions for XP."""
+import os
+
+from collections import defaultdict
+from tqdm import tqdm
+
+import entropix.utils.data as dutils
+import entropix.utils.metrix as metrix
+import entropix.core.aligner as aligner
+import entropix.core.matrixor as matrixor
+import entropix.core.evaluator as evaluator
+
+__all__ = ('launch_xp')
+
+
+def print_results(rmse, sim, xp_results_filepath):
+    with open(xp_results_filepath, 'w', encoding='utf-8') as out_str:
+        print('Printing RMSE results to file...')
+        print('ALIGNMENT RMSE * 10^-4', file=out_str)
+        print('\\oanc & {} &  &  &  & '.format(
+            rmse['oanc']['enwiki07']), file=out_str)
+        print('\\enwiki2 & {} & {} &  &  & '.format(
+            rmse['enwiki2']['enwiki07'], rmse['enwiki2']['oanc']),
+              file=out_str)
+        print('\\acl & {} & {} & {} &  & '.format(
+            rmse['acl']['enwiki07'], rmse['acl']['oanc'],
+            rmse['acl']['enwiki2']), file=out_str)
+        print('\\enwiki4 & {} & {} & {} & {} & '.format(
+            rmse['enwiki4']['enwiki07'], rmse['enwiki4']['oanc'],
+            rmse['enwiki4']['enwiki2'], rmse['enwiki4']['acl']), file=out_str)
+        print('\\bnc & {} & {} & {} & {} & {}'.format(
+            rmse['bnc']['enwiki07'], rmse['bnc']['oanc'],
+            rmse['bnc']['enwiki2'], rmse['bnc']['acl'],
+            rmse['bnc']['enwiki4']), file=out_str)
+        print('Printing SIM results to file...')
+        print('MODEL\tMEN SPR\tMEN RATIO\tSIMLEX SPR\tSIMLEX RATIO', file=out_str)
+        print('{}\t{}\t{}\t{}\t{}'.format(
+            'ENWIKI07', sim['enwiki07']['men']['spr'],
+            sim['enwiki07']['men']['ratio'], sim['enwiki07']['simlex']['spr'],
+            sim['enwiki07']['simlex']['ratio']), file=out_str)
+        print('{}\t{}\t{}\t{}\t{}'.format(
+            'OANC', sim['oanc']['men']['spr'],
+            sim['oanc']['men']['ratio'], sim['oanc']['simlex']['spr'],
+            sim['oanc']['simlex']['ratio']), file=out_str)
+        print('{}\t{}\t{}\t{}\t{}'.format(
+            'ENWIKI2', sim['enwiki2']['men']['spr'],
+            sim['enwiki2']['men']['ratio'], sim['enwiki2']['simlex']['spr'],
+            sim['enwiki2']['simlex']['ratio']), file=out_str)
+        print('{}\t{}\t{}\t{}\t{}'.format(
+            'ACL', sim['acl']['men']['spr'],
+            sim['acl']['men']['ratio'], sim['acl']['simlex']['spr'],
+            sim['acl']['simlex']['ratio']), file=out_str)
+        print('{}\t{}\t{}\t{}\t{}'.format(
+            'ENWIKI4', sim['enwiki4']['men']['spr'],
+            sim['enwiki4']['men']['ratio'], sim['enwiki4']['simlex']['spr'],
+            sim['enwiki4']['simlex']['ratio']), file=out_str)
+        print('{}\t{}\t{}\t{}\t{}'.format(
+            'BNC', sim['bnc']['men']['spr'],
+            sim['bnc']['men']['ratio'], sim['bnc']['simlex']['spr'],
+            sim['bnc']['simlex']['ratio']), file=out_str)
+
+
+def assert_consistancy_sim_results(sim, name, model, vocab):
+    men_spr = evaluator.evaluate_distributional_space(
+        model, vocab, 'men', 'spr', 'numpy', 'cosine', 0)[0]
+    assert men_spr == sim[name]['men']['spr']
+    m_cov_pairs, m_pairs = dutils.get_dataset_coverage('men', vocab)
+    men_ratio = (m_cov_pairs / m_pairs) * 100
+    assert men_ratio == sim[name]['men']['ratio']
+    simlex_spr = evaluator.evaluate_distributional_space(
+        model, vocab, 'simlex', 'spr', 'numpy', 'cosine', 0)[0]
+    assert simlex_spr == sim[name]['simlex']['spr']
+    s_cov_pairs, s_pairs = dutils.get_dataset_coverage('simlex', vocab)
+    simlex_ratio = (s_cov_pairs / s_pairs) * 100
+    assert simlex_ratio == sim[name]['simlex']['ratio']
+
+
+def update_rmse_results(rmse, A, B, scale, name1, name2):
+    T = matrixor.apply_absolute_orientation_with_scaling(A, B)
+    V = matrixor.apply_absolute_orientation_with_scaling(B, A)
+    rmse1 = metrix.root_mean_square_error(A, T)
+    rmse2 = metrix.root_mean_square_error(B, V)
+    avg = (rmse1 + rmse2) / 2
+    rmse[name1][name2] = avg * scale
+    return rmse
+
+def update_sim_results(sim, name, model, vocab):
+    sim[name]['men']['spr'] = evaluator.evaluate_distributional_space(
+        model, vocab, 'men', 'spr', 'numpy', 'cosine', 0)[0]
+    m_cov_pairs, m_pairs = dutils.get_dataset_coverage('men', vocab)
+    sim[name]['men']['ratio'] = (m_cov_pairs / m_pairs) * 100
+    sim[name]['simlex']['spr'] = evaluator.evaluate_distributional_space(
+        model, vocab, 'simlex', 'spr', 'numpy', 'cosine', 0)[0]
+    s_cov_pairs, s_pairs = dutils.get_dataset_coverage('simlex', vocab)
+    sim[name]['simlex']['ratio'] = (s_cov_pairs / s_pairs) * 100
+    return sim
+
+
+def get_results(models, scale):
+    rmse = defaultdict(lambda: defaultdict(dict))
+    sim = defaultdict(lambda: defaultdict(dict))
+    for name1, model1, vocab1 in tqdm(models):
+        aligned_model1 = model1
+        vocab = vocab1
+        for name2, model2, vocab2 in models:
+            if name1 == name2:
+                continue
+            assert aligned_model1.shape[1] == model2.shape[1]
+            aligned_model1, _, vocab = aligner.align_vocab(
+                aligned_model1, model2, vocab, vocab2)
+        update_sim_results(sim, name1, aligned_model1, vocab)
+        for name2, model2, vocab2 in tqdm(models):
+            if name1 == name2:
+                continue
+            A, B, test_vocab = aligner.align_vocab(
+                aligned_model1, model2, vocab, vocab2)
+            assert A.shape == B.shape
+            # if name2 in sim:
+            #     assert_consistancy_sim_results(sim, name2, B, test_vocab)
+            update_rmse_results(rmse, A, B, scale, name1, name2)
+    return rmse, sim
+
+
+def load_models(model_names, model_dirpath, start, end):
+    loaded_models = []
+    for model_name in model_names:
+        print('Loading model {}...'.format(model_name))
+        model_path = os.path.join(model_dirpath, '{}-aligned.npy'.format(model_name))
+        vocab_path = os.path.join(model_dirpath, '{}-aligned.vocab'.format(model_name))
+        model, vocab = dutils.load_model_and_vocab(
+            model_path, 'numpy', vocab_path, start=start, end=end)
+        loaded_models.append((model_name, model, vocab))
+    return loaded_models
+
+
+def launch_xp(model_names, model_dirpath, start, end, scale,
+              xp_results_filepath):
+    models = load_models(model_names, model_dirpath, start, end)
+    rmse, sim = get_results(models, scale)
+    print_results(rmse, sim, xp_results_filepath)
