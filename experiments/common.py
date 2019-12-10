@@ -241,7 +241,8 @@ def launch_xp(model_names, model_dirpath, start, end, scale,
               dataset=None, niter=0):
     if randomize is True:
         rmse = defaultdict(lambda: defaultdict(list))
-        for _ in range(niter):
+        for idx in range(niter):
+            print('Running randomized iter = {}/{}'.format(idx+1, niter))
             models = load_aligned_models(
                 model_names, model_dirpath, start, end, randomize,
                 dims_dirpath, dataset)
