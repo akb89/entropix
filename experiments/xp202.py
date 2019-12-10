@@ -9,7 +9,8 @@ if __name__ == '__main__':
     START = 0
     END = 30
     SCALE = 1e4  # scaling factor for RMSE
+    NITER = 10
     print('Running entropix XP#202 on SVD-RAND-30')
     MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc']
     com_xp.launch_xp(MODEL_NAMES, SVD_DIRPATH, START, END, SCALE,
-                     RESULTS_FILEPATH, randomize=True)
+                     RESULTS_FILEPATH, randomize=True, niter=NITER)
