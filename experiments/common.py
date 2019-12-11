@@ -205,8 +205,9 @@ def get_results(models, scale, rmse, sim, randomize=False):
     return rmse, sim
 
 
-def load_aligned_models(model_names, model_dirpath, start, end, randomize,
-                        dims_dirpath, dataset, block_size):
+def load_aligned_models(model_names, model_dirpath, start, end,
+                        randomize=False, dims_dirpath=None, dataset=None,
+                        block_size=0):
     loaded_models = []
     for name in model_names:
         print('Loading aligned model {}...'.format(name))
