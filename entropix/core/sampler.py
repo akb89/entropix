@@ -483,7 +483,6 @@ class Sampler():
             with multiprocessing.Pool(num_threads) as pool:
                 _sample = functools.partial(
                     self.sample, [], alldims)
-                print('num_folds = {}'.format(num_folds))
                 for fold, keep in pool.imap_unordered(_sample,
                                                       range(1,
                                                             num_folds+1)):
