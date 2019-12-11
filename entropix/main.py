@@ -40,7 +40,7 @@ def _evaluate(args):
     logger.info('Loading distributional space from {}'.format(args.model))
     model, vocab = dutils.load_model_and_vocab(
         args.model, args.type, args.vocab, args.singvalues, args.singalpha,
-        args.start, args.end, args.dims)
+        args.start, args.end, args.dims, shuffle=args.shuffle)
     evaluator.evaluate_distributional_space(model, vocab, args.dataset,
                                             args.metric, args.type,
                                             args.distance, args.kfold_size)
@@ -337,6 +337,8 @@ def main():
                                  help='absolute path to singular values')
     parser_evaluate.add_argument('--singalpha', type=float, default=0,
                                  help='power alpha for singular values')
+    parser_evaluate.add_argument('-f', '--shuffle', action='store_true',
+                                 help='Whether or not to shuffle model')
     parser_generate = subparsers.add_parser(
         'generate', formatter_class=argparse.RawTextHelpFormatter,
         help='generate raw frequency count based model')
