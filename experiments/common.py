@@ -197,15 +197,21 @@ def get_rmse(A, B):
     return avg
 
 
-def update_sim_results(sim, name, model, vocab):
-    sim[name]['men']['spr'] = evaluator.evaluate_distributional_space(
-        model, vocab, 'men', 'spr', 'numpy', 'cosine', 0)[0]
-    m_cov_pairs, m_pairs = dutils.get_dataset_coverage('men', vocab)
-    sim[name]['men']['ratio'] = (m_cov_pairs / m_pairs) * 100
-    sim[name]['simlex']['spr'] = evaluator.evaluate_distributional_space(
-        model, vocab, 'simlex', 'spr', 'numpy', 'cosine', 0)[0]
-    s_cov_pairs, s_pairs = dutils.get_dataset_coverage('simlex', vocab)
-    sim[name]['simlex']['ratio'] = (s_cov_pairs / s_pairs) * 100
+def update_sim_results(sim, name, model, vocab, randomize):
+    if randomize:
+        sim[name]['men']['spr'].append(evaluator.evaluate_distributional_space(
+            model, vocab, 'men', 'spr', 'numpy', 'cosine', 0)[0])
+        sim[name]['simlex']['spr'].append(evaluator.evaluate_distributional_space(
+            model, vocab, 'simlex', 'spr', 'numpy', 'cosine', 0)[0])
+    else:
+        m_cov_pairs, m_pairs = dutils.get_dataset_coverage('men', vocab)
+        s_cov_pairs, s_pairs = dutils.get_dataset_coverage('simlex', vocab)
+        sim[name]['men']['spr'] = evaluator.evaluate_distributional_space(
+            model, vocab, 'men', 'spr', 'numpy', 'cosine', 0)[0]
+        sim[name]['men']['ratio'] = (m_cov_pairs / m_pairs) * 100
+        sim[name]['simlex']['spr'] = evaluator.evaluate_distributional_space(
+            model, vocab, 'simlex', 'spr', 'numpy', 'cosine', 0)[0]
+        sim[name]['simlex']['ratio'] = (s_cov_pairs / s_pairs) * 100
     return sim
 
 
@@ -219,7 +225,7 @@ def get_results(models, scale, rmse, sim, randomize=False):
             assert aligned_model1.shape[1] == model2.shape[1]
             aligned_model1, _, vocab = aligner.align_vocab(
                 aligned_model1, model2, vocab, vocab2)
-        update_sim_results(sim, name1, aligned_model1, vocab)
+        update_sim_results(sim, name1, aligned_model1, vocab, randomize)
         for name2, model2, vocab2 in tqdm(models):
             if name1 == name2:
                 continue
