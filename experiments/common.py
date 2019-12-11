@@ -56,7 +56,7 @@ def dump_ndim_rmse(name1, name2, model1, model2, vocab1, vocab2, ndim, dirpath,
             print('{}\t{}'.format(idx, rmse), file=output_str)
 
 
-def print_batch_results(rmse, xp_results_filepath):
+def print_batch_results(rmse, sim, xp_results_filepath):
     with open(xp_results_filepath, 'w', encoding='utf-8') as out_str:
         print('Printing RMSE results to file...')
         print('ALIGNMENT RMSE * 10^-4', file=out_str)
@@ -95,6 +95,35 @@ def print_batch_results(rmse, xp_results_filepath):
             np.std(rmse['bnc']['acl']),
             np.mean(rmse['bnc']['enwiki4']),
             np.std(rmse['bnc']['enwiki4'])), file=out_str)
+        print('Printing SIM results to file...')
+        print('MEN SPR AVG STD', file=out_str)
+        print('MODEL & {0:.2f} $\\pm$ {1:.2f} & {2:.2f} $\\pm$ {3:.2f} & {4:.2f} $\\pm$ {5:.2f} & {6:.2f} $\\pm$ {7:.2f} & {8:.2f} $\\pm$ {9:.2f} & {10:.2f} $\\pm$ {11:.2f}'.format(
+            np.mean(sim['enwiki07']['men']['spr']),
+            np.std(sim['enwiki07']['men']['spr']),
+            np.mean(sim['oanc']['men']['spr']),
+            np.std(sim['oanc']['men']['spr']),
+            np.mean(sim['enwiki2']['men']['spr']),
+            np.std(sim['enwiki2']['men']['spr']),
+            np.mean(sim['acl']['men']['spr']),
+            np.std(sim['acl']['men']['spr']),
+            np.mean(sim['enwiki4']['men']['spr']),
+            np.std(sim['enwiki4']['men']['spr']),
+            np.mean(sim['bnc']['men']['spr']),
+            np.std(sim['bnc']['men']['spr'])), file=out_str)
+        print('SIMLEX SPR AVG STD', file=out_str)
+        print('MODEL & {0:.2f} $\\pm$ {1:.2f} & {2:.2f} $\\pm$ {3:.2f} & {4:.2f} $\\pm$ {5:.2f} & {6:.2f} $\\pm$ {7:.2f} & {8:.2f} $\\pm$ {9:.2f} & {10:.2f} $\\pm$ {11:.2f}'.format(
+            np.mean(sim['enwiki07']['simlex']['spr']),
+            np.std(sim['enwiki07']['simlex']['spr']),
+            np.mean(sim['oanc']['simlex']['spr']),
+            np.std(sim['oanc']['simlex']['spr']),
+            np.mean(sim['enwiki2']['simlex']['spr']),
+            np.std(sim['enwiki2']['simlex']['spr']),
+            np.mean(sim['acl']['simlex']['spr']),
+            np.std(sim['acl']['simlex']['spr']),
+            np.mean(sim['enwiki4']['simlex']['spr']),
+            np.std(sim['enwiki4']['simlex']['spr']),
+            np.mean(sim['bnc']['simlex']['spr']),
+            np.std(sim['bnc']['simlex']['spr'])), file=out_str)
 
 
 def print_results(rmse, sim, xp_results_filepath):
@@ -190,8 +219,7 @@ def get_results(models, scale, rmse, sim, randomize=False):
             assert aligned_model1.shape[1] == model2.shape[1]
             aligned_model1, _, vocab = aligner.align_vocab(
                 aligned_model1, model2, vocab, vocab2)
-        if not randomize:
-            update_sim_results(sim, name1, aligned_model1, vocab)
+        update_sim_results(sim, name1, aligned_model1, vocab)
         for name2, model2, vocab2 in tqdm(models):
             if name1 == name2:
                 continue
@@ -242,13 +270,14 @@ def launch_xp(model_names, model_dirpath, start, end, scale,
               dataset=None, nruns=0, block_size=0):
     if randomize is True:
         rmse = defaultdict(lambda: defaultdict(list))
+        sim = defaultdict(lambda: defaultdict(list))
         for idx in range(nruns):
             print('Running randomized iter = {}/{}'.format(idx+1, nruns))
             models = load_aligned_models(
                 model_names, model_dirpath, start, end, randomize,
                 dims_dirpath, dataset, block_size)
-            rmse, sim = get_results(models, scale, rmse, None, randomize)
-        print_batch_results(rmse, xp_results_filepath)
+            rmse, sim = get_results(models, scale, rmse, sim, randomize)
+        print_batch_results(rmse, sim, xp_results_filepath)
     else:
         rmse = defaultdict(lambda: defaultdict(dict))
         sim = defaultdict(lambda: defaultdict(dict))
