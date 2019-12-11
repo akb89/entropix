@@ -98,32 +98,32 @@ def print_batch_results(rmse, sim, xp_results_filepath):
         print('Printing SIM results to file...')
         print('MEN SPR AVG STD', file=out_str)
         print('MODEL & {0:.2f} $\\pm$ {1:.2f} & {2:.2f} $\\pm$ {3:.2f} & {4:.2f} $\\pm$ {5:.2f} & {6:.2f} $\\pm$ {7:.2f} & {8:.2f} $\\pm$ {9:.2f} & {10:.2f} $\\pm$ {11:.2f}'.format(
-            np.mean(sim['enwiki07']['men']['spr']),
-            np.std(sim['enwiki07']['men']['spr']),
-            np.mean(sim['oanc']['men']['spr']),
-            np.std(sim['oanc']['men']['spr']),
-            np.mean(sim['enwiki2']['men']['spr']),
-            np.std(sim['enwiki2']['men']['spr']),
-            np.mean(sim['acl']['men']['spr']),
-            np.std(sim['acl']['men']['spr']),
-            np.mean(sim['enwiki4']['men']['spr']),
-            np.std(sim['enwiki4']['men']['spr']),
-            np.mean(sim['bnc']['men']['spr']),
-            np.std(sim['bnc']['men']['spr'])), file=out_str)
+            np.mean(sim['enwiki07']['men']),
+            np.std(sim['enwiki07']['men']),
+            np.mean(sim['oanc']['men']),
+            np.std(sim['oanc']['men']),
+            np.mean(sim['enwiki2']['men']),
+            np.std(sim['enwiki2']['men']),
+            np.mean(sim['acl']['men']),
+            np.std(sim['acl']['men']),
+            np.mean(sim['enwiki4']['men']),
+            np.std(sim['enwiki4']['men']),
+            np.mean(sim['bnc']['men']),
+            np.std(sim['bnc']['men'])), file=out_str)
         print('SIMLEX SPR AVG STD', file=out_str)
         print('MODEL & {0:.2f} $\\pm$ {1:.2f} & {2:.2f} $\\pm$ {3:.2f} & {4:.2f} $\\pm$ {5:.2f} & {6:.2f} $\\pm$ {7:.2f} & {8:.2f} $\\pm$ {9:.2f} & {10:.2f} $\\pm$ {11:.2f}'.format(
-            np.mean(sim['enwiki07']['simlex']['spr']),
-            np.std(sim['enwiki07']['simlex']['spr']),
-            np.mean(sim['oanc']['simlex']['spr']),
-            np.std(sim['oanc']['simlex']['spr']),
-            np.mean(sim['enwiki2']['simlex']['spr']),
-            np.std(sim['enwiki2']['simlex']['spr']),
-            np.mean(sim['acl']['simlex']['spr']),
-            np.std(sim['acl']['simlex']['spr']),
-            np.mean(sim['enwiki4']['simlex']['spr']),
-            np.std(sim['enwiki4']['simlex']['spr']),
-            np.mean(sim['bnc']['simlex']['spr']),
-            np.std(sim['bnc']['simlex']['spr'])), file=out_str)
+            np.mean(sim['enwiki07']['simlex']),
+            np.std(sim['enwiki07']['simlex']),
+            np.mean(sim['oanc']['simlex']),
+            np.std(sim['oanc']['simlex']),
+            np.mean(sim['enwiki2']['simlex']),
+            np.std(sim['enwiki2']['simlex']),
+            np.mean(sim['acl']['simlex']),
+            np.std(sim['acl']['simlex']),
+            np.mean(sim['enwiki4']['simlex']),
+            np.std(sim['enwiki4']['simlex']),
+            np.mean(sim['bnc']['simlex']),
+            np.std(sim['bnc']['simlex'])), file=out_str)
 
 
 def print_results(rmse, sim, xp_results_filepath):
@@ -199,9 +199,9 @@ def get_rmse(A, B):
 
 def update_sim_results(sim, name, model, vocab, randomize):
     if randomize:
-        sim[name]['men']['spr'].append(evaluator.evaluate_distributional_space(
+        sim[name]['men'].append(evaluator.evaluate_distributional_space(
             model, vocab, 'men', 'spr', 'numpy', 'cosine', 0)[0])
-        sim[name]['simlex']['spr'].append(evaluator.evaluate_distributional_space(
+        sim[name]['simlex'].append(evaluator.evaluate_distributional_space(
             model, vocab, 'simlex', 'spr', 'numpy', 'cosine', 0)[0])
     else:
         m_cov_pairs, m_pairs = dutils.get_dataset_coverage('men', vocab)
