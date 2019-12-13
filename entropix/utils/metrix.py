@@ -146,7 +146,7 @@ def init_eval_metrix(metric, alpha=None):
     if metric == 'spr':
         return -1.
     if metric == 'rmse':
-        return 1.
+        return 10**15.
     if metric == 'combined':
         return alpha * -1. - (1. - alpha) * 1.
-    return (-1, 1)
+    return (-1, 10**15)
