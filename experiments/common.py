@@ -16,6 +16,19 @@ import entropix.core.evaluator as evaluator
 __all__ = ('launch_xp', 'dump_aligned_models', 'load_aligned_models')
 
 
+def load_dims_truth_array(dims, start, end):
+    return np.array([x in dims for x in range(start, end)])
+
+
+def load_dims(dim_filepath):
+    dims = []
+    with open(dim_filepath, 'r', encoding='utf-8') as dim_stream:
+        for line in dim_stream:
+            line = line.strip()
+            dims.append(int(line))
+    return dims
+
+
 def dump_aligned_models(models, dirpath):
     print('Dumping aligned models and vocabularies...')
     for name1, model1, vocab1 in tqdm(models):
@@ -241,7 +254,7 @@ def get_results(models, scale, rmse, sim, randomize=False):
 
 def load_aligned_models(model_names, model_dirpath, start, end,
                         randomize=False, dims_dirpath=None, dataset=None,
-                        block_size=0):
+                        bins_size=0):
     loaded_models = []
     for name in model_names:
         print('Loading aligned model {}...'.format(name))
@@ -254,7 +267,7 @@ def load_aligned_models(model_names, model_dirpath, start, end,
             dim_path = None
         model, vocab = dutils.load_model_and_vocab(
             model_path, 'numpy', vocab_path, start=start, end=end,
-            shuffle=randomize, dims_filepath=dim_path, block_size=block_size)
+            shuffle=randomize, dims_filepath=dim_path, bins_size=bins_size)
         loaded_models.append((name, model, vocab))
     return loaded_models
 
@@ -273,7 +286,7 @@ def load_models(model_names, model_dirpath, start, end):
 
 def launch_xp(model_names, model_dirpath, start, end, scale,
               xp_results_filepath, randomize=False, dims_dirpath=None,
-              dataset=None, nruns=0, block_size=0):
+              dataset=None, nruns=0, bins_size=0):
     if randomize is True:
         rmse = defaultdict(lambda: defaultdict(list))
         sim = defaultdict(lambda: defaultdict(list))
@@ -281,7 +294,7 @@ def launch_xp(model_names, model_dirpath, start, end, scale,
             print('Running randomized iter = {}/{}'.format(idx+1, nruns))
             models = load_aligned_models(
                 model_names, model_dirpath, start, end, randomize,
-                dims_dirpath, dataset, block_size)
+                dims_dirpath, dataset, bins_size)
             rmse, sim = get_results(models, scale, rmse, sim, randomize)
         print_batch_results(rmse, sim, xp_results_filepath)
     else:
@@ -289,6 +302,6 @@ def launch_xp(model_names, model_dirpath, start, end, scale,
         sim = defaultdict(lambda: defaultdict(dict))
         models = load_aligned_models(
             model_names, model_dirpath, start, end, randomize,
-            dims_dirpath, dataset, block_size)
+            dims_dirpath, dataset, bins_size)
         rmse, sim = get_results(models, scale, rmse, sim, randomize)
         print_results(rmse, sim, xp_results_filepath)
