@@ -240,7 +240,7 @@ def get_results(models, scale, rmse, sim, randomize=False):
                 aligned_model1, model2, vocab, vocab2)
         print('Computing sim values for {}'.format(name1))
         update_sim_results(sim, name1, aligned_model1, vocab, randomize)
-        for name2, model2, vocab2 in tqdm(models):
+        for name2, model2, vocab2 in models:
             if name1 == name2:
                 continue
             print('Computing RMSE between {} and {}'.format(name1, name2))
