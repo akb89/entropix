@@ -13,6 +13,8 @@ Implements algorithm 2.4 (AO+Scaling) of the paper:
 
 import numpy as np
 
+from einsumt import einsumt
+
 __all__ = ('apply_absolute_orientation_with_scaling')
 
 
@@ -24,7 +26,8 @@ def center(matrix):
 def compute_sum_inner_product(A, B):
     # return np.diagonal(A @ B.T).sum()
     print('Computing einsum for inner product...')
-    return np.diagonal(np.einsum('ij,ik->jk', A, B)).sum()
+    #return np.diagonal(np.einsum('ij,ik->jk', A, B)).sum()
+    return np.diagonal(einsumt('ij,ik->jk', A, B)).sum()
 
 
 def compute_scaling(A, B):
@@ -34,7 +37,8 @@ def compute_scaling(A, B):
 def compute_sum_outer_product(A, B):
     # return B.T @ A
     print('Computing einsum for outer product...')
-    return np.einsum('ij,ik->jk', B, A)  # much faster than above
+    #return np.einsum('ij,ik->jk', B, A)  # much faster than above
+    return einsumt('ij,ik->jk', B, A)
 
 
 def apply_ao_rotation(A, B):
