@@ -229,7 +229,7 @@ def update_sim_results(sim, name, model, vocab, randomize):
 
 
 def get_results(models, scale, rmse, sim, randomize=False):
-    for name1, model1, vocab1 in tqdm(models):
+    for name1, model1, vocab1 in models:
         aligned_model1 = model1
         vocab = vocab1
         for name2, model2, vocab2 in models:
@@ -238,10 +238,12 @@ def get_results(models, scale, rmse, sim, randomize=False):
             assert aligned_model1.shape[1] == model2.shape[1]
             aligned_model1, _, vocab = aligner.align_vocab(
                 aligned_model1, model2, vocab, vocab2)
+        print('Computing sim values for {}'.format(name1))
         update_sim_results(sim, name1, aligned_model1, vocab, randomize)
         for name2, model2, vocab2 in tqdm(models):
             if name1 == name2:
                 continue
+            print('Computing RMSE between {} and {}'.format(name1, name2))
             A, B, _ = aligner.align_vocab(
                 aligned_model1, model2, vocab, vocab2)
             assert A.shape == B.shape
