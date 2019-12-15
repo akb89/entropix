@@ -16,6 +16,11 @@ import entropix.core.evaluator as evaluator
 __all__ = ('launch_xp', 'dump_aligned_models', 'load_aligned_models')
 
 
+def binize(data, bin_size):
+    """Binning a numpy array."""
+    return data[:(data.size // bin_size) * bin_size].reshape(-1, bin_size)
+
+
 def load_dims_truth_array(dims, start, end):
     return np.array([x in dims for x in range(start, end)])
 
