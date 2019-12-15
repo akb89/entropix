@@ -3,6 +3,8 @@
 import numpy as np
 import numpy.testing as npt
 import scipy.spatial as spatial
+import scipy.signal as sig
+import scipy.stats as stats
 import entropix.utils.metrix as metrix
 
 
@@ -47,6 +49,7 @@ def test_cross_correlation():
     assert xcorr == 0.21
     assert max_corr == 0.38
     assert offset == 1
+    assert metrix.pearson_correlation(x, y) - (0.21 / 0.38) < 1e16
 
 
 def test_xcorr_norm():

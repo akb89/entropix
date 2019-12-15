@@ -39,10 +39,22 @@ def purity(y_true, y_pred):
     return 1. / len(y_true) * np.sum(np.max(M, axis=1))
 
 
+def pearson_correlation(x, y):
+    return stats.pearsonr(x, y)[0]
+
+
 def xcorr_norm(x, y):
     assert x.size == y.size
-    # return np.sqrt(np.sum(x**2) * np.sum(y**2))
-    return np.sqrt(np.sum(np.square(x)) * np.sum(np.square(y)))
+    return np.sqrt(np.sum(x**2) * np.sum(y**2))
+    # return np.sqrt(np.sum(np.square(x)) * np.sum(np.square(y)))
+
+
+def abs_max_corr_idx(xcorr_array):
+    idx_max_corr = xcorr_array.argmax()
+    idx_min_corr = xcorr_array.argmin()
+    if abs(xcorr_array[idx_min_corr]) > xcorr_array[idx_max_corr]:
+        return idx_min_corr
+    return idx_max_corr
 
 
 def cross_correlation(x, y):
@@ -56,9 +68,9 @@ def cross_correlation(x, y):
     assert x.size == y.size
     xcorr_array = np.correlate(x, y, mode='full')
     xcorr = xcorr_array[x.size-1]
-    idx_max_corr = xcorr_array.argmax()
-    max_corr = xcorr_array[idx_max_corr]
-    offset = np.arange(1-x.size, x.size)[idx_max_corr]
+    max_corr_idx = abs_max_corr_idx(xcorr_array)
+    max_corr = xcorr_array[max_corr_idx]
+    offset = np.arange(1-x.size, x.size)[max_corr_idx]
     return xcorr, max_corr, offset
 
 
