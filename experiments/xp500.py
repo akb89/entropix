@@ -18,10 +18,10 @@ def binize(data, bin_size):
 if __name__ == '__main__':
     START = 0
     END = 10000
-    #SVD_DIRPATH = '/home/kabbach/entropix/models/frontiers/aligned/'
-    SVD_DIRPATH = '/Users/akb/Github/entropix/models/frontiers/aligned/'
-    #MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc']
-    MODEL_NAMES = ['enwiki07', 'oanc']
+    SVD_DIRPATH = '/home/kabbach/entropix/models/frontiers/aligned/'
+    #SVD_DIRPATH = '/Users/akb/Github/entropix/models/frontiers/aligned/'
+    MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc']
+    #MODEL_NAMES = ['enwiki07', 'oanc']
     EPSILON = 1e-4
     BIN_SIZE = 30
     models = com_xp.load_aligned_models(MODEL_NAMES, SVD_DIRPATH, START, END)

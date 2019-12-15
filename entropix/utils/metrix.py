@@ -41,7 +41,8 @@ def purity(y_true, y_pred):
 
 def xcorr_norm(x, y):
     assert x.size == y.size
-    return np.sqrt(np.sum(x**2) * np.sum(y**2))
+    # return np.sqrt(np.sum(x**2) * np.sum(y**2))
+    return np.sqrt(np.sum(np.square(x)) * np.sum(np.square(y)))
 
 
 def cross_correlation(x, y):
