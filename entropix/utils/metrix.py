@@ -3,8 +3,9 @@
 import logging
 import math
 import numpy as np
-from scipy import stats
+import scipy.stats as stats
 import scipy.spatial as spatial
+import scipy.signal as sig
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,28 @@ def purity(y_true, y_pred):
         pred_clusters[id] = (y_pred == cl).astype('int')
     M = pred_clusters.dot(true_clusters.T)
     return 1. / len(y_true) * np.sum(np.max(M, axis=1))
+
+
+def xcorr_norm(x, y):
+    assert x.size == y.size
+    return np.sqrt(np.sum(x**2) * np.sum(y**2))
+
+
+def cross_correlation(x, y):
+    """Return normalized cross-correlation and offset.
+
+    Assuming x and y to be same-size arrays, in full mode, we will get a
+    cross-correlation array of size x.size + y.size - 1 = 2 * n - 1
+    (with n = x.size).
+    To get the offset,
+    """
+    assert x.size == y.size
+    xcorr_array = np.correlate(x, y, mode='full')
+    xcorr = xcorr_array[x.size-1]
+    idx_max_corr = xcorr_array.argmax()
+    max_corr = xcorr_array[idx_max_corr]
+    offset = np.arange(1-x.size, x.size)[idx_max_corr]
+    return xcorr, max_corr, offset
 
 
 # Note: this is scipy's spearman, without tie adjustment

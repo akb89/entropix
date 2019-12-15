@@ -65,3 +65,47 @@ def test_apply_ao_with_scaling():
     assert abs(metrix.cosine_similarity(A[0], A[1]) - metrix.cosine_similarity(U[0], U[1])) < 0.000001
     assert abs(metrix.cosine_similarity(A[1], A[2]) - metrix.cosine_similarity(U[1], U[2])) < 0.000001
     assert abs(metrix.root_mean_square_error(A, T) - metrix.root_mean_square_error(U, B)) < 0.000001
+
+def test_ao_scaling_in_diff_config():
+    A = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
+    B = np.array([[2, 2, 2], [2, 2, 2], [2, 2, 2]])
+    T = matrixor.apply_absolute_orientation_with_scaling(A, B)
+    assert metrix.root_mean_square_error(A, T) < 1e-10
+    A = np.array([[1, 0], [1, 0], [1, 0]])
+    B = np.array([[0, 1], [0, 1], [0, 1]])
+    T = matrixor.apply_absolute_orientation_with_scaling(A, B)
+    assert metrix.root_mean_square_error(A, T) < 1e-10
+    A = np.array([[1, 0], [1, 0], [0, 1]])
+    B = np.array([[0, 1], [0, 1], [1, 0]])
+    T = matrixor.apply_absolute_orientation_with_scaling(A, B)
+    assert metrix.root_mean_square_error(A, T) < 1e-10
+    A = np.array([[1, 1, 0], [1, 1, 0], [1, 1, 0]])
+    B = np.array([[0, 0, 1], [0, 0, 1], [0, 0, 1]])
+    T = matrixor.apply_absolute_orientation_with_scaling(A, B)
+    assert metrix.root_mean_square_error(A, T) < 1e-10
+    A = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    B = np.array([[0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0], [1, 0, 0, 0]])
+    T = matrixor.apply_absolute_orientation_with_scaling(A, B)
+    assert metrix.root_mean_square_error(A, T) < 1e-10
+    A = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    B = np.array([[0, 0, 0, 1], [0, 0, 1, 0], [1, 0, 0, 0], [0, 1, 0, 0]])
+    T = matrixor.apply_absolute_orientation_with_scaling(A, B)
+    assert metrix.root_mean_square_error(A, T) < 1e-10
+    A = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    B = np.array([[0, 0, 0, -1], [0, 0, -1, 0], [-1, 0, 0, 0], [0, -1, 0, 0]])
+    T = matrixor.apply_absolute_orientation_with_scaling(A, B)
+    assert metrix.root_mean_square_error(A, T) < 1e-10
+    A = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    B = np.array([[0, 0, 0, -1], [0, 0, 1, 0], [-1, 0, 0, 0], [0, 1, 0, 0]])
+    T = matrixor.apply_absolute_orientation_with_scaling(A, B)
+    assert metrix.root_mean_square_error(A, T) < 1e-10
+    A = np.array([[-1, 0, 0, 0], [0, 1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+    B = np.array([[0, 0, 0, 1], [0, 0, 1, 0], [-1, 0, 0, 0], [0, 1, 0, 0]])
+    T = matrixor.apply_absolute_orientation_with_scaling(A, B)
+    assert metrix.root_mean_square_error(A, T) < 1e-10
+    A = np.array([[-1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    B = np.array([[0, 0, 0, -1], [0, 0, -1, 0], [-1, 0, 0, 0], [0, -1, 0, 0]])
+    C = np.abs(A - B)
+    print(A - B)
+    print(C)
+    assert 1 == 2
