@@ -1,55 +1,16 @@
-"""Generating entropies and counts for a set of wikipedia dumps."""
+"""Generate a set of aligned vocabularies for each model.
 
-import os
-import functools
-import multiprocessing
+Trying with acl mincount-30 instead of acl mincount-3.
+"""
 
-import entropix
-import entropix.utils.files as futils
-
-
-def _process(counts_dirpath, min_count, wiki_filepath):
-    counts = entropix.count(corpus_filepath=wiki_filepath,
-                            output_dirpath=counts_dirpath, min_count=min_count)
-    corpus_size, vocab_size, entropy = entropix.compute(counts)
-    return wiki_filepath, corpus_size, vocab_size, entropy
-
+import common as com_xp
 
 if __name__ == '__main__':
-    print('Running entropix XP#001')
-
-    WIKI_DIRPATH = '/home/kabbach/witokit/data/wiki/'
-    COUNTS_DIRPATH = '/home/kabbach/witokit/data/counts/xp001/'
-    RESULTS_FILEPATH = '/home/kabbach/entropix/results/xp001.results'
-    NUM_THREADS = 51
-    MIN_COUNT = 0
-
-    assert os.path.exists(WIKI_DIRPATH)
-    assert os.path.exists(COUNTS_DIRPATH)
-
-    file_num = 0
-    results = {}
-    wiki_filepaths = futils.get_input_filepaths(WIKI_DIRPATH)
-    with multiprocessing.Pool(NUM_THREADS) as pool:
-        process = functools.partial(_process, COUNTS_DIRPATH, MIN_COUNT)
-        for wikipath, corpus_size, vocab_size, entropy in pool.imap_unordered(process, wiki_filepaths):
-            file_num += 1
-            print('Done processing file {}'.format(wikipath))
-            print('Completed processing of {}/{} files'
-                  .format(file_num, len(wiki_filepaths)))
-            partial = {
-                'corpus_size': corpus_size,
-                'vocab_size': vocab_size,
-                'entropy': entropy
-            }
-            results[os.path.basename(wikipath)] = partial
-    print('Saving results to file {}'.format(RESULTS_FILEPATH))
-    with open(RESULTS_FILEPATH, 'w', encoding='utf-8') as output_stream:
-        print('{:25}\t{:>15}\t{:>10}\t{:>7}'
-              .format('Wiki', 'Corpus', 'Vocab', 'Entropy'),
-              file=output_stream)
-        for key in sorted(results.keys()):
-            print('{:25}\t{:>15}\t{:>10}\t{:>7}'
-                  .format(key, results[key]['corpus_size'],
-                          results[key]['vocab_size'], results[key]['entropy']),
-                  file=output_stream)
+    SVD_DIRPATH = '/home/kabbach/entropix/models/frontiers/svd/'
+    OUTPUT_DIRPATH = '/home/kabbach/entropix/models/frontiers/aligned-acl-30/'
+    START = 0
+    END = 10000
+    print('Aligning vocabularies across all models with acl-mincount-30')
+    MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl-30', 'enwiki4', 'bnc']
+    MODELS = com_xp.load_models(MODEL_NAMES, SVD_DIRPATH, START, END)
+    com_xp.dump_aligned_models(MODELS, OUTPUT_DIRPATH)

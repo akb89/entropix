@@ -1,39 +1,23 @@
-"""Semantic Textual Similarity Evaluation"""
-
+"""Representing sampled dim as barcode."""
 import os
-import entropix
-import entropix.utils.files as futils
-import numpy as np
 
+import matplotlib.pyplot as plt
 
+import common as com_xp
 
-def _evaluate(dataset, model_filepath, vocabulary_filepath, selected_dims=None):
-    model = np.load(model_filepath)
-    model = model[:, ::-1]  # put singular vectors in decreasing order of singular value
-    if selected_dims:
-        dims = []
-        with open(selected_dims, 'r', encoding='utf-8') as dims_stream:
-            for line in dims_stream:
-                dims.append(int(line.strip()))
-        model = model[:, dims]
-    return entropix.core.evaluator.evaluate_distributional_space(model, vocabulary_filepath, dataset)
-
-if __name__=='__main__':
-    print('Running entropix XP#400')
-
-    MODEL_DIRPATH = '/home/ludovica/entropix_models/'
-    DIMS_DIRPATH = '/home/ludovica/entropix_selecteddims/'
-    VOCAB_FILEPATH =  '/home/ludovica/Downloads/enwiki.20190120.mincount-300.win-5.vocab'
-
-    assert os.path.exists(MODEL_DIRPATH)
-
-    for model_filepath in os.listdir(MODEL_DIRPATH):
-        for dims_filepath in os.listdir(DIMS_DIRPATH):
-            print(model_filepath, dims_filepath)
-            try:
-                ret = _evaluate(
-                    'sts2012', os.path.join(MODEL_DIRPATH, model_filepath),
-                     VOCAB_FILEPATH, os.path.join(DIMS_DIRPATH, dims_filepath))
-                print(ret)
-            except:
-                print('impossible to evaluate')
+if __name__ == '__main__':
+    MODELS_PATH = '/Users/akb/Gitlab/frontiers/data/'
+    MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc']
+    DATASET = 'men'
+    barprops = dict(aspect='auto', cmap='binary', interpolation='nearest')
+    fig = plt.figure()
+    for MODEL_NAME in MODEL_NAMES:
+        DIMS_FILEPATH = os.path.join(
+            MODELS_PATH, '{}-{}.dims'.format(MODEL_NAME, DATASET))
+        dims = com_xp.load_dims(DIMS_FILEPATH)
+        x = com_xp.load_dims_truth_array(dims, start=0, end=10000)
+        ax = fig.add_axes([0.3, 0.4, 0.6, 0.2])
+        ax.set_axis_off()
+        ax.imshow(x.reshape((1, -1)), **barprops)
+        break
+    plt.show()

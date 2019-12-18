@@ -119,3 +119,4 @@ ppmi_test.py
 output/
 logs/
 decode.py
+corpora/

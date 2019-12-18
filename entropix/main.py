@@ -14,6 +14,7 @@ import numpy as np
 import entropix.utils.config as cutils
 import entropix.utils.files as futils
 import entropix.utils.data as dutils
+import entropix.utils.metrix as metrix
 import entropix.core.calculator as calculator
 import entropix.core.comparator as comparator
 import entropix.core.evaluator as evaluator
@@ -21,7 +22,9 @@ import entropix.core.generator as generator
 import entropix.core.reducer as reducer
 import entropix.core.remover as remover
 import entropix.core.weigher as weigher
-import entropix.core.overlap_analyser as analyser
+import entropix.core.analyzer as analyzer
+import entropix.core.aligner as aligner
+import entropix.core.matrixor as matrixor
 
 from entropix.core.sampler import Sampler
 
@@ -37,7 +40,7 @@ def _evaluate(args):
     logger.info('Loading distributional space from {}'.format(args.model))
     model, vocab = dutils.load_model_and_vocab(
         args.model, args.type, args.vocab, args.singvalues, args.singalpha,
-        args.start, args.end, args.dims)
+        args.start, args.end, args.dims, shuffle=args.shuffle)
     evaluator.evaluate_distributional_space(model, vocab, args.dataset,
                                             args.metric, args.type,
                                             args.distance, args.kfold_size)
@@ -214,8 +217,8 @@ def _nmf(args):
                       args.n_components, args.dataset, args.vocab)
 
 
-def _analyse_ppmi_rows_overlap(args):
-    analyser.analyse_overlap(args.model, args.vocab, args.dataset)
+def _analyze_ppmi_rows_overlap(args):
+    analyzer.analyze_overlap(args.model, args.vocab, args.dataset)
 
 
 def _export(args):
@@ -227,30 +230,65 @@ def _export(args):
         raise Exception('Cannot specify both --dims and --start or --end params')
     if args.start is not None and args.end is None or args.end is not None and args.start is None:
         raise Exception('Both --start and --end params should be specified')
+    if args.shuffle and args.dims and not args.block_size:
+        raise Exception('You need to specify the block_size parameter for '
+                        'shuffling with dim bias')
     model, vocab = dutils.load_model_and_vocab(
         args.model, args.type, args.vocab, args.singvalues, args.singalpha,
         args.start, args.end, args.dims, args.shuffle, args.randomize,
-        args.randtype, args.normloc, args.normscale)
+        args.randtype, args.normloc, args.normscale, args.block_size)
     np.save(args.output, model)
     dutils.save_vocab(vocab, '{}.vocab'.format(args.output))
 
 
 def _compare(args):
-    basename1 = os.path.basename(args.model1)
-    basename2 = os.path.basename(args.model2)
-    logger.info('Comparing DS models {} and {}'.format(basename1, basename2))
-    VOCAB1_FILEPATH = '{}.vocab'.format(args.model1.split('.npy')[0])
-    VOCAB2_FILEPATH = '{}.vocab'.format(args.model2.split('.npy')[0])
-    model1, vocab1 = dutils.load_model_and_vocab(
-        model_filepath=args.model1, model_type='numpy',
-        vocab_filepath=VOCAB1_FILEPATH)
-    model2, vocab2 = dutils.load_model_and_vocab(
-        model_filepath=args.model2, model_type='numpy',
-        vocab_filepath=VOCAB2_FILEPATH)
-    avg, std = comparator.compare(model1, model2, vocab1, vocab2,
-                                  args.num_neighbors, args.num_threads)
+    logger.info('Comparing DS models {} and {}'.format(
+        os.path.basename(args.model1), os.path.basename(args.model2)))
+    model1 = np.load(args.model1)
+    model2 = np.load(args.model2)
+    avg, std = comparator.compare(model1, model2, args.num_neighbors,
+                                  args.num_threads, args.low_ram)
     logger.info('avg = {}'.format(avg))
     logger.info('std = {}'.format(std))
+
+
+def _align(args):
+    logger.info('Intersecting vocabularies and aligning models accordingly...')
+    vocab_filepath = '{}.vocab'.format(os.path.join(os.path.dirname(
+        args.vocab1), args.outputname))
+    model1, vocab1 = dutils.load_model_and_vocab(
+        args.model1, 'numpy', args.vocab1)
+    model2, vocab2 = dutils.load_model_and_vocab(
+        args.model2, 'numpy', args.vocab2)
+    aligned_model1, aligned_model2, vocab = aligner.align_vocab(
+        model1, model2, vocab1, vocab2)
+    aligned_model1_filepath = '{}.{}'.format(args.model1.split('.npy')[0],
+                                             args.outputname)
+    aligned_model2_filepath = '{}.{}'.format(args.model2.split('.npy')[0],
+                                             args.outputname)
+    logger.info('Saving aligned vocab to {}'.format(vocab_filepath))
+    futils.save_vocab(vocab, vocab_filepath)
+    logger.info('Saving aligned model1 to {}'.format(aligned_model1_filepath))
+    np.save(aligned_model1_filepath, aligned_model1)
+    logger.info('Saving aligned model2 to {}'.format(aligned_model2_filepath))
+    np.save(aligned_model2_filepath, aligned_model2)
+    logger.info('Reduced model1 from {} to {}'
+                .format(model1.shape, aligned_model1.shape))
+    logger.info('Reduced model2 from {} to {}'
+                .format(model2.shape, aligned_model2.shape))
+
+
+def _transform(args):
+    logger.info('Applying matrix transformation AO + Scaling...')
+    A = np.load(args.model1)
+    B = np.load(args.model2)
+    T = matrixor.apply_absolute_orientation_with_scaling(A, B)
+    X = matrixor.apply_absolute_orientation_with_scaling(B, A)
+    rmse1 = metrix.root_mean_square_error(A, T)
+    rmse2 = metrix.root_mean_square_error(B, X)
+    rmse = (rmse1 + rmse2) / 2
+    logger.info('rmse1 = {}, rmse2 = {}'.format(rmse1, rmse2))
+    logger.info('RMSE = {}'.format(rmse))
 
 
 def main():
@@ -284,10 +322,10 @@ def main():
                                                           'ica', 'nmf', 'txt',
                                                           'scipy'],
                                  help='model type')
-    parser_evaluate.add_argument('-c', '--metric',
+    parser_evaluate.add_argument('-c', '--metric', required=True,
                                  choices=['spr', 'rmse'],
                                  help='which eval metric to use')
-    parser_evaluate.add_argument('-a', '--distance',
+    parser_evaluate.add_argument('-a', '--distance', required=True,
                                  choices=['cosine', 'euclidean'],
                                  help='which distance to use for similarity')
     parser_evaluate.add_argument('-x', '--kfold-size',
@@ -299,6 +337,8 @@ def main():
                                  help='absolute path to singular values')
     parser_evaluate.add_argument('--singalpha', type=float, default=0,
                                  help='power alpha for singular values')
+    parser_evaluate.add_argument('-f', '--shuffle', action='store_true',
+                                 help='Whether or not to shuffle model')
     parser_generate = subparsers.add_parser(
         'generate', formatter_class=argparse.RawTextHelpFormatter,
         help='generate raw frequency count based model')
@@ -485,15 +525,15 @@ def main():
                                help='absolute filepath with model name where '
                                     'to save .npy and .vocab files of final '
                                     'sampled model')
-    parser_analyse_ppmi_rows_overlap = subparsers.add_parser(
-        'analyse-overlap', formatter_class=argparse.RawTextHelpFormatter,
+    parser_analyze_ppmi_rows_overlap = subparsers.add_parser(
+        'analyze', formatter_class=argparse.RawTextHelpFormatter,
         help='provides qualitative data on features overlap in a provided dataset')
-    parser_analyse_ppmi_rows_overlap.set_defaults(func=_analyse_ppmi_rows_overlap)
-    parser_analyse_ppmi_rows_overlap.add_argument('-m', '--model', required=True,
+    parser_analyze_ppmi_rows_overlap.set_defaults(func=_analyze_ppmi_rows_overlap)
+    parser_analyze_ppmi_rows_overlap.add_argument('-m', '--model', required=True,
                                                   help='absolute path to .npz matrix')
-    parser_analyse_ppmi_rows_overlap.add_argument('-v', '--vocab', required=True,
+    parser_analyze_ppmi_rows_overlap.add_argument('-v', '--vocab', required=True,
                                                   help='vocabulary mapping for dsm')
-    parser_analyse_ppmi_rows_overlap.add_argument('-d', '--dataset', required=True,
+    parser_analyze_ppmi_rows_overlap.add_argument('-d', '--dataset', required=True,
                                                   choices=['men', 'simlex', 'simverb'],
                                                   help='which dataset to consider')
     parser_export = subparsers.add_parser(
@@ -534,6 +574,8 @@ def main():
     parser_export.add_argument('--normscale', type=float,
                                help='std of --randtype normal distribution. '
                                     'Should be > 0')
+    parser_export.add_argument('--block-size', type=int, default=30,
+                               help='block size to compute probs for biased shuffling')
     parser_compare = subparsers.add_parser(
         'compare', formatter_class=argparse.RawTextHelpFormatter,
         help='compare the nearest neighbors of two numpy models')
@@ -546,5 +588,29 @@ def main():
                                 help='number of neighbors to consider')
     parser_compare.add_argument('--num-threads', type=int, default=1,
                                 help='number of threads to use for low RAM')
+    parser_compare.add_argument('--low-ram', action='store_true',
+                                help='force (slower) low-ram comparison')
+    parser_align = subparsers.add_parser(
+        'align', formatter_class=argparse.RawTextHelpFormatter,
+        help='intersect vocabularies and align models accordingly')
+    parser_align.set_defaults(func=_align)
+    parser_align.add_argument('-m1', '--model1', required=True,
+                              help='absolute path to input embedding model1')
+    parser_align.add_argument('-m2', '--model2', required=True,
+                              help='absolute path to input embedding model2')
+    parser_align.add_argument('-v1', '--vocab1', required=True,
+                              help='absolute path to model1 vocab')
+    parser_align.add_argument('-v2', '--vocab2', required=True,
+                              help='absolute path to model2 vocab')
+    parser_align.add_argument('-o', '--outputname', required=True,
+                              help='output name to use to rename files')
+    parser_transform = subparsers.add_parser(
+        'transform', formatter_class=argparse.RawTextHelpFormatter,
+        help='apply matrix transformation to minimize RMSE')
+    parser_transform.set_defaults(func=_transform)
+    parser_transform.add_argument('-m1', '--model1', required=True,
+                                  help='absolute path to input embedding model1')
+    parser_transform.add_argument('-m2', '--model2', required=True,
+                                  help='absolute path to input embedding model2')
     args = parser.parse_args()
     args.func(args)

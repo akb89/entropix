@@ -23,6 +23,7 @@ def _count_lines_in_stream(corpus_filepath):
 
 
 def _count_with_info_filter(word_to_idx_dic, win_size, line):
+    print(line)
     data_dic = {}
     tokens = line.strip().split()
     for token_pos, token in enumerate(tokens):
@@ -103,17 +104,18 @@ def generate_distributional_model(output_dirpath, corpus_filepath,
             with multiprocessing.Pool(processes=num_threads) as pool:
                 _process = functools.partial(_count_with_info_filter,
                                              word_to_idx_dic, win_size)
-                for _data_dic in tqdm(pool.imap_unordered(_process,
-                                                          input_stream),
-                                      total=total_num_lines):
+                # for _data_dic in tqdm(pool.imap_unordered(_process,
+                #                                           input_stream),
+                #                       total=total_num_lines):
+                for _data_dic in pool.imap_unordered(_process, input_stream):
                     rowx = 0
                     for row, columns in _data_dic.items():
                         rowx += 1
-                        print('Processing rowx = {}'.format(rowx))
+                        #print('Processing rowx = {}'.format(rowx))
                         colx = 0
                         for col, count in columns.items():
                             colx += 1
-                            print('Processing colx = {}'.format(colx))
+                            #print('Processing colx = {}'.format(colx))
                             data_dic[row][col] += count
 
     logger.info('Building CSR sparse matrix...')

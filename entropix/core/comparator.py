@@ -71,44 +71,24 @@ def _compare_fast(model1, model2, n):
     return 1 - np.count_nonzero(idx1 == idx2, axis=1) / n
 
 
-def _compare(model1, model2, n, num_threads):
+def _compare(model1, model2, num_neighbors, num_threads, low_ram):
+    if low_ram:
+        logger.warning('Forcing low RAM comparison. This should be slower, '
+                       'but you can pass in a --num-threads parameter to '
+                       'speed up the process')
+        return _compare_low_ram(model1, model2, num_neighbors, num_threads)
     try:
-        return _compare_fast(model1, model2, n)
+        return _compare_fast(model1, model2, num_neighbors)
     except MemoryError:
         logger.warning('Models are too big to fit in RAM. Switching to low '
                        'RAM footprint algorithm. You can pass in a '
                        '--num-threads parameter to speed up the process')
-        return _compare_low_ram(model1, model2, n, num_threads)
+        return _compare_low_ram(model1, model2, num_neighbors, num_threads)
 
 
-def _align_model_vocab(model1, model2, vocab1, vocab2):
-    logger.info('Aligning model vocabularies...')
-    vocab_2_to_vocab1 = {idx: vocab1[word] for word, idx in vocab2.items()
-                         if word in vocab1}
-    _model1 = np.empty(shape=(len(vocab_2_to_vocab1), model1.shape[1]))
-    idx2 = [idx for word, idx in vocab2.items() if word in vocab1]
-    assert len(idx2) == len(vocab_2_to_vocab1)
-    _model2 = model2[idx2, :]
-    for idx, item in enumerate(sorted(idx2)):
-        _model1[idx] = model1[vocab_2_to_vocab1[item]]
-    return _model1, _model2
-
-
-def align_vocab(model1, model2, vocab1, vocab2):
-    if len(vocab1) != len(vocab2):
-        return _align_model_vocab(model1, model2, vocab1, vocab2)
-    for word, idx in vocab1.items():
-        if word not in vocab2:
-            return _align_model_vocab(model1, model2, vocab1, vocab2)
-        if vocab2[word] != idx:
-            return _align_model_vocab(model1, model2, vocab1, vocab2)
-    logger.info('Processing already aligned vocabularies')
-    return model1, model2
-
-
-def compare(model1, model2, vocab1, vocab2, n, num_threads):
-    model1, model2 = align_vocab(model1, model2, vocab1, vocab2)
-    variance = _compare(model1, model2, n, num_threads)
+def compare(model1, model2, num_neighbors, num_threads, low_ram):
+    # model1, model2 = align_vocab(model1, model2, vocab1, vocab2)
+    variance = _compare(model1, model2, num_neighbors, num_threads, low_ram)
     # take the average and std
     avg = np.mean(variance)
     std = np.std(variance)

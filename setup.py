@@ -34,7 +34,7 @@ setup(
     },
     install_requires=['pyyaml>=4.2b1', 'tqdm==4.35.0', 'scipy==1.2.0',
                       'matplotlib==3.0.2', 'scikit-learn==0.21.2',
-                      'joblib==0.13.2', 'gensim==3.4.0'],
+                      'joblib==0.13.2', 'gensim==3.4.0', 'einsumt==0.9.1'],
     classifiers=['Development Status :: 2 - Pre-Alpha',
                  'Environment :: Web Environment',
                  'Intended Audience :: Developers',

@@ -5,7 +5,6 @@ import logging
 import random
 import functools
 import multiprocessing
-from collections import defaultdict
 
 import numpy as np
 import entropix.core.evaluator as evaluator
@@ -186,7 +185,7 @@ class Sampler():
                 print('Max {} test rmse = {}'.format(dataset, max_test_rmse), file=out_res)
                 logger.info('Average {} test rmse = {}'.format(dataset, avg_test_rmse))
                 print('Average {} test rmse = {}'.format(dataset, avg_test_rmse), file=out_res)
-                logger.info('Std test rmse = {}'.format(dataset, std_test_rmse))
+                logger.info('Std {} test rmse = {}'.format(dataset, std_test_rmse))
                 print('Std {} test rmse = {}'.format(dataset, std_test_rmse), file=out_res)
                 logger.info('{} one-liner: {} & {} & {} & {} & {} & {} & {} & {} & '
                             '{} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} '
@@ -451,14 +450,12 @@ class Sampler():
         return self.sample_seq_mix(keep, dims, fold)
 
     def sample_dimensions(self):
-        global model
+        global model  # hack to limit RAM footprint in multithreaded-kfold
         logger.info('Sampling dimensions over a total of {} dims, optimizing '
                     'on {} using {} mode...'.format(
                         model.shape[1], '-'.join(self._datasets), self._mode))
         if self._mode not in ['seq', 'mix', 'limit']:
             raise Exception('Unsupported mode {}'.format(self._mode))
-        # if not self._kfolding:
-        #     raise Exception('Non-kfold mode needs reimplementation')
         if self._end > model.shape[1]:
             raise Exception('End parameter is > model.shape[1]: {} > {}'
                             .format(self._end, model.shape[1]))
@@ -486,7 +483,6 @@ class Sampler():
             with multiprocessing.Pool(num_threads) as pool:
                 _sample = functools.partial(
                     self.sample, [], alldims)
-                print('num_folds = {}'.format(num_folds))
                 for fold, keep in pool.imap_unordered(_sample,
                                                       range(1,
                                                             num_folds+1)):
