@@ -189,6 +189,10 @@ def print_results(rmse, sim, xp_results_filepath):
             'BNC', sim['bnc']['men']['spr'],
             sim['bnc']['men']['ratio'], sim['bnc']['simlex']['spr'],
             sim['bnc']['simlex']['ratio']), file=out_str)
+        print('{}\t{}\t{}\t{}\t{}'.format(
+            'ENWIKI', sim['enwiki']['men']['spr'],
+            sim['enwiki']['men']['ratio'], sim['enwiki']['simlex']['spr'],
+            sim['enwiki']['simlex']['ratio']), file=out_str)
 
 
 def assert_consistancy_sim_results(sim, name, model, vocab):
@@ -261,12 +265,15 @@ def get_results(models, scale, rmse, sim, randomize=False):
 
 def load_aligned_models(model_names, model_dirpath, start, end,
                         randomize=False, dims_dirpath=None, dataset=None,
-                        bins_size=0):
+                        bins_size=0, sing_alpha=0):
     loaded_models = []
     for name in model_names:
         print('Loading aligned model {}...'.format(name))
         model_path = os.path.join(model_dirpath, '{}-aligned.npy'.format(name))
         vocab_path = os.path.join(model_dirpath, '{}-aligned.vocab'.format(name))
+        singvalues_filepath = None
+        if sing_alpha != 0:
+            singvalues_filepath = os.path.join(model_dirpath, '{}-singvalues.npy'.format(name))
         if dims_dirpath:
             dim_path = os.path.join(dims_dirpath,
                                     '{}-{}.dims'.format(name, dataset))
@@ -274,7 +281,8 @@ def load_aligned_models(model_names, model_dirpath, start, end,
             dim_path = None
         model, vocab = dutils.load_model_and_vocab(
             model_path, 'numpy', vocab_path, start=start, end=end,
-            shuffle=randomize, dims_filepath=dim_path, bins_size=bins_size)
+            shuffle=randomize, dims_filepath=dim_path, bins_size=bins_size,
+            sing_alpha=sing_alpha, singvalues_filepath=singvalues_filepath)
         loaded_models.append((name, model, vocab))
     return loaded_models
 
@@ -293,7 +301,7 @@ def load_models(model_names, model_dirpath, start, end):
 
 def launch_xp(model_names, model_dirpath, start, end, scale,
               xp_results_filepath, randomize=False, dims_dirpath=None,
-              dataset=None, nruns=0, bins_size=0):
+              dataset=None, nruns=0, bins_size=0, sing_alpha=0):
     if randomize is True:
         rmse = defaultdict(lambda: defaultdict(list))
         sim = defaultdict(lambda: defaultdict(list))
@@ -301,7 +309,7 @@ def launch_xp(model_names, model_dirpath, start, end, scale,
             print('Running randomized iter = {}/{}'.format(idx+1, nruns))
             models = load_aligned_models(
                 model_names, model_dirpath, start, end, randomize,
-                dims_dirpath, dataset, bins_size)
+                dims_dirpath, dataset, bins_size, sing_alpha)
             rmse, sim = get_results(models, scale, rmse, sim, randomize)
         print_batch_results(rmse, sim, xp_results_filepath)
     else:
@@ -309,6 +317,6 @@ def launch_xp(model_names, model_dirpath, start, end, scale,
         sim = defaultdict(lambda: defaultdict(dict))
         models = load_aligned_models(
             model_names, model_dirpath, start, end, randomize,
-            dims_dirpath, dataset, bins_size)
+            dims_dirpath, dataset, bins_size, sing_alpha)
         rmse, sim = get_results(models, scale, rmse, sim, randomize)
         print_results(rmse, sim, xp_results_filepath)
