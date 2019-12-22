@@ -7,7 +7,8 @@ from collections import defaultdict
 
 import numpy as np
 
-import common as com_xp
+from tqdm import tqdm
+
 from entropix.core.sampler import Sampler
 
 
@@ -48,13 +49,12 @@ if __name__ == '__main__':
     results = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     with multiprocessing.Pool(NUM_THREADS) as pool:
         process = functools.partial(_process, SVD_DIRPATH)
-        for name, dataset, dims in pool.imap_unordered(
-            process, items(MODEL_NAMES, DATASETS, NUM_ITER)):
+        for name, dataset, dims in tqdm(pool.imap_unordered(
+            process, items(MODEL_NAMES, DATASETS, NUM_ITER)), total=NUM_ITER*len(MODEL_NAMES)*len(DATASETS)):
             mean = np.mean(dims)
             median = np.median(dims)
             results[name][dataset]['mean'].append(mean)
             results[name][dataset]['median'].append(median)
-            print(name, dataset)
     with open(RESULTS_FILEPATH, 'w', encoding='utf-8') as rs_stream:
         print('MODEL & MEN-MEAN & MEN-MEDIAN & SIMLEX-MEAN & SIMLEX-MEDIAN',
               file=rs_stream)
