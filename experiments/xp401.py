@@ -44,6 +44,7 @@ if __name__ == '__main__':
     MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc', 'enwiki']
     #MODEL_NAMES = ['enwiki07', 'oanc']
     DATASETS = ['men', 'simlex']
+    #NUM_THREADS = 1
     NUM_THREADS = 30
     NUM_ITER = 10
     results = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
@@ -57,16 +58,16 @@ if __name__ == '__main__':
             results[name][dataset]['median'].append(median)
             #print(name, dataset)
     with open(RESULTS_FILEPATH, 'w', encoding='utf-8') as rs_stream:
-        print('MODEL & MEN-MEAN & MEN-MEDIAN & SIMLEX-MEAN & SIMLEX-MEDIAN',
+        print('MODEL & MEN-MEDIAN & MEN-MEAN & SIMLEX-MEDIAN & SIMLEX-MEAN',
               file=rs_stream)
         for key in results.keys():
             print('{} & {}\\pm{} & {}\\pm{} & {}\\pm{} & {}\\pm{}'.format(
                 key,
-                np.mean(results[key]['men']['mean']),
-                np.std(results[key]['men']['mean']),
-                np.mean(results[key]['men']['median']),
-                np.std(results[key]['men']['median']),
-                np.mean(results[key]['simlex']['mean']),
-                np.std(results[key]['simlex']['mean']),
-                np.mean(results[key]['simlex']['median']),
-                np.std(results[key]['simlex']['median'])), file=rs_stream)
+                int(round(np.mean(results[key]['men']['median']))),
+                int(round(np.std(results[key]['men']['median']))),
+                int(round(np.mean(results[key]['men']['mean']))),
+                int(round(np.std(results[key]['men']['mean']))),
+                int(round(np.mean(results[key]['simlex']['median']))),
+                int(round(np.std(results[key]['simlex']['median']))),
+                int(round(np.mean(results[key]['simlex']['mean']))),
+                int(round(np.std(results[key]['simlex']['mean'])))), file=rs_stream)

@@ -13,8 +13,9 @@ if __name__ == '__main__':
     DIMS_DIRPATH = '/Users/akb/Gitlab/frontiers/data/'
     #RESULTS_FILEPATH = '/home/kabbach/entropix/models/frontiers/results/xp402.results'
     RESULTS_FILEPATH = '/Users/akb/Github/entropix/models/frontiers/results/xp402.results'
-    MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc', 'wiki']
-    #MODEL_NAMES = ['enwiki07', 'oanc']
+    # MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc', 'enwiki']
+    MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc']
+    # MODEL_NAMES = ['enwiki07', 'oanc']
     DATASETS = ['men', 'simlex']
     results = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     for name, dataset in tqdm(itertools.product(MODEL_NAMES, DATASETS),
@@ -26,12 +27,12 @@ if __name__ == '__main__':
         results[name][dataset]['mean'].append(mean)
         results[name][dataset]['median'].append(median)
     with open(RESULTS_FILEPATH, 'w', encoding='utf-8') as rs_stream:
-        print('MODEL & MEN-MEAN & MEN-MEDIAN & SIMLEX-MEAN & SIMLEX-MEDIAN',
+        print('MODEL & MEN-MEDIAN & MEN-MEAN & SIMLEX-MEDIAN & SIMLEX-MEAN',
               file=rs_stream)
         for key in results.keys():
             print('{} & {} & {} & {} & {}'.format(
                 key,
-                np.mean(results[key]['men']['mean']),
-                np.mean(results[key]['men']['median']),
-                np.mean(results[key]['simlex']['mean']),
-                np.mean(results[key]['simlex']['median'])), file=rs_stream)
+                int(round(np.mean(results[key]['men']['median']))),
+                int(round(np.mean(results[key]['men']['mean']))),
+                int(round(np.mean(results[key]['simlex']['median']))),
+                int(round(np.mean(results[key]['simlex']['mean'])))), file=rs_stream)
