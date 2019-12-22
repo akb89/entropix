@@ -27,7 +27,7 @@ def _process(dirpath, name_and_dataset):
         vocab_filepath=vocab_filepath, datasets=[dataset],
         output_basepath=os.path.join(dirpath, '{}-{}-seq'.format(name, dataset)),
         num_iter=2, shuffle=True, mode='seq', rate=None, start=0, end=10000,
-        reduce=True, limit=None, rewind=False, kfolding=False, kfold_size=1,
+        reduce=True, limit=5, rewind=False, kfolding=False, kfold_size=0,
         max_num_threads=1, debug=False, metric='both', alpha=None,
         logs_dirpath=None, distance='cosine', singvalues_filepath=None,
         sing_alpha=0, dump=False)
@@ -55,6 +55,7 @@ if __name__ == '__main__':
             median = np.median(dims)
             results[name][dataset]['mean'].append(mean)
             results[name][dataset]['median'].append(median)
+            #print(name, dataset)
     with open(RESULTS_FILEPATH, 'w', encoding='utf-8') as rs_stream:
         print('MODEL & MEN-MEAN & MEN-MEDIAN & SIMLEX-MEAN & SIMLEX-MEDIAN',
               file=rs_stream)
