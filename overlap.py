@@ -1,6 +1,6 @@
 if __name__ == '__main__':
-    CORPUS1 = '/Users/akb/Github/entropix/corpora/enwiki4.txt'
-    CORPUS2 = '/Users/akb/Github/entropix/corpora/enwiki8.txt'
+    CORPUS1 = '/Users/akb/Github/entropix/corpora/enwiki2.txt'
+    CORPUS2 = '/Users/akb/Github/entropix/corpora/enwiki4.txt'
     counter = 0
     total_sent = 0
     sent2s = set()
