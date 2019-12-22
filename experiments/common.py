@@ -30,7 +30,8 @@ def load_dims(dim_filepath):
     with open(dim_filepath, 'r', encoding='utf-8') as dim_stream:
         for line in dim_stream:
             line = line.strip()
-            dims.append(int(line))
+            if line:
+                dims.append(int(line))
     return dims
 
 
