@@ -45,7 +45,7 @@ if __name__ == '__main__':
     #MODEL_NAMES = ['enwiki07', 'oanc']
     DATASETS = ['men', 'simlex']
     #NUM_THREADS = 1
-    NUM_THREADS = 30
+    NUM_THREADS = 35
     NUM_ITER = 10
     results = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     with multiprocessing.Pool(NUM_THREADS) as pool:
@@ -54,20 +54,25 @@ if __name__ == '__main__':
             process, items(MODEL_NAMES, DATASETS, NUM_ITER)), total=NUM_ITER*len(MODEL_NAMES)*len(DATASETS)):
             mean = np.mean(dims)
             median = np.median(dims)
+            ninety = np.percentile(dims, 90)
             results[name][dataset]['mean'].append(mean)
             results[name][dataset]['median'].append(median)
-            #print(name, dataset)
+            results[name][dataset]['ninety'].append(ninety)
     with open(RESULTS_FILEPATH, 'w', encoding='utf-8') as rs_stream:
-        print('MODEL & MEN-MEDIAN & MEN-MEAN & SIMLEX-MEDIAN & SIMLEX-MEAN',
+        print('MODEL & MEN-MEDIAN & MEN-MEAN & MEN-90p & SIMLEX-MEDIAN & SIMLEX-MEAN & SIMLEX-90p',
               file=rs_stream)
         for key in results.keys():
-            print('{} & {}\\pm{} & {}\\pm{} & {}\\pm{} & {}\\pm{}'.format(
+            print('{} & {}\\pm{} & {}\\pm{} & {}\\pm{} & {}\\pm{} & {}\\pm{} & {}\\pm{}'.format(
                 key,
                 int(round(np.mean(results[key]['men']['median']))),
                 int(round(np.std(results[key]['men']['median']))),
                 int(round(np.mean(results[key]['men']['mean']))),
                 int(round(np.std(results[key]['men']['mean']))),
+                int(round(np.mean(results[key]['men']['ninety']))),
+                int(round(np.std(results[key]['men']['ninety']))),
                 int(round(np.mean(results[key]['simlex']['median']))),
                 int(round(np.std(results[key]['simlex']['median']))),
                 int(round(np.mean(results[key]['simlex']['mean']))),
-                int(round(np.std(results[key]['simlex']['mean'])))), file=rs_stream)
+                int(round(np.std(results[key]['simlex']['mean']))),
+                int(round(np.mean(results[key]['simlex']['ninety']))),
+                int(round(np.std(results[key]['simlex']['ninety'])))), file=rs_stream)

@@ -24,15 +24,19 @@ if __name__ == '__main__':
         dims = com_utils.load_dims(dims_filepath)
         mean = np.mean(dims)
         median = np.median(dims)
+        ninety = np.percentile(dims, 90)
         results[name][dataset]['mean'].append(mean)
         results[name][dataset]['median'].append(median)
+        results[name][dataset]['ninety'].append(ninety)
     with open(RESULTS_FILEPATH, 'w', encoding='utf-8') as rs_stream:
-        print('MODEL & MEN-MEDIAN & MEN-MEAN & SIMLEX-MEDIAN & SIMLEX-MEAN',
+        print('MODEL & MEN-MEDIAN & MEN-MEAN & MEN-90p & SIMLEX-MEDIAN & SIMLEX-MEAN & SIMLEX-90p',
               file=rs_stream)
         for key in results.keys():
-            print('{} & {} & {} & {} & {}'.format(
+            print('{} & {} & {} & {} & {} & {} & {}'.format(
                 key,
                 int(round(np.mean(results[key]['men']['median']))),
                 int(round(np.mean(results[key]['men']['mean']))),
+                int(round(np.mean(results[key]['men']['ninety']))),
                 int(round(np.mean(results[key]['simlex']['median']))),
-                int(round(np.mean(results[key]['simlex']['mean'])))), file=rs_stream)
+                int(round(np.mean(results[key]['simlex']['mean']))),
+                int(round(np.mean(results[key]['simlex']['ninety'])))), file=rs_stream)
