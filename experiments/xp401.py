@@ -45,7 +45,7 @@ if __name__ == '__main__':
     #MODEL_NAMES = ['enwiki07', 'oanc']
     DATASETS = ['men', 'simlex']
     #NUM_THREADS = 1
-    NUM_THREADS = 35
+    NUM_THREADS = 40
     NUM_ITER = 10
     results = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     with multiprocessing.Pool(NUM_THREADS) as pool:

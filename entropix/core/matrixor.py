@@ -25,8 +25,7 @@ def center(matrix):
 
 def compute_sum_inner_product(A, B):
     # return np.diagonal(A @ B.T).sum()
-    #return np.diagonal(np.einsum('ij,ik->jk', A, B)).sum()
-    return np.diagonal(einsumt('ij,ik->jk', A, B)).sum()
+    return np.diagonal(einsumt('ij,ik->jk', A, B)).sum()  # much faster
 
 
 def compute_scaling(A, B):
@@ -35,8 +34,7 @@ def compute_scaling(A, B):
 
 def compute_sum_outer_product(A, B):
     # return B.T @ A
-    #return np.einsum('ij,ik->jk', B, A)  # much faster than above
-    return einsumt('ij,ik->jk', B, A)
+    return einsumt('ij,ik->jk', B, A)  # much faster than above
 
 
 def apply_ao_rotation(A, B):

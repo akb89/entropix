@@ -35,7 +35,7 @@ def compute_energy(singvalues_filepath, dims_filepath):
     total_energy = np.sum(singvalues**2)
     curr_energy = 0
     for d in dims:
-        curr_energy+=singvalues[d]**2
+        curr_energy += singvalues[d]**2
     return curr_energy/total_energy
 
 

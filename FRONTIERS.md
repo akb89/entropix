@@ -1,5 +1,22 @@
 # Frontiers paper experiments
 
+This README file details the experimental protocols used to generate the experiments from the Kabbach and Herbelot, 2020 paper on *xxxx*.
+
+
+
+## Corpora
+You need the following corpora. Wikipedia dumps and samples are generated with [WiToKit](https://github.com/akb89/witokit). All corpora are tokenized with [Polyglot](https://github.com/aboSamoor/polyglot) and lowercased. Here are the links to some tokenized and lowercased versions of each corpora:
+- [OANC]()
+- [ACL]()
+- [BNC]()
+- [WIKI07]()
+- [WIKI2]()
+- [WIKI4]()
+- [WIKI]()
+
+
+# OLD
+
 ## Generate
 To generate a raw count matrix from a tokenized corpus, run:
 ```

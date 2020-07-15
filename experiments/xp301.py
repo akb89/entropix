@@ -17,6 +17,7 @@ if __name__ == '__main__':
     BIN_SIZE = 30
     # SVD_DIRPATH = '/home/kabbach/entropix/models/frontiers/aligned/'
     SVD_DIRPATH = '/Users/akb/Github/entropix/models/frontiers/aligned/'
+    RESULTS_FILEPATH = '/Users/akb/Github/entropix/models/frontiers/results/smoothed-pearson-rmse.dat'
     # MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc']
     MODEL_NAMES = ['enwiki07', 'oanc']
     models = com_xp.load_aligned_models(MODEL_NAMES, SVD_DIRPATH, START, END)
@@ -57,6 +58,9 @@ if __name__ == '__main__':
         plt.plot(avg_hat, rmse_hat, color='blue')
         #plt.plot(avg_hat5, rmse_hat3, color='yellow')
         #plt.plot(avg_hat4, rmses, color='yellow')
+        print(avg_hat)
+        # with open(RESULTS_FILEPATH, 'w', encoding='utf-8') as out_str:
+        #
         plt.show()
         # with open('{}-{}-pearson-rmse-n{}-log.dat'
         #           .format(name1, name2, BIN_SIZE), 'w',

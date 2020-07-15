@@ -87,10 +87,20 @@ def test_ao_scaling_in_diff_config():
     B = np.array([[0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0], [1, 0, 0, 0]])
     T = matrixor.apply_absolute_orientation_with_scaling(A, B)
     assert metrix.root_mean_square_error(A, T) < 1e-10
+
     A = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
     B = np.array([[0, 0, 0, 1], [0, 0, 1, 0], [1, 0, 0, 0], [0, 1, 0, 0]])
+    #print(metrix.pearson_correlation(A[:, 0], B[:, 0]))
     T = matrixor.apply_absolute_orientation_with_scaling(A, B)
-    assert metrix.root_mean_square_error(A, T) < 1e-10
+    assert metrix.root_mean_square_error(A, T) < 1e-15
+
+    A = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    B = np.array([[.9, 0, 0, 0], [0, .9, 0, 0], [0, 0, .9, 0], [0, 0, 0, .9]])
+    print(metrix.pearson_correlation(A[:, 0], B[:, 0]))
+    T = matrixor.apply_absolute_orientation_with_scaling(A, B)
+    assert metrix.root_mean_square_error(A, T) < 1e-15
+    assert 1 == 2
+
     A = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
     B = np.array([[0, 0, 0, -1], [0, 0, -1, 0], [-1, 0, 0, 0], [0, -1, 0, 0]])
     T = matrixor.apply_absolute_orientation_with_scaling(A, B)
@@ -106,6 +116,3 @@ def test_ao_scaling_in_diff_config():
     A = np.array([[-1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
     B = np.array([[0, 0, 0, -1], [0, 0, -1, 0], [-1, 0, 0, 0], [0, -1, 0, 0]])
     C = np.abs(A - B)
-    print(A - B)
-    print(C)
-    assert 1 == 2

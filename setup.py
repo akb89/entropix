@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""matrixor setup.py.
+"""entropix setup.py.
 
-This file details modalities for packaging the matrixor application.
+This file details modalities for packaging the entropix application.
 """
 
 from setuptools import setup

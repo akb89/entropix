@@ -498,4 +498,5 @@ class Sampler():
             np.save(self._model_dump_filepath, model)
             logger.info('Dumping vocab to {}'.format(self._vocab_dump_filepath))
             futils.save_vocab(vocab, self._vocab_dump_filepath)
-        return dims
+        if dims:  # fix this hack
+            return dims

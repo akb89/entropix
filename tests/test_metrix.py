@@ -3,9 +3,18 @@
 import numpy as np
 import numpy.testing as npt
 import scipy.spatial as spatial
-import scipy.signal as sig
-import scipy.stats as stats
+import scipy.sparse as sparse
 import entropix.utils.metrix as metrix
+
+
+def test_energy():
+    singvalues = np.array([0, 1, 2, 3, 4, 5])
+    assert metrix.energy(singvalues) == 55
+    matrix = np.array([[0, 1, 0, 0, 2], [0, 1, 0, 0, 3]])
+    matrix = sparse.csr_matrix(matrix)
+    print(type(matrix))
+    assert matrix.__class__.__name__ == 'csr_matrix'
+    assert metrix.energy(matrix) == 15
 
 
 def test_similarity():
