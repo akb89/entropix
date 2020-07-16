@@ -22,6 +22,7 @@ logging.config.dictConfig(
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=R0914
 def _sample(model_filepath, vocab_filepath, dataset, kfold_size, mode, metric,
             shuffle, max_num_threads, limit):
     if mode not in ['seq', 'limit']:
@@ -43,7 +44,7 @@ def _sample(model_filepath, vocab_filepath, dataset, kfold_size, mode, metric,
     results = {}
     for fold, dims in sampled_dims.items():
         results[fold] = {
-            'dim': dims,
+            'dims': dims,
             'train': evaluator.evaluate(
                 model[:, dims], splits_dict[fold]['train'], metric=metric),
             'test': evaluator.evaluate(
@@ -58,11 +59,19 @@ def sample(args):
                       args.mode, args.metric, args.shuffle, args.num_threads,
                       args.limit)
     if args.dump:
-        # save to file
-        pass
+        if args.kfold_size != 0:
+            raise Exception('Cannot dump dims for kfolds')
+        output_fpath = '{}.sampled.mode-{}.dataset-{}.metric-{}.dims'.format(
+            os.path.abspath(args.model).split('.npy')[0], args.mode,
+            args.dataset, args.metric)
+        with open(output_fpath, 'w', encoding='utf-8') as output_str:
+            for dim in sorted(results[1]['dims']):
+                print(dim, file=output_str)
 
 
+# pylint: disable=C0103
 def restricted_kfold_size(x):
+    """Restrict kfold-size values."""
     x = float(x)
     if x < 0.0 or x > 0.5:
         raise argparse.ArgumentTypeError('{} kfold-size not in range [0, 0.5]'

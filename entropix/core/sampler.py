@@ -23,6 +23,7 @@ def _init_eval_metric(metric):
     return (0, 10**15)
 
 
+# pylint: disable=C0103
 def sample_limit(model, train_splits, metric, limit):
     """Sample dimensions in limit mode."""
     best_metric = _init_eval_metric(metric)
