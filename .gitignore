@@ -120,3 +120,4 @@ output/
 logs/
 decode.py
 corpora/
+*.tsv

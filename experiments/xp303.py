@@ -1,4 +1,3 @@
-"""Dump absolute Pearson correlations between singular vectors of two models."""
 import itertools
 
 import numpy as np
@@ -6,7 +5,6 @@ from tqdm import tqdm
 
 import common as com_xp
 import entropix.core.aligner as aligner
-import entropix.utils.metrix as metrix
 
 if __name__ == '__main__':
     START = 0
@@ -25,12 +23,14 @@ if __name__ == '__main__':
         vocab2 = tuple2[2]
         print('Processing models {} and {}'.format(name1, name2))
         z, t, _ = aligner.align_vocab(model1, model2, vocab1, vocab2)
-        xcorrx = []
-        for col1, col2 in tqdm(zip(z.T, t.T), total=z.shape[1]):
-            xcorr = metrix.pearson_correlation(col1, col2)
-            xcorrx.append(xcorr)
-        xcorrx = np.log(np.abs(xcorrx))
-        with open('{}-{}-pearson-log.dat'.format(name1, name2), 'w',
-                  encoding='utf-8') as outs:
-            for xcorr in xcorrx:
-                print(xcorr, file=outs)
+        with open('{}-dimstats.dat'.format(name1), 'w', encoding='utf-8') as out1:
+            with open('{}-dimstats.dat'.format(name2), 'w', encoding='utf-8') as out2:
+                for col1, col2 in tqdm(zip(z.T, t.T), total=z.shape[1]):
+                    col1 = np.abs(col1)
+                    avg1 = np.mean(col1)
+                    std1 = np.std(col1)
+                    print('{}\t{}'.format(avg1, std1), file=out1)
+                    col2 = np.abs(col2)
+                    avg2 = np.mean(col2)
+                    std2 = np.std(col2)
+                    print('{}\t{}'.format(avg2, std2), file=out2)

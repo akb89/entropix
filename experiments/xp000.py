@@ -8,6 +8,7 @@ if __name__ == '__main__':
     START = 0
     END = 10000
     print('Aligning vocabularies across all models')
-    MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc']
+    MODEL_NAMES = ['enwiki07', 'oanc', 'enwiki2', 'acl', 'enwiki4', 'bnc',
+                   'enwiki']
     MODELS = com_xp.load_models(MODEL_NAMES, SVD_DIRPATH, START, END)
     com_xp.dump_aligned_models(MODELS, OUTPUT_DIRPATH)
