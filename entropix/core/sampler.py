@@ -5,6 +5,7 @@ import functools
 import multiprocessing
 
 import numpy as np
+
 import entropix.core.evaluator as evaluator
 
 __all__ = ('sample_seq', 'sample_limit')
@@ -12,7 +13,7 @@ __all__ = ('sample_seq', 'sample_limit')
 logger = logging.getLogger(__name__)
 
 
-def _init_eval_metrix(metric):
+def _init_eval_metric(metric):
     if metric not in ['spr', 'rmse', 'pearson', 'both']:
         raise Exception('Unsupported metric: {}'.format(metric))
     if metric in ['spr', 'pearson']:
@@ -22,31 +23,31 @@ def _init_eval_metrix(metric):
     return (0, 10**15)
 
 
-def sample_limit():
-    best_metrix = _init_eval_metrix(metric)
+def sample_limit(model, train_splits, metric, limit):
+    """Sample dimensions in limit mode."""
+    best_metric = _init_eval_metric(metric)
     dims = []
     max_num_dim_best = 0
+    alldims = list(range(model.shape[1]))
     for k in range(limit):
         best_dim_idx = -1
         least_worst_dim = -1
-        least_worst_metrix = _init_eval_metrix(metric)
+        least_worst_metric = _init_eval_metric(metric)
         for dim_idx in alldims:
             if dim_idx in dims:
                 continue
             dims.append(dim_idx)
-            eval_metrix = evaluator.evaluate(
-                model[:, list(dims)], splits[fold]['train'],
-                datasets=datasets, metric=metric,
-                alpha=alpha, distance=distance)
-            if evaluator.is_improving(eval_metrix,
-                                      best_metrix,
+            eval_metric = evaluator.evaluate(
+                model[:, dims], train_splits, metric=metric)
+            if evaluator.is_improving(eval_metric,
+                                      best_metric,
                                       metric=metric):
-                best_metrix = eval_metrix
+                best_metric = eval_metric
                 best_dim_idx = dim_idx
-            elif evaluator.is_improving(eval_metrix,
-                                        least_worst_metrix,
+            elif evaluator.is_improving(eval_metric,
+                                        least_worst_metric,
                                         metric=metric):
-                least_worst_metrix = eval_metrix
+                least_worst_metric = eval_metric
                 least_worst_dim = dim_idx
             dims.pop()
         if best_dim_idx == -1:
@@ -56,17 +57,16 @@ def sample_limit():
         else:
             dims.append(best_dim_idx)
             max_num_dim_best = len(dims)
-            logger.info('Current best {} = {} on {} with fold {} and '
-                        'dims = {}'.format(metric, best_metrix,
-                                           datasets, fold, dims))
-    logger.info('Best eval metrix = {} on {} with fold {} found using '
-                '{} dims'.format(best_metrix, datasets, fold,
-                                 max_num_dim_best))
-    return fold, dims
+            logger.info('Current best {} = {} with dims = {}'
+                        .format(metric, best_metric, dims))
+    logger.info('Best eval metrix = {} with ndims = {}'
+                .format(best_metric, max_num_dim_best))
+    return {1: dims}  # to remain consistent with sample_seq return
 
 
 def sample_seq_reduce(model, splits_dict, dims, step, fold, metric,
                       best_train_eval_metric):
+    """Remove dimensions that do not negatively impact scores on train."""
     logger.info('Reducing dimensions while maintaining highest score '
                 'on eval metric {}. Step = {}. Best train eval metric = {}'
                 .format(metric, step, best_train_eval_metric))
@@ -98,6 +98,7 @@ def sample_seq_reduce(model, splits_dict, dims, step, fold, metric,
 
 def sample_seq_add(model, splits_dict, keep, alldims, metric, fold,
                    best_train_eval_metric):
+    """Add dimensions that improve scores on train."""
     logger.info('Increasing dimensions to maximize score on eval metric '
                 '{}. Best train eval metric = {}'
                 .format(metric, best_train_eval_metric))
@@ -136,6 +137,7 @@ def _sample_seq(model, splits_dict, keep, alldims, metric, fold):
 
 def sample_seq(model, splits_dict, kfold_size, metric, shuffle,
                max_num_threads):
+    """Sample dimensions in sequential mode."""
     alldims = list(range(model.shape[1]))
     if shuffle:
         random.shuffle(alldims)
@@ -153,10 +155,10 @@ def sample_seq(model, splits_dict, kfold_size, metric, shuffle,
     num_threads = num_folds if num_folds <= max_num_threads \
         else max_num_threads
     with multiprocessing.Pool(num_threads) as pool:
-        _sample = functools.partial(_sample_seq, model, keep, alldims,
-                                    splits_dict, metric)
+        _sample = functools.partial(_sample_seq, model, splits_dict, keep,
+                                    alldims, metric)
         sampled_dims = {}
         for fold, keep in pool.imap_unordered(_sample,
                                               range(1, num_folds+1)):
-            sampled_dims[fold]['dim'] = keep
+            sampled_dims[fold] = keep
     return sampled_dims
