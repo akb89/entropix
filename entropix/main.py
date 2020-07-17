@@ -13,7 +13,6 @@ import embeddix
 import entropix.utils.config as cutils
 import entropix.utils.data as dutils
 import entropix.core.sampler as sampler
-import entropix.core.evaluator as evaluator
 
 logging.config.dictConfig(
     cutils.load(
@@ -23,12 +22,11 @@ logger = logging.getLogger(__name__)
 
 
 # pylint: disable=R0914
-def _sample(model_filepath, vocab_filepath, dataset, kfold_size, mode, metric,
-            shuffle, max_num_threads, limit):
+def _sample(model, vocab, dataset, kfold_size, mode, metric, shuffle,
+            max_num_threads, limit):
     if mode not in ['seq', 'limit']:
         raise Exception('Invalid sampling mode: {}'.format(mode))
-    model = embeddix.load_dense(model_filepath)
-    vocab = embeddix.load_vocab(vocab_filepath)
+
     splits_dict = dutils.load_splits_dict(dataset, vocab, kfold_size)
     if mode == 'seq':
         logger.info('Sampling dimensions in seq mode over {} dims, '
@@ -45,17 +43,17 @@ def _sample(model_filepath, vocab_filepath, dataset, kfold_size, mode, metric,
     for fold, dims in sampled_dims.items():
         results[fold] = {
             'dims': dims,
-            'train': evaluator.evaluate(
-                model[:, dims], splits_dict[fold]['train'], metric=metric),
-            'test': evaluator.evaluate(
-                model[:, dims], splits_dict[fold]['test'], metric=metric)
+            'train': splits_dict[fold]['train'],
+            'test': splits_dict[fold]['test']
         }
     return results
 
 
 def sample(args):
     """Sample dimensions from model."""
-    results = _sample(args.model, args.vocab, args.dataset, args.kfold_size,
+    model = embeddix.load_dense(args.model)
+    vocab = embeddix.load_vocab(args.vocab)
+    results = _sample(model, vocab, args.dataset, args.kfold_size,
                       args.mode, args.metric, args.shuffle, args.num_threads,
                       args.limit)
     if args.dump:
