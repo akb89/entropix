@@ -23,7 +23,7 @@ def _init_eval_metric(metric):
     return (0, 10**15)
 
 
-# pylint: disable=C0103
+# pylint: disable=C0103,W0621
 def sample_limit(model, train_splits, metric, limit):
     """Sample dimensions in limit mode."""
     best_metric = _init_eval_metric(metric)
@@ -65,7 +65,7 @@ def sample_limit(model, train_splits, metric, limit):
     return {1: dims}  # to remain consistent with sample_seq return
 
 
-def sample_seq_reduce(model, splits_dict, dims, step, fold, metric,
+def sample_seq_reduce(splits_dict, dims, step, fold, metric,
                       best_train_eval_metric):
     """Remove dimensions that do not negatively impact scores on train."""
     logger.info('Reducing dimensions while maintaining highest score '
@@ -92,12 +92,12 @@ def sample_seq_reduce(model, splits_dict, dims, step, fold, metric,
     if len(keep) != len(dims):
         step += 1
         keep, best_train_eval_metric = sample_seq_reduce(
-            model, splits_dict, keep, step, fold, metric,
+            splits_dict, keep, step, fold, metric,
             best_train_eval_metric)
     return keep, best_train_eval_metric
 
 
-def sample_seq_add(model, splits_dict, keep, alldims, metric, fold,
+def sample_seq_add(splits_dict, keep, alldims, metric, fold,
                    best_train_eval_metric):
     """Add dimensions that improve scores on train."""
     logger.info('Increasing dimensions to maximize score on eval metric '
@@ -123,22 +123,25 @@ def sample_seq_add(model, splits_dict, keep, alldims, metric, fold,
     return keep, best_train_eval_metric
 
 
-def _sample_seq(model, splits_dict, keep, alldims, metric, fold):
+def _sample_seq(splits_dict, keep, alldims, metric, fold):
     best_train_eval_metric = evaluator.evaluate(
         model[:, keep], splits_dict[fold]['train'], metric=metric)
     logger.debug('Initial train eval metric = {}'.format(
         best_train_eval_metric))
     keep, best_train_eval_metric = sample_seq_add(
-        model, splits_dict, keep, alldims, metric, fold,
+        splits_dict, keep, alldims, metric, fold,
         best_train_eval_metric)
     keep, best_train_eval_metric = sample_seq_reduce(
-        model, splits_dict, keep, 1, fold, metric, best_train_eval_metric)
+        splits_dict, keep, 1, fold, metric, best_train_eval_metric)
     return fold, keep
 
 
-def sample_seq(model, splits_dict, kfold_size, metric, shuffle,
+# pylint: disable=W0601
+def sample_seq(_model, splits_dict, kfold_size, metric, shuffle,
                max_num_threads):
     """Sample dimensions in sequential mode."""
+    global model  # ugly hack to reuse same in-memory model during forking
+    model = _model
     alldims = list(range(model.shape[1]))
     if shuffle:
         random.shuffle(alldims)
@@ -156,7 +159,7 @@ def sample_seq(model, splits_dict, kfold_size, metric, shuffle,
     num_threads = num_folds if num_folds <= max_num_threads \
         else max_num_threads
     with multiprocessing.Pool(num_threads) as pool:
-        _sample = functools.partial(_sample_seq, model, splits_dict, keep,
+        _sample = functools.partial(_sample_seq, splits_dict, keep,
                                     alldims, metric)
         sampled_dims = {}
         for fold, keep in pool.imap_unordered(_sample,
