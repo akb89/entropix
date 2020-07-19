@@ -136,7 +136,7 @@ def _sample_seq(splits_dict, keep, alldims, metric, fold):
     return fold, keep
 
 
-# pylint: disable=C0103,W0621
+# pylint: disable=W0601
 def sample_seq(_model, splits_dict, kfold_size, metric, shuffle,
                max_num_threads):
     """Sample dimensions in sequential mode."""

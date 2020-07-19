@@ -16,7 +16,7 @@ setup(
     author_email='akb@3azouz.net',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    version='1.1.4',
+    version='1.1.5',
     url='https://github.com/akb89/entropix',
     download_url='https://github.com/akb89/entropix',
     license='MIT',
