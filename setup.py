@@ -16,7 +16,7 @@ setup(
     author_email='akb@3azouz.net',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    version='1.1.3',
+    version='1.1.4',
     url='https://github.com/akb89/entropix',
     download_url='https://github.com/akb89/entropix',
     license='MIT',
@@ -31,7 +31,7 @@ setup(
             'entropix = entropix.main:main'
         ],
     },
-    install_requires=['pyyaml>=4.2b1', 'numpy==1.19.0', 'embeddix==1.13.4'],
+    install_requires=['pyyaml>=4.2b1', 'numpy==1.19.0', 'embeddix==1.14.1'],
     classifiers=['Development Status :: 5 - Production/Stable',
                  'Environment :: Web Environment',
                  'Intended Audience :: Developers',
