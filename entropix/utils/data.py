@@ -44,7 +44,7 @@ def load_splits_dict(dataset, vocab, kfold_size):
     train/test_dict = {left_idx, right_idx, sim}
     the train/test division follows kfold_size expressed as a precentage
     of the total dataset dedicated to testing.
-    kfold_size should be a float > 0 and <= 0.5
+    kfold_size should be a float >= 0 and <= 0.5
     """
     left_idx, right_idx, f_sim = embeddix.load_dataset(dataset, vocab)
     if kfold_size == 0:
