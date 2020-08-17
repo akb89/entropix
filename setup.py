@@ -16,7 +16,7 @@ setup(
     author_email='akb@3azouz.net',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    version='1.1.6',
+    version='1.1.7',
     url='https://github.com/akb89/entropix',
     download_url='https://github.com/akb89/entropix',
     license='MIT',
@@ -24,14 +24,14 @@ setup(
     platforms=['any'],
     packages=['entropix', 'entropix.logging', 'entropix.exceptions',
               'entropix.utils', 'entropix.core'],
-    package_data={'entropix': ['logging/*.yml', 'resources/*']},
+    package_data={'entropix': ['logging/*.yml']},
     include_package_data=True,
     entry_points={
         'console_scripts': [
             'entropix = entropix.main:main'
         ],
     },
-    install_requires=['pyyaml>=4.2b1', 'numpy==1.19.0', 'embeddix==1.14.1'],
+    install_requires=['pyyaml>=4.2b1', 'numpy==1.19.0', 'embeddix==1.15.1'],
     classifiers=['Development Status :: 5 - Production/Stable',
                  'Environment :: Web Environment',
                  'Intended Audience :: Developers',
