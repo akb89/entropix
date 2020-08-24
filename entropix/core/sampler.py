@@ -106,6 +106,8 @@ def sample_seq_add(splits_dict, keep, alldims, metric, fold,
     dims = [idx for idx in alldims if idx not in keep]
     added_counter = 0
     for idx, dim_idx in enumerate(dims):
+        if idx == 10:
+            break
         keep.append(dim_idx)
         train_eval_metric = evaluator.evaluate(
             model[:, keep], splits_dict[fold]['train'], metric=metric)

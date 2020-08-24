@@ -22,12 +22,11 @@ logger = logging.getLogger(__name__)
 
 
 # pylint: disable=R0914
-def _sample(model, vocab, dataset, kfold_size, mode, metric, shuffle,
+def _sample(model, splits_dict, dataset, kfold_size, mode, metric, shuffle,
             max_num_threads, limit):
     if mode not in ['seq', 'limit']:
         raise Exception('Invalid sampling mode: {}'.format(mode))
 
-    splits_dict = dutils.load_splits_dict(dataset, vocab, kfold_size)
     if mode == 'seq':
         logger.info('Sampling dimensions in seq mode over {} dims, '
                     'optimizing on {} using {}'
@@ -53,7 +52,8 @@ def sample(args):
     """Sample dimensions from model."""
     model = embeddix.load_dense(args.model)
     vocab = embeddix.load_vocab(args.vocab)
-    results = _sample(model, vocab, args.dataset, args.kfold_size,
+    splits_dict = dutils.load_splits_dict(args.dataset, vocab, args.kfold_size)
+    results = _sample(model, splits_dict, args.dataset, args.kfold_size,
                       args.mode, args.metric, args.shuffle, args.num_threads,
                       args.limit)
     if args.dump:
