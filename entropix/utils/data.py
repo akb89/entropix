@@ -37,7 +37,7 @@ def _load_splits_dict(left_idx, right_idx, sim, kfold_size):
     return kfold_dict
 
 
-def load_splits_dict(dataset, vocab, kfold_size):
+def load_splits_dict(dataset, vocab, kfold_size=0):
     """Return a kfold train/test dict.
 
     The dict has the form dict[kfold_num] = {train_dict, test_dict} where
