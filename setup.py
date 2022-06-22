@@ -31,7 +31,7 @@ setup(
             'entropix = entropix.main:main'
         ],
     },
-    install_requires=['pyyaml>=4.2b1', 'numpy==1.19.0', 'embeddix==1.15.1'],
+    install_requires=['pyyaml>=4.2b1', 'numpy==1.22.0', 'embeddix==1.15.1'],
     classifiers=['Development Status :: 5 - Production/Stable',
                  'Environment :: Web Environment',
                  'Intended Audience :: Developers',
